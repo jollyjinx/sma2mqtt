@@ -14,6 +14,6 @@ FROM th089/swift:latest
 
 WORKDIR /app
 
-COPY --from=build /app/.build/debug/Hello .
+COPY --from=build /app/.build/debug/sma2mqtt .
 
-CMD ["./Hello"]
+CMD ["./sma2mqtt"]

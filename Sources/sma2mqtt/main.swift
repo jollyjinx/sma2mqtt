@@ -1,9 +1,14 @@
 import Dispatch
 import Foundation
+
 import BinaryCoder
-
-
 import NIO
+import MQTTNIO
+
+let mqttEventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: 2)
+let mqttClient = MQTTClient(    configuration: .init(target: .host("mqtt", port: 1883) ),
+                                eventLoopGroup: mqttEventLoopGroup  )
+mqttClient.connect()
 
 /// Implements a simple chat protocol.
 private final class ChatMessageDecoder: ChannelInboundHandler {
@@ -14,17 +19,28 @@ private final class ChatMessageDecoder: ChannelInboundHandler {
         var buffer = envelope.data
 
         if let byteData = buffer.readBytes(length: buffer.readableBytes)
-        {            print("\n Data: \(byteData) from: \(envelope.remoteAddress) ") // onPort:\(address.port)")
+        {
+            print("\n Data: \(byteData) from: \(envelope.remoteAddress) ") // onPort:\(address.port)")
 
-                    let binaryDecoder = BinaryDecoder(data: byteData )
-                    if let sma = try? binaryDecoder.decode(SMAMulticastPacket.self)
-                    {
-                        print( "Decoded: \(sma)")
-                    }
-                    else
-                    {
-                        print("did not decode")
-                    }
+            let binaryDecoder = BinaryDecoder(data: byteData )
+            if let sma = try? binaryDecoder.decode(SMAMulticastPacket.self)
+            {
+                //print( "Decoded: \(sma)")
+
+                let jsonData = try! JSONEncoder().encode(sma.obis)
+                let jsonString = String(data: jsonData, encoding: .utf8)!
+                print("JSON:\(jsonString)")
+                mqttClient.publish(
+                    topic: "sma/sunnymanager",
+                    payload: jsonString,
+                    retain: true
+                )
+
+            }
+            else
+            {
+                print("did not decode")
+            }
         }
 
         // To begin with, the chat messages are simply whole datagrams, no other length.

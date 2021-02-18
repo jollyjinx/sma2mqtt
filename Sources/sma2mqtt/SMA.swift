@@ -25,17 +25,14 @@ import BinaryCoder
                         ];
 
 
-struct ObisValue:BinaryDecodable
+struct ObisValue:BinaryDecodable, Encodable
 {
-
-
     let id:String
     let value:Double
 
-
     init(fromBinary decoder: BinaryDecoder) throws
     {
-                    print("Decoding ObisValue")
+//        print("Decoding ObisValue")
 
         let b:UInt8 = try decoder.decode(UInt8.self)
         let c:UInt8 = try decoder.decode(UInt8.self)
@@ -44,7 +41,7 @@ struct ObisValue:BinaryDecodable
 
         self.id = "1:\(c).\(d).\(e)"
 
-                    print("Decoding ObisValue:id:\(id)")
+//        print("Decoding ObisValue:id:\(id)")
 
         let intValue:Int64
 
@@ -78,17 +75,9 @@ struct SMAMulticastPacket: BinaryDecodable
 
     init(fromBinary decoder: BinaryDecoder) throws
     {
-        print("Decoding SMAMulticastPacket")
+//        print("Decoding SMAMulticastPacket")
 
-        let b:UInt8 = try decoder.decode(UInt8.self)
-                print("Decoding SMAMulticastPacket: b \(b)")
-        let c:UInt8 = try decoder.decode(UInt8.self)
-                print("Decoding SMAMulticastPacket: c \(c)")
-        let d:UInt8 = try decoder.decode(UInt8.self)
-                print("Decoding SMAMulticastPacket: d \(d)")
-        self.id         = try decoder.decode(Data.self,length:3)
-
-                print("Decoding SMAMulticastPacket: id \(id)")
+        self.id         = try decoder.decode(Data.self,length:6)
         self.time_in_ms = try decoder.decode(type(of: time_in_ms))
         self.header2    = try decoder.decode(Data.self,length:18)
 
