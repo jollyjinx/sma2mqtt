@@ -10,46 +10,47 @@ let mqttClient = MQTTClient(    configuration: .init(target: .host("mqtt", port:
                                 eventLoopGroup: mqttEventLoopGroup  )
 mqttClient.connect()
 
+var lasttime:Date = Date.distantPast
+var emitInterval = 1.0
+
 /// Implements a simple chat protocol.
 private final class ChatMessageDecoder: ChannelInboundHandler {
     public typealias InboundIn = AddressedEnvelope<ByteBuffer>
 
-    public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
+    public func channelRead(context: ChannelHandlerContext, data: NIOAny)
+    {
         let envelope = self.unwrapInboundIn(data)
         var buffer = envelope.data
 
-        if let byteData = buffer.readBytes(length: buffer.readableBytes)
+        let timenow = Date()
+
+        if  timenow.timeIntervalSince(lasttime) > emitInterval,
+            let byteData = buffer.readBytes(length: buffer.readableBytes)
         {
-            print("\n Data: \(byteData) from: \(envelope.remoteAddress) ") // onPort:\(address.port)")
+            print("\(timenow) Data: \(buffer.readableBytes) from: \(envelope.remoteAddress) ") // onPort:\(address.port)")
 
             let binaryDecoder = BinaryDecoder(data: byteData )
             if let sma = try? binaryDecoder.decode(SMAMulticastPacket.self)
             {
                 //print( "Decoded: \(sma)")
+                let jsonEncoder = JSONEncoder()
+               //     jsonEncoder.dateEncodingStrategy = .iso8601
 
-                let jsonData = try! JSONEncoder().encode(sma.obis)
+                let jsonData = try! jsonEncoder.encode(sma.interestingValues)
                 let jsonString = String(data: jsonData, encoding: .utf8)!
-                print("JSON:\(jsonString)")
-                mqttClient.publish(
-                    topic: "sma/sunnymanager",
-                    payload: jsonString,
-                    retain: true
-                )
+                //print("JSON:\(jsonString)")
 
+                mqttClient.publish( topic: "sma/sunnymanager",
+                                    payload: jsonString,
+                                    retain: true
+                                    )
+                lasttime = timenow
             }
             else
             {
                 print("did not decode")
             }
         }
-
-        // To begin with, the chat messages are simply whole datagrams, no other length.
-        guard let message = buffer.readString(length: buffer.readableBytes) else {
-            print("Error: invalid string received")
-            return
-        }
-
-        print("\(envelope.remoteAddress): \(message)")
     }
 }
 

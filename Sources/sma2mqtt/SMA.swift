@@ -1,9 +1,29 @@
 import Foundation
 import BinaryCoder
 
-     let interestingValues = [   "1:1.4.0"   : "grid usage" ,
+
+struct InterestingValue : Encodable
+{
+    let id:     String
+    let topic:  String
+    let title:  String
+    let unit:   String
+    let value:  Double
+    let payload: Double
+    let devicename = "sunnymanager"
+    let time = "\(Date())"
+}
+
+
+let _interestingValues: [String:[String:String]] = [
+                            "1:1.4.0"   : [ "unit" : "W",   "topic" : "usage" , "title" : "Grid Usage"],
+                            "1:2.4.0"   : [ "unit" : "W",   "topic" : "feedin", "title" : "Grid Feedin"],
+                            "1:14.4.0"  : [ "unit" : "Hz",  "topic" : "gridfrequency", "title": "Grid Frequency"]
+                         ]
+
+let unused = [
                             "1:1.8.0"   : "grid counter",
-                            "1:2.4.0"   : "feed in",
+
                             "1:2.8.0"   : "feed in counter",
 
                             "1:21.4.0"  :   "L1 grid usage",
@@ -21,8 +41,8 @@ import BinaryCoder
                             "1:62.4.0"  :   "L3 feed in",
                             "1:62.8.0"  :   "L3 feed in counter",
 
-                            "1:14.4.0"  :   "frequency"
-                        ];
+                        ]
+
 
 
 struct ObisValue:BinaryDecodable, Encodable
@@ -62,7 +82,7 @@ struct ObisValue:BinaryDecodable, Encodable
         }
     }
 
-    var description:String { "\(id) : \(value)  \( interestingValues[id] ?? "unknown" )" }
+    var description:String { "\(id) : \(value)  \( _interestingValues[id]?["topic"] ?? "unknown" )" }
 }
 
 
@@ -72,6 +92,22 @@ struct SMAMulticastPacket: BinaryDecodable
     let time_in_ms: UInt32
     let header2 : Data
     let obis:[ObisValue]
+
+    var interestingValues : [InterestingValue] { get { return obis.compactMap{ obisValue in
+                                
+                                                                    if let interestingValue = _interestingValues[obisValue.id]
+                                                                    {
+                                                                        return InterestingValue(id: obisValue.id,
+                                                                                                topic: interestingValue["topic"]!,
+                                                                                                title: interestingValue["title"]!,
+                                                                                                unit: interestingValue["unit"]!,
+                                                                                                value: obisValue.value,
+                                                                                                payload : obisValue.value
+                                                                            )
+                                                                    }
+                                                                    return nil
+                                                                }
+                                        } }
 
     init(fromBinary decoder: BinaryDecoder) throws
     {
