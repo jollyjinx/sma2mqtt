@@ -120,7 +120,7 @@ struct SMAMulticastPacket: BinaryDecodable
         var obisvalues = [ObisValue]()
         do
         {
-            while true
+            while !decoder.isAtEnd
             {
                 let aObis = try ObisValue(fromBinary: decoder )
 

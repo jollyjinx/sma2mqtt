@@ -11,7 +11,7 @@ let package = Package(
         // Dependencies declare other packages that this package depends on.
         // .package(url: /* package url */, from: "1.0.0"),
 //        .package(url: "https://github.com/FitnessKit/AsyncNetwork", from: "1.0.2"),
-        .package(url: "https://github.com/jollyjinx/BinaryCoder", from: "2.2.0"),
+        .package(url: "https://github.com/jollyjinx/BinaryCoder", from: "2.2.1"),
 
 //        .package(url: "https://github.com/alessionossa/BinaryCoder", from: "2.1.0"),
 //        .package(url: "https://github.com/jverkoey/BinaryCodable", from: "0.3.1"),
