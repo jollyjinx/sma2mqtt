@@ -14,13 +14,13 @@ then
 fi
 
 mkdir .build
-cat >.build/buildandstart.sh <<EOF
+cat >./.build/buildandstart.sh <<EOF
 #!/bin/sh
 swift build -c release --build-path=./build
 exec ./build/release/$name
 
 EOF
-chmod ugo+x .build/buildandstart.sh
+chmod ugo+x ./.build/buildandstart.sh
 
 docker image inspect swift:latest || docker build -t swift:latest .
 
@@ -28,11 +28,11 @@ docker stop $name
 docker container rm $name
 
 docker run \
-	--detach --restart=always \
-	-u $(id -u ${USER}):$(id -g ${USER}) \
-	--net service16 \
-	--log-opt max-size=1m --log-opt max-file=2 \
-	-v ${DIR}/:/home \
-	--name $name \
-	swift:latest
+        --detach --restart=always \
+        -u $(id -u ${USER}):$(id -g ${USER}) \
+        --net service16 \
+        --log-opt max-size=1m --log-opt max-file=2 \
+        -v ${DIR}/:/home \
+        --name $name \
+        swift:latest
 docker network connect mqtt-net $name
