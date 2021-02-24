@@ -27,7 +27,7 @@ private final class ChatMessageDecoder: ChannelInboundHandler {
         if  timenow.timeIntervalSince(lasttime) > emitInterval,
             let byteData = buffer.readBytes(length: buffer.readableBytes)
         {
-            print("\(timenow) Data: \(buffer.readableBytes) from: \(envelope.remoteAddress) ") // onPort:\(address.port)")
+            print("\(timenow) Data: \(byteData.count) from: \(envelope.remoteAddress) ")
 
             let binaryDecoder = BinaryDecoder(data: byteData )
             if let sma = try? binaryDecoder.decode(SMAMulticastPacket.self)
@@ -122,8 +122,8 @@ let datagramChannel = try datagramBootstrap
         }
     }.wait()
 
-print("Now broadcasting, happy chatting.\nPress ^D to exit.")
-
+print("Receiving SMA Data\nPress ^D to exit.")
+RunLoop.current.run()
 
 while let line = readLine(strippingNewline: false) {
     datagramChannel.writeAndFlush(AddressedEnvelope(remoteAddress: chatMulticastGroup, data: line), promise: nil)
