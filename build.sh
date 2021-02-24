@@ -5,6 +5,7 @@ echo "DIR:$DIR"
 
 cd ${DIR}
 
+buildpath=.build
 name=$(perl -ne  'BEGIN{ $/=undef; } print "$1\n" if /Package\(\s+name\:\s+\"(.*?)\"/;' <Package.swift)
 
 if [[ -z $name ]]
@@ -13,14 +14,23 @@ then
     exit 1
 fi
 
-mkdir .build
-cat >./.build/buildandstart.sh <<EOF
+mkdir ${buildpath}
+cat >${buildpath}/buildandstart.sh <<EOF
 #!/bin/sh
-swift build -c release --build-path=./build
-exec ./build/release/$name
+swift build -c release --build-path=${buildpath}
+exec ${buildpath}/release/${name}
 
 EOF
-chmod ugo+x ./.build/buildandstart.sh
+chmod ugo+x ${buildpath}/buildandstart.sh
+
+cat >Dockerfile <<EOF
+FROM th089/swift:latest
+
+WORKDIR /home
+
+CMD ["${buildpath}/buildandstart.sh"]
+
+EOF
 
 docker image inspect swift:latest || docker build -t swift:latest .
 
