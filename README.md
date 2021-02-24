@@ -1,4 +1,5 @@
-#Swift Package to read Speedwire from SunnyHomeManager and publish them over MQTT inside docker on raspberry ARM64
+# sma2mqtt
+Swift Package to read Speedwire from SunnyHomeManager and publish them over MQTT inside docker on raspberry ARM64
 
 The build.sh is a build script to create a docker container to compile and run the actual swift program inside the container.
 It's hacked been together to see if a swift program is feasable and doable at all on linux inside a docker container.
