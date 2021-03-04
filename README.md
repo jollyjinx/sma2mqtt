@@ -8,7 +8,7 @@ It uses docker network to connect to the correct VLAN - my network is heavily sp
 If you want to change things - here we go
 
 ```
-USAGE: sma2-mqtt [--debug] [--mqqt-servername <mqqt-servername>] [--mqtt-port <mqtt-port>] [--interval <interval>] [--topic <topic>] [--bind-address <bind-address>] [--bind-port <bind-port>] [--mcast-address <mcast-address>] [--mcast-port <mcast-port>]
+USAGE: sma2mqtt [--debug] [--mqqt-servername <mqqt-servername>] [--mqtt-port <mqtt-port>] [--interval <interval>] [--topic <topic>] [--bind-address <bind-address>] [--bind-port <bind-port>] [--mcast-address <mcast-address>] [--mcast-port <mcast-port>]
 
 OPTIONS:
   -d, --debug             optional debug output 
