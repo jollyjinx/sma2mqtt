@@ -5,6 +5,7 @@ import NIO
 import MQTTNIO
 import BinaryCoder
 import ArgumentParser
+import JLog
 
 struct JNXServer
 {
@@ -25,11 +26,13 @@ struct JNXMCASTGroup
     let bind: JNXServer
 }
 
-
 struct sma2mqtt: ParsableCommand
 {
     @Flag(name: .shortAndLong, help: "optional debug output")
-    var debug: Bool = false
+    var debug: Int
+
+    @Flag(name: .long, help: "send json output to stdout")
+    var json:Bool = false
 
     @Option(name: .long, help: "MQTT Server hostname")
     var mqqtServername: String = "mqtt"
@@ -60,14 +63,18 @@ struct sma2mqtt: ParsableCommand
         let mqttServer  = JNXMQTTServer(server: JNXServer(hostname: mqqtServername, port: mqttPort), emitInterval: interval, topic: topic)
         let mcastServer = JNXMCASTGroup(server: JNXServer(hostname: mcastAddress, port: mcastPort), bind: JNXServer(hostname: bindAddress, port: bindPort) )
 
-        startSma2mqtt(mcastServer:mcastServer,mqttServer:mqttServer,debug:debug)
+        if debug > 0
+        {
+            JLog.loglevel =  debug > 1 ? .trace : .debug
+        }
+        startSma2mqtt(mcastServer:mcastServer,mqttServer:mqttServer,jsonOutput:json)
     }
 }
 sma2mqtt.main()
 
 
 
-func startSma2mqtt(mcastServer:JNXMCASTGroup,mqttServer:JNXMQTTServer,debug:Bool)
+func startSma2mqtt(mcastServer:JNXMCASTGroup,mqttServer:JNXMQTTServer,jsonOutput:Bool)
 {
     let mqttEventLoopGroup  = MultiThreadedEventLoopGroup(numberOfThreads: 2)
     let mqttClient          = MQTTClient(configuration: .init(target: .host(mqttServer.server.hostname, port: Int(mqttServer.server.port)) ), eventLoopGroup: mqttEventLoopGroup  )
@@ -101,7 +108,7 @@ func startSma2mqtt(mcastServer:JNXMCASTGroup,mqttServer:JNXMQTTServer,debug:Bool
         .channelOption(ChannelOptions.socketOption(.so_reuseaddr), value: 1)
         .channelInitializer { channel in
             return channel.pipeline.addHandler(ChatMessageEncoder()).flatMap {
-                channel.pipeline.addHandler( SMAMessageReceiver(mqttClient:mqttClient,mqttServer:mqttServer,debug:debug) )
+                channel.pipeline.addHandler( SMAMessageReceiver(mqttClient:mqttClient,mqttServer:mqttServer,jsonOutput:jsonOutput) )
             }
         }
 
@@ -129,7 +136,7 @@ func startSma2mqtt(mcastServer:JNXMCASTGroup,mqttServer:JNXMQTTServer,debug:Bool
             }
         }.wait()
 
-    print("Receiving SMA Data\nPress ^C to exit.")
+    JLog.info("Receiving SMA Data\nPress ^C to exit.")
     RunLoop.current.run()
 //
 //    while let line = readLine(strippingNewline: false) {
@@ -152,13 +159,14 @@ final class SMAMessageReceiver: ChannelInboundHandler
     var lasttime:Date = Date.distantPast
     let mqttServer:JNXMQTTServer
     let mqttClient:MQTTClient
-    let debug:Bool
+    let jsonOutput:Bool
 
-    init(mqttClient:MQTTClient,mqttServer:JNXMQTTServer,debug:Bool = false)
+
+    init(mqttClient:MQTTClient,mqttServer:JNXMQTTServer,jsonOutput:Bool = false)
     {
         self.mqttClient = mqttClient
         self.mqttServer = mqttServer
-        self.debug = debug
+        self.jsonOutput = jsonOutput
     }
 
     public func channelRead(context: ChannelHandlerContext, data: NIOAny)
@@ -171,12 +179,12 @@ final class SMAMessageReceiver: ChannelInboundHandler
         if  timenow.timeIntervalSince(lasttime) > mqttServer.emitInterval,
             let byteData = buffer.readBytes(length: buffer.readableBytes)
         {
-            if debug { print("\(timenow) Data: \(byteData.count) from: \(envelope.remoteAddress) ") }
+            JLog.debug("\(timenow) Data: \(byteData.count) from: \(envelope.remoteAddress) ")
 
             let binaryDecoder = BinaryDecoder(data: byteData )
             if let sma = try? binaryDecoder.decode(SMAMulticastPacket.self)
             {
-                if debug { print("Decoded: \(sma)") }
+                JLog.debug("Decoded: \(sma)")
 
                 let jsonEncoder = JSONEncoder()
                //     jsonEncoder.dateEncodingStrategy = .iso8601
@@ -184,7 +192,9 @@ final class SMAMessageReceiver: ChannelInboundHandler
                 let jsonData = try! jsonEncoder.encode(sma.interestingValues)
                 let jsonString = String(data: jsonData, encoding: .utf8)!
 
-                if debug { print("JSON:\(jsonString)") }
+
+                JLog.debug("JSON:\(jsonString)")
+                if jsonOutput { print("\(jsonString)") }
 
                 mqttClient.publish( topic: mqttServer.topic,
                                     payload: jsonString,
@@ -194,7 +204,7 @@ final class SMAMessageReceiver: ChannelInboundHandler
             }
             else
             {
-                print("did not decode")
+                JLog.error("did not decode")
             }
         }
     }
