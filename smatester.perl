@@ -2,6 +2,7 @@
 
 use strict;
 use IO::Socket::INET;
+use POSIX;
 
 use constant USER_TYPE_ADMIN        => 0xBB;
 use constant USER_TYPE_USER         => 0x88;
@@ -193,63 +194,129 @@ sub printSMANetPacket
 
     print "      SMANet Packet:";
 
-    my $smanet_length = unpack('C',substr($data,0,1)) * 4;
 
-    if(    length($data) < 2
-        || length($data) != $smanet_length
-        || $smanet_length < 32
-      )
     {
-        printf "Invalid SMANet packet: %d != %d < 32 :%s\n",$smanet_length,length($data),prettyhexdata($data);
-        return undef;
+        my $smanet_length = unpack('C',substr($data,0,1)) * 4;
+
+        if(    length($data) < 2
+            || length($data) != $smanet_length
+            || $smanet_length < 32
+          )
+        {
+            printf "Invalid SMANet packet: %d != %d < 32 :%s\n",$smanet_length,length($data),prettyhexdata($data);
+            return undef;
+        }
     }
 
-    my $response    = unpack('v',substr($data,18,2));
-    my $command     = unpack('v',substr($data,26,2));
-    my $destination = unpack('H*',substr($data,2,6));
-    my $source      = unpack('H*',substr($data,10,6));
-    my $packetid    = unpack('v',substr($data,22,2)) & 0x7FFF;
-    my $direction   = unpack('v',substr($data,22,2)) & 0x8000 ? 'OK' : 'FAIL' ;
-
-    printf "%s command:%04x response:%04x: source:%s destination:%s pktid:0x%04x ",$direction,$command,$response,$source,$destination,$packetid;
-
-    if( $response != 0 || $command == 0xFFFD )
     {
-        printf "raw:%s\n",prettyhexdata($data);
-        return undef;
+        my $response    = unpack('v',substr($data,18,2));
+        my $command     = unpack('v',substr($data,26,2));
+        my $destination = unpack('H*',substr($data,2,6));
+        my $source      = unpack('H*',substr($data,10,6));
+        my $packetid    = unpack('v',substr($data,22,2)) & 0x7FFF;
+        my $direction   = unpack('v',substr($data,22,2)) & 0x8000 ? 'OK' : 'FAIL' ;
+
+        printf "%s command:%04x response:%04x: source:%s destination:%s pktid:0x%04x ",$direction,$command,$response,$source,$destination,$packetid;
+
+        if( $response != 0 || $command == 0xFFFD )
+        {
+            printf "raw:%s\n",prettyhexdata($data);
+            return undef;
+        }
     }
 
-    my $valuetype   = unpack('V',substr($data,28,4));
-    my $valuecount  = unpack('V',substr($data,32,4));
+    {
+        my $valuetype   = unpack('V',substr($data,28,4));
+        my $valuecount  = unpack('V',substr($data,32,4));
 
+        my $header = substr($data,0,36);
 
-    my $header = substr($data,0,36);
+        printf "type:0x%08x count:0x%08x raw:%s\n",$valuetype,$valuecount,prettyhexdata($header);
+    }
+
     my $footer = substr($data,36);
 
-    printf "type:0x%08x count:0x%08x raw:%s\n",$valuetype,$valuecount,prettyhexdata($header);
-
-    while( length($footer) > 28 )
+    FOOTERPARSING: while( length($footer) > 7 )
     {
+        my $number = unpack('C',substr($footer,0,1));
+        my $code = unpack('v',substr($footer,1,2));
+        my $type = unpack('C',substr($footer,3,1));
         my $time  = unpack('V',substr($footer,4,4));
-        my $value = unpack('V',substr($footer,8,4));
-        my @stringvalues = map { ord($_)>31 && ord($_)<0x7E ? $_ : '.' } split(//,substr($footer,8,14));
-        printf "\t%s %s,%d %s\n",prettyhexdata(substr($footer,0,28)),''.localtime($time),$value,join('',@stringvalues);
-        $footer = substr($footer,28);
+        my $timestring = POSIX::strftime('%Y-%m-%dT%H:%M:%S',localtime($time));
+        my $typelength = 28;
+
+        if( $time ne 0 && '2021' ne substr($timestring,0,4) )
+        {
+            printf "Weird time %s raw: %s\n",$timestring,prettyhexdata($footer);
+            $footer = substr($footer,1);
+            next FOOTERPARSING;
+        }
+        printf "%sCode:0x%04x No:0x%02x Type:0x%02x %s %22s",' ' x 7,$code,$number,$type,$timestring,code2Name($code);
+
+        $type = 0x08 if $code == 0x8234;
+
+        if( $type == 0x00  )
+        {
+            my $value1 = unpack('V',substr($footer,8,4));
+            my $value2 = unpack('V',substr($footer,16,4));
+
+            printf "%20s ", ( $value1 != 4294967295 ? sprintf("%d",$value1) : 'NaN');
+
+            $typelength = $value2 == $value1 ? 28 : 16;
+        }
+#        elsif( $type == 0x61  )
+#        {
+#            $typelength = 14;
+#            my $value = unpack('V',substr($footer,8,4));
+#
+#            printf "%20s ", ( $value != 4294967295 ? sprintf("%d",$value) : 'NaN');
+#        }
+        elsif( $type == 0x40 )
+        {
+            my $value = unpack('l',pack('L',unpack('V',substr($footer,8,4))));
+
+            printf "%20s ", ( $value != -2147483648 ? sprintf("%d",$value) : 'NaN');
+        }
+        elsif( $type == 0x10 )
+        {
+            $typelength = 40;
+            my $value = unpack('Z*',substr($footer,8,14));
+
+            printf "%20s ",$value;
+        }
+        elsif( $type == 0x08)
+        {
+            $typelength = 40;
+            my $position = 10;
+            my @values = ();
+
+            while( $position < 38)
+            {
+                my $value = unpack('C',substr($footer,$position+1,1));
+                my $end   = unpack('v',substr($footer,$position+2,2));
+
+                push(@values, sprintf("%0d",$value) );
+
+                $position += 4;
+
+                last if $end == 0xfffe;
+
+            }
+
+            printf "%20s ",join('.',@values);
+        }
+        else
+        {
+            printf "TYPE %02x UNKOWN ",$type;
+            $typelength = 2;
+        }
+        printf "raw: %s\n",prettyhexdata(substr($footer,0,$typelength));
+        $footer = substr($footer,$typelength);
     }
 
     if ( length( $footer ) > 0 )
     {
-        if ( length( $footer ) > 11 )
-        {
-            my $time  = unpack('V',substr($footer,4,4));
-            my $value = unpack('V',substr($footer,8,4));
-
-            printf "\t%s %s,%d\n",prettyhexdata($footer),''.localtime($time),$value;
-        }
-        else
-        {
-            printf "\t%s\n",prettyhexdata( $footer );
-        }
+            printf "\tFOOTER raw:%s\n",prettyhexdata( $footer );
     }
     return undef;
 }
@@ -272,3 +339,75 @@ sub encodePassword
     return $encoded;
 }
 
+sub code2Name
+{
+    my($code) = @_;
+
+ my %codes = (
+ 0x2148 => 'OperationHealth                ',  #  // *08* Condition (aka INV_STATUS)
+ 0x2377 => 'CoolsysTmpNom                  ',  #  // *40* Operating condition temperatures
+ 0x251E => 'DcMsWatt                       ',  #  // *40* DC power input (aka SPOT_PDC1 / SPOT_PDC2)
+ 0x2601 => 'MeteringTotWhOut               ',  #  // *00* Total yield (aka SPOT_ETOTAL)
+ 0x2622 => 'MeteringDyWhOut                ',  #  // *00* Day yield (aka SPOT_ETODAY)
+ 0x263F => 'GridMsTotW                     ',  #  // *40* Power (aka SPOT_PACTOT)
+ 0x295A => 'BatChaStt                      ',  #  // *00* Current battery charge status
+ 0x411E => 'OperationHealthSttOk           ',  #  // *00* Nominal power in Ok Mode (aka INV_PACMAX1)
+ 0x411F => 'OperationHealthSttWrn          ',  #  // *00* Nominal power in Warning Mode (aka INV_PACMAX2)
+ 0x4120 => 'OperationHealthSttAlm          ',  #  // *00* Nominal power in Fault Mode (aka INV_PACMAX3)
+ 0x4164 => 'OperationGriSwStt              ',  #  // *08* Grid relay/contactor (aka INV_GRIDRELAY)
+ 0x4166 => 'OperationRmgTms                ',  #  // *00* Waiting time until feed-in
+ 0x451F => 'DcMsVol                        ',  #  // *40* DC voltage input (aka SPOT_UDC1 / SPOT_UDC2)
+ 0x4521 => 'DcMsAmp                        ',  #  // *40* DC current input (aka SPOT_IDC1 / SPOT_IDC2)
+ 0x4623 => 'MeteringPvMsTotWhOut           ',  #  // *00* PV generation counter reading
+ 0x4624 => 'MeteringGridMsTotWhOut         ',  #  // *00* Grid feed-in counter reading
+ 0x4625 => 'MeteringGridMsTotWhIn          ',  #  // *00* Grid reference counter reading
+ 0x4626 => 'MeteringCsmpTotWhIn            ',  #  // *00* Meter reading consumption meter
+ 0x4627 => 'MeteringGridMsDyWhOut	       ',  #  // *00* ?
+ 0x4628 => 'MeteringGridMsDyWhIn           ',  #  // *00* ?
+ 0x462E => 'MeteringTotOpTms               ',  #  // *00* Operating time (aka SPOT_OPERTM)
+ 0x462F => 'MeteringTotFeedTms             ',  #  // *00* Feed-in time (aka SPOT_FEEDTM)
+ 0x4631 => 'MeteringGriFailTms             ',  #  // *00* Power outage
+ 0x4635 => 'MeteringPvMsTotWOut            ',  #  // *40* PV power generated
+ 0x4636 => 'MeteringGridMsTotWOut          ',  #  // *40* Power grid feed-in
+ 0x4637 => 'MeteringGridMsTotWIn           ',  #  // *40* Power grid reference
+ 0x4639 => 'MeteringCsmpTotWIn             ',  #  // *40* Consumer power
+ 0x463A => 'MeteringWhIn                   ',  #  // *00* Absorbed energy
+ 0x463B => 'MeteringWhOut                  ',  #  // *00* Released energy
+ 0x4640 => 'GridMsWphsA                    ',  #  // *40* Power L1 (aka SPOT_PAC1)
+ 0x4641 => 'GridMsWphsB                    ',  #  // *40* Power L2 (aka SPOT_PAC2)
+ 0x4642 => 'GridMsWphsC                    ',  #  // *40* Power L3 (aka SPOT_PAC3)
+ 0x4648 => 'GridMsPhVphsA                  ',  #  // *00* Grid voltage phase L1 (aka SPOT_UAC1)
+ 0x4649 => 'GridMsPhVphsB                  ',  #  // *00* Grid voltage phase L2 (aka SPOT_UAC2)
+ 0x464A => 'GridMsPhVphsC                  ',  #  // *00* Grid voltage phase L3 (aka SPOT_UAC3)
+ 0x464B => 'GridMsPhVphsA2B6100            ',  #
+ 0x464C => 'GridMsPhVphsB2C6100            ',  #
+ 0x464D => 'GridMsPhVphsC2A6100            ',  #
+ 0x4650 => 'GridMsAphsA_1                  ',  #  // *00* Grid current phase L1 (aka SPOT_IAC1)
+ 0x4651 => 'GridMsAphsB_1                  ',  #  // *00* Grid current phase L2 (aka SPOT_IAC2)
+ 0x4652 => 'GridMsAphsC_1                  ',  #  // *00* Grid current phase L3 (aka SPOT_IAC3)
+ 0x4653 => 'GridMsAphsA                    ',  #  // *00* Grid current phase L1 (aka SPOT_IAC1_2)
+ 0x4654 => 'GridMsAphsB                    ',  #  // *00* Grid current phase L2 (aka SPOT_IAC2_2)
+ 0x4655 => 'GridMsAphsC                    ',  #  // *00* Grid current phase L3 (aka SPOT_IAC3_2)
+ 0x4657 => 'GridMsHz                       ',  #  // *00* Grid frequency (aka SPOT_FREQ)
+ 0x46AA => 'MeteringSelfCsmpSelfCsmpWh     ',  #  // *00* Energy consumed internally
+ 0x46AB => 'MeteringSelfCsmpActlSelfCsmp   ',  #  // *00* Current self-consumption
+ 0x46AC => 'MeteringSelfCsmpSelfCsmpInc    ',  #  // *00* Current rise in self-consumption
+ 0x46AD => 'MeteringSelfCsmpAbsSelfCsmpInc ',  #  // *00* Rise in self-consumption
+ 0x46AE => 'MeteringSelfCsmpDySelfCsmpInc  ',  #  // *00* Rise in self-consumption today
+ 0x491E => 'BatDiagCapacThrpCnt            ',  #  // *40* Number of battery charge throughputs
+ 0x4926 => 'BatDiagTotAhIn                 ',  #  // *00* Amp hours counter for battery charge
+ 0x4927 => 'BatDiagTotAhOut                ',  #  // *00* Amp hours counter for battery discharge
+ 0x495B => 'BatTmpVal                      ',  #  // *40* Battery temperature
+ 0x495C => 'BatVol                         ',  #  // *40* Battery voltage
+ 0x495D => 'BatAmp                         ',  #  // *40* Battery current
+ 0x821E => 'NameplateLocation              ',  #  // *10* Device name (aka INV_NAME)
+ 0x821F => 'NameplateMainModel             ',  #  // *08* Device class (aka INV_CLASS)
+ 0x8220 => 'NameplateModel                 ',  #  // *08* Device type (aka INV_TYPE)
+ 0x8221 => 'NameplateAvalGrpUsr            ',  #  // *  * Unknown
+ 0x8234 => 'NameplatePkgRev                ',  #  // *08* Software package (aka INV_SWVER)
+ 0x832A => 'InverterWLim                   ',  #  // *00* Maximum active power device (aka INV_PACMAX1_2) (Some inverters like SB3300/SB1200)
+ );
+    my $name = ''.$codes{$code};
+        $name =~ s/\s*$//;
+    return $name;
+}
