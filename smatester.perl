@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 
 use strict;
+use utf8;
 use IO::Socket::INET;
 use POSIX;
 
@@ -17,6 +18,7 @@ if(@ARGV == 1)
     binmode FILE;
     my $seperator = pack('N',0x534d4100);
     $/ = $seperator;
+
     while( my $data = <FILE> )
     {
         chomp $data;
@@ -40,7 +42,7 @@ my  $socket = new IO::Socket::INET (PeerHost => $hostname,
                                     Timeout => 2)                                   || die "Can't open socket due to:$!\n";
     $socket->setsockopt(SOL_SOCKET, SO_RCVTIMEO, pack('l!l!', TIMOUT_RECEIVE, 0))   || die "error setting SO_RCVTIMEO: $!";
 
-my $filehandle;
+my $filehandle = undef;
 if( length $filename )
 {
     open( $filehandle, ">>", $filename) || die "Can't open $filename for appending due to:$!";
@@ -53,6 +55,14 @@ my $inverterid  = 'ffff ffff ffff';
 my @commands = (
     "0C04 fdff 07000000 84030000 4c20cb51 00000000".encodePassword($password),  # login
 
+#    "0000 0052 0000 4600 FFFF 4600 ",   # SpotACVoltage: // SPOT_UAC1, SPOT_UAC2, SPOT_UAC3, SPOT_IAC1, SPOT_IAC2, SPOT_IAC3
+
+#    "0000 0051 0000 2900 ffff 2900 ",   # BatteryInfo:
+#    "0000 0051 0000 2a00 ffff 2a00 ",   # BatteryInfo:
+#    "0000 0051 0000 4100 ffff 4100 ",   # BatteryInfo:
+#    "0000 0052 0000 4900 ffff 4900 ",   # BatteryInfo:
+#    "0000 0053 0000 4900 ffff 4900 ",   # BatteryInfo:
+#    "0000 0054 0000 4900 ffff 4900 ",   # BatteryInfo:
 
 #    "0000 0051 0048 4600 FF55 4600 ",   # SpotACVoltage: // SPOT_UAC1, SPOT_UAC2, SPOT_UAC3, SPOT_IAC1, SPOT_IAC2, SPOT_IAC3
 #    "0000 0051 0148 4600 0248 4600 ",   # SpotACVoltage: // SPOT_UAC1, SPOT_UAC2, SPOT_UAC3, SPOT_IAC1, SPOT_IAC2, SPOT_IAC3
@@ -65,7 +75,7 @@ my @commands = (
 #    "0000 0051 0148 4600 014F 4600 ",   # SpotACVoltage: // SPOT_UAC1, SPOT_UAC2, SPOT_UAC3, SPOT_IAC1, SPOT_IAC2, SPOT_IAC3
 #    "0000 0051 0148 4600 0150 4600 ",   # SpotACVoltage: // SPOT_UAC1, SPOT_UAC2, SPOT_UAC3, SPOT_IAC1, SPOT_IAC2, SPOT_IAC3
 
-
+#
     "0000 0051 001e 4100 ff20 4100 ",   # MaxACPower:     // INV_PACMAX1, INV_PACMAX2, INV_PACMAX3
     "0000 0051 001e 4900 ff5d 4900 ",   # BatteryInfo:
     "0000 0051 002a 8300 ff2a 8300 ",   # MaxACPower2:   // INV_PACMAX1_2
@@ -85,7 +95,7 @@ my @commands = (
     "0000 0058 001e 8200 ff20 8200 ",   # TypeLabel:    // INV_NAME, INV_TYPE, INV_CLASS
     "0000 0058 0034 8200 ff34 8200 ",   # SoftwareVersion:  // INV_SWVERSION
     "0000 0264 008d 6100 ff8d 6100 ",   # sbftest:
-
+#
 
     #"0C04 fdff ffffffff ",   # logout, shuts down socket for quite some time
     );
@@ -148,7 +158,7 @@ sub sendCommand
 
     sleep(1);
     my $size = $socket->send($data);
-    print $filehandle $data if $filehandle;
+    print $filehandle $data if defined $filehandle;
     printSMAPacket('sent',$data);
 }
 
@@ -177,7 +187,7 @@ sub printSMAPacket
         ||  $length    != $expectedlen
         )
     {
-        printf "%s: invalide SMA packet: %0x %0x %d=%d %0x %s\n",$prefix,$smaheader,$proto,$length,$expectedlen,$footer,prettyhexdata($data);
+        printf "%s: invalid SMA packet: %0x %0x %d=%d %0x %s\n",$prefix,$smaheader,$proto,$length,$expectedlen,$footer,prettyhexdata($data);
         return undef;
     }
 
@@ -193,7 +203,6 @@ sub printSMANetPacket
     my($data) = @_;
 
     print "      SMANet Packet:";
-
 
     {
         my $smanet_length = unpack('C',substr($data,0,1)) * 4;
@@ -234,7 +243,8 @@ sub printSMANetPacket
         printf "type:0x%08x count:0x%08x raw:%s\n",$valuetype,$valuecount,prettyhexdata($header);
     }
 
-    my $footer = substr($data,36);
+    my $footer  = substr($data,36);
+    my $source  = unpack('H*',substr($data,10,6));
 
     FOOTERPARSING: while( length($footer) > 7 )
     {
@@ -251,40 +261,56 @@ sub printSMANetPacket
             $footer = substr($footer,1);
             next FOOTERPARSING;
         }
-        printf "%sCode:0x%04x No:0x%02x Type:0x%02x %s %22s",' ' x 7,$code,$number,$type,$timestring,code2Name($code);
+
+        printf "%s%s Code:0x%04x No:0x%02x Type:0x%02x %s %27s",' ' x 7,$source,$code,$number,$type,$timestring,code2Name($code);
 
         $type = 0x08 if $code == 0x8234;
 
-        if( $type == 0x00  )
+        ##### TYPE decoding
+
+        if( $type == 0x00 || $type == 0x40 )        # integer
         {
-            my $value1 = unpack('V',substr($footer,8,4));
-            my $value2 = unpack('V',substr($footer,16,4));
+            my $value1  = unpack('V',substr($footer,8,4));
+            my $value2  = unpack('V',substr($footer,12,4));
+            my $value3  = unpack('V',substr($footer,16,4));
+            my $value4  = unpack('V',substr($footer,20,4));
+            my $length28 = unpack('V',substr($footer,24,4));
 
-            printf "%20s ", ( $value1 != 4294967295 ? sprintf("%d",$value1) : 'NaN');
+            my  @values = ($value1,$value2,$value3,$value4);
+                @values = ($value1) if '' eq join('',map { $value1 == $_ ? '' : 'ne' } @values);  # print one value if all are same
 
-            $typelength = $value2 == $value1 ? 28 : 16;
+            unless( ($value1 == 0) && ($value2 == 0) && ($value3 == 0) && ($value4 == 0) && ($length28 == 0) )
+            {
+                $typelength = 16 if $value2 == 0 && $length28 != 1;
+                $typelength = 16 if $value4 == $time;
+            }
+
+            splice(@values,1) if $typelength == 16;
+
+
+            my @results;
+            for my $value (@values)
+            {
+                if( $type == 0x00 )
+                {
+                    push(@results, $value != 4294967295 ? sprintf("%d",$value) : 'NaN');
+                }
+                else
+                {
+                    my $signed = unpack('l',pack('L',$value));
+                    push(@results, $signed != -2147483648 ? sprintf("%d",$signed) : 'NaN');
+                }
+            }
+            printf "%20s ",join(':',@results);
         }
-#        elsif( $type == 0x61  )
-#        {
-#            $typelength = 14;
-#            my $value = unpack('V',substr($footer,8,4));
-#
-#            printf "%20s ", ( $value != 4294967295 ? sprintf("%d",$value) : 'NaN');
-#        }
-        elsif( $type == 0x40 )
-        {
-            my $value = unpack('l',pack('L',unpack('V',substr($footer,8,4))));
-
-            printf "%20s ", ( $value != -2147483648 ? sprintf("%d",$value) : 'NaN');
-        }
-        elsif( $type == 0x10 )
+        elsif( $type == 0x10 )      # string
         {
             $typelength = 40;
-            my $value = unpack('Z*',substr($footer,8,14));
+            my $value = unpack('Z*',substr($footer,8,32));
 
             printf "%20s ",$value;
         }
-        elsif( $type == 0x08)
+        elsif( $type == 0x08)      # dotted version
         {
             $typelength = 40;
             my $position = 10;
@@ -310,7 +336,7 @@ sub printSMANetPacket
             printf "TYPE %02x UNKOWN ",$type;
             $typelength = 2;
         }
-        printf "raw: %s\n",prettyhexdata(substr($footer,0,$typelength));
+        printf "realtype:0x%02x len:%d raw: %s\n",$type,$typelength,prettyhexdata(substr($footer,0,$typelength));
         $footer = substr($footer,$typelength);
     }
 
@@ -350,7 +376,7 @@ sub code2Name
  0x2601 => 'MeteringTotWhOut               ',  #  // *00* Total yield (aka SPOT_ETOTAL)
  0x2622 => 'MeteringDyWhOut                ',  #  // *00* Day yield (aka SPOT_ETODAY)
  0x263F => 'GridMsTotW                     ',  #  // *40* Power (aka SPOT_PACTOT)
- 0x295A => 'BatChaStt                      ',  #  // *00* Current battery charge status
+ 0x295A => 'bat.system.soc (%)             ',
  0x411E => 'OperationHealthSttOk           ',  #  // *00* Nominal power in Ok Mode (aka INV_PACMAX1)
  0x411F => 'OperationHealthSttWrn          ',  #  // *00* Nominal power in Warning Mode (aka INV_PACMAX2)
  0x4120 => 'OperationHealthSttAlm          ',  #  // *00* Nominal power in Fault Mode (aka INV_PACMAX3)
@@ -395,12 +421,16 @@ sub code2Name
  0x46AD => 'MeteringSelfCsmpAbsSelfCsmpInc ',  #  // *00* Rise in self-consumption
  0x46AE => 'MeteringSelfCsmpDySelfCsmpInc  ',  #  // *00* Rise in self-consumption today
  0x491E => 'BatDiagCapacThrpCnt            ',  #  // *40* Number of battery charge throughputs
- 0x4926 => 'BatDiagTotAhIn                 ',  #  // *00* Amp hours counter for battery charge
- 0x4927 => 'BatDiagTotAhOut                ',  #  // *00* Amp hours counter for battery discharge
- 0x495B => 'BatTmpVal                      ',  #  // *40* Battery temperature
- 0x495C => 'BatVol                         ',  #  // *40* Battery voltage
- 0x495D => 'BatAmp                         ',  #  // *40* Battery current
- 0x821E => 'NameplateLocation              ',  #  // *10* Device name (aka INV_NAME)
+ 0x4922 => 'bat.cells.maxtemperature (ºdC) ',
+ 0x4923 => 'bat.cells.mintemperature (ºdC) ',
+ 0x4924 => 'bat.cells.??                   ',
+ 0x4933 => 'bat.cells.setcharging.voltage(cV)',
+ 0x4926 => 'bat.total.charge (Ah)          ',
+ 0x4927 => 'bat.total.discharge (Ah)       ',
+ 0x495B => 'bat.system.temperature (ºdC)   ',
+ 0x495C => 'bat.system.voltage (cV)        ',
+ 0x495D => 'bat.system.current (mA)        ',
+ 0x821E => 'system.name                    ',  #  // *10* Device name (aka INV_NAME)
  0x821F => 'NameplateMainModel             ',  #  // *08* Device class (aka INV_CLASS)
  0x8220 => 'NameplateModel                 ',  #  // *08* Device type (aka INV_TYPE)
  0x8221 => 'NameplateAvalGrpUsr            ',  #  // *  * Unknown
