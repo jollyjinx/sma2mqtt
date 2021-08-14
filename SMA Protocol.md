@@ -57,9 +57,11 @@ SMA Net Version 1 Content
 ## 0x6065 Protocol: Inverter Communication
 =========================================
 
-Warning this protocol uses little endian format. It has a header followed by one command.
+Warning this protocol uses little endian format. Requests and responses share the same header format. 
+Requests to the inverter send the header followed by a command (e.g. logon, logoff, data request ).
+Responses from the inverter have the same header with data then attached (e.g. ac-power values ).
 
-### Header
+### 0x6065 Protocol Header
 
 addr | type| explanation
 -----------------------------------
@@ -83,12 +85,13 @@ addr | type| explanation
 0x0A | U16 |  Destination SysID           Any: 0xFFFF
 0x0C | U32 |  Destination Serial number   Any: 0xFFFF FFFF
 
-0x10 | U16 |  ??ctrl      0x0000          sending 0xA0 0x01 0x03
+0x10 | U16 |  ??ctrl      0x0000              sending 0xA0 0x01 0x03
 0x12 | U16 |  Result:     0x0000 ok
      |     |              0x0002  0000 0010b  incorrect command ?
      |     |              0x0014              unkown command ?
      |     |              0x0015  0000 1111b  no values
      |     |              0x0017  0001 1111b  not logged in
+     |     |              0x0102              login not possible (busy)?
 
 0x14 | U16 | Bit 0-14 packet id
      |     | bit 15   request / bit 15 needs to be set
@@ -96,12 +99,14 @@ addr | type| explanation
      |     |                    1 - ok
 
 
-### Request login
+# Requests to Inverter
+
+## login request
 
 addr | type | explanation
 -----------------------------------
-0x16 | U8   | 0x0C
-0x17 | U8   | 0x04
+0x16 | U8   | 0x0C          0000 1100b
+0x17 | U8   | 0x04          0000 0100b
 0x18 | U16  | 0xFFFD        Login
 0x2A | U32  | 0x07 | 0x0A   Usergroup 0x07 = user / 0xA installer
 0x2E | U32  | 0x384         ?? Timeout
@@ -110,7 +115,7 @@ addr | type | explanation
 0x3A | U8*12| password characters + 0x88 User / 0xBB Installer
 
 
-### Request logout
+## logout request
 
 addr | type | explanation
 -----------------------------------
@@ -120,9 +125,9 @@ addr | type | explanation
 0x2A | U32  | 0xFFFF FFFF
 
 
-### Other Requests
+## command request
 
-Other commands seem have same size ( 0x16 - 0x25 )
+Normal commands seem have same size ( position 0x16 - 0x24 )
 
 addr | type| explanation
 -----------------------------------
@@ -133,12 +138,65 @@ addr | type| explanation
      |     |            ---- X--0b  8 -> response 9 as if adding one to the request
 0x17 | U8  | ??  send:       seems not to matter except for login
      |     |     response:   usually 02
-0x18 | U16 | Requests
+0x18 | U16 | Comand Request
+0x1A | U32 | Range Start
+0x20 | U32 | Range End
+
+
+# Responses from inverter
+
+I've not seen any response from a logout.
+
+addr | type| explanation
+-----------------------------------
+0x16 | U8  | ?? flags maybe usually 0x01
+     |     |    flags   0000 0000b
+     |     |            ---- ---Xb  0 = request
+     |     |                        1 = answer
+     |     |            ---- X--0b  8 -> response 9 as if adding one to the request
+0x17 | U8  | ?? usually 02
+0x18 | U16 | Command used
 0x1A | U32 | option 1  / Range Start
 0x20 | U32 | option 2  / Range End
+0x24 - End of packet | Array of values 
 
 
-### Responses
+## Array of values format
+
+The response data is an array of values of different length just concatinated, starting at offset zero here for easier translation to code.
+
+addr | type| explanation
+-----------------------------------
+0x00 | U8   |   number
+0x01 | U16  |   kind (a number in the range specified by the request)
+0x03 | U8   |   data format
+0x04 | U32  |   unix timestamp
 
 
+## Data format 0x00 unsigned number
+
+Length 16 or 24 bytes. Can either contain one value or multiple values.
+
+0x08 | U32  |   value1, UInt32Max == NaN
+0x0C | U32  |   value2, UInt32Max == NaN
+optional values3 and value4
+0x10 | U32  |   value3, UInt32Max == NaN
+0x14 | U32  |   value4, UInt32Max == NaN
+0x18 | U32  |   0x0000 0001 marker for 4 values
+
+
+## Data format 0x40 signed number
+
+Same format as for unsigned except that values are S32 and test for NaN is Int32Min
+
+
+## Data format 0x10 string
+
+Length 24 bytes.
+
+0x08....0x1C | U8  | String zero terminated
+
+## Data format 0x08 version
+
+Length 24 bytes. Contains the version requested kind.
 
