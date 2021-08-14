@@ -165,17 +165,23 @@ addr | type| explanation
 
 The response data is an array of values of different length just concatinated, starting at offset zero here for easier translation to code.
 
+## Value header
+
 addr | type| explanation
 -----------------------------------
 0x00 | U8   |   number
 0x01 | U16  |   kind (a number in the range specified by the request)
-0x03 | U8   |   data format
+0x03 | U8   |   data format     0x00 usigned number(s)
+     |      |                   0x40 signed number(s)
+     |      |                   0x10 zero terminated string
+     |      |                   0x08 version number
+     |      |                   one caveat it seems that 0x8234 kind contains version numbers
 0x04 | U32  |   unix timestamp
 
 
-## Data format 0x00 unsigned number
+## Value format 0x00 unsigned number
 
-Length 16 or 24 bytes. Can either contain one value or multiple values.
+Length 0x10 (16d) or 0x20 (24d) bytes. Can either contain one value or multiple values.
 
 0x08 | U32  |   value1, UInt32Max == NaN
 0x0C | U32  |   value2, UInt32Max == NaN
@@ -185,18 +191,18 @@ optional values3 and value4
 0x18 | U32  |   0x0000 0001 marker for 4 values
 
 
-## Data format 0x40 signed number
+## Value format 0x40 signed number
 
 Same format as for unsigned except that values are S32 and test for NaN is Int32Min
 
 
-## Data format 0x10 string
+## Value format 0x10 string
 
-Length 24 bytes.
+Length 0x24 (40d) bytes.
 
 0x08....0x1C | U8  | String zero terminated
 
-## Data format 0x08 version
+## Value format 0x08 version
 
-Length 24 bytes. Contains the version requested kind.
-
+Length 0x24 (40d) bytes. Contains the version for requested kind.
+Contains key value pairs of version data appended by 0xffff fffe.
