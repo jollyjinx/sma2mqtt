@@ -213,11 +213,29 @@ Same format as for unsigned except that values are S32 and test for NaN is Int32
 
 Length 0x24 (40d) bytes.
 
-    addr | type| explanation
+    addr         | type| explanation
     -----------------------------------
     0x08....0x1C | U8  | String zero terminated
 
-## Value format 0x08 version
+## Value format 0x08 tuple/version
 
-Length 0x24 (40d) bytes. Contains the version for requested kind.
-Contains key value pairs of version data appended by 0xffff fffe.
+Length 0x24 (40d) bytes. Contains tuples for requested kind.
+Contains tuples (key,value) value pairs of version data appended by 0xffff fffe.
+
+    addr         | type| explanation
+    -----------------------------------
+    0x08....0x1C | U16 | A: value  
+                 | U16 | B: is valid
+                 |     |  
+                 |     | A is valid if 0x0100 bit is set in B
+                 |     | AB = 0x0FF FFFE End of values 
+                 |     |  
+    Example: 0x1234 0100    1234 set as 0x1000
+             0x5678 0000    5678 not set
+             0x8001 0100    8001 set
+             0x00FF FFF     end of values
+        
+    Result: value is: 1234.8001 
+    
+
+

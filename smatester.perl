@@ -310,7 +310,12 @@ sub printSMANetPacket
             next FOOTERPARSING;
         }
 
-        printf "%s%s Code:0x%04x-0x%04x No:0x%02x Type:0x%02x %s %27s ",' ' x 7,$source,$command,$code,$number,$type,$timestring,code2Name($code);
+        my  $typeinformation = code2Typeinformation($code);
+        my  $name = $$typeinformation{name};
+
+            $name .= '.'.$number if $number > 0 && $number <7;
+            $name .= ' ('.$$typeinformation{unit}.')' if $$typeinformation{unit};
+        printf "%s%s Code:0x%04x-0x%04x No:0x%02x Type:0x%02x %s %27s ",' ' x 7,$source,$command,$code,$number,$type,$timestring,$name;
 
         $type = 0x08 if $code == 0x8234;
 
@@ -361,19 +366,21 @@ sub printSMANetPacket
         elsif( $type == 0x08)      # dotted version
         {
             $typelength = 40;
-            my $position = 10;
+            my $position = 8;
             my @values = ();
 
             while( $position < 38)
             {
-                my $value = unpack('C',substr($footer,$position+1,1));
-                my $end   = unpack('v',substr($footer,$position+2,2));
+                my $value = unpack('V',substr($footer,$position,4));
+                last if $value == 0x00fffffe;
 
-                push(@values, sprintf("%0d",$value) );
+                my $value1   = unpack('v',substr($footer,$position,2));
+                my $value2   = unpack('v',substr($footer,$position+2,2));
+
+                push(@values, sprintf("%04d",$value1) ) if $value2 & 0x100  ;
 
                 $position += 4;
 
-                last if $end == 0xfffe;
 
             }
 
@@ -407,7 +414,7 @@ sub encodePassword
         my $character = ord(substr($password,$index,1));
         my $calculate = ($character + $usertype);
         $encoded .= unpack('H*',chr($calculate));
-#        printf "%s %d 0x%x %d 0x%x 0x%1X %s\n",substr($password,$index,1),$character,$character,$calculate,$calculate,$calculate,$encoded;
+#        printf "%s %d 0x%x %d 0x%x 0x%1X %s\n",substr($password,$index,1},$character,$character,$calculate,$calculate,$calculate,$encoded;
     }
 #     print "encoded:".$encoded."\n";
     return $encoded;
@@ -432,82 +439,77 @@ sub dumpFile
     close(FILE);
 }
 
-sub code2Name
+sub code2Typeinformation
 {
-    my($code) = @_;
+    my($number) = @_;
 
- my %codes = (
+ my $typeInformation = {
 
- 0x4922 => 'battery.cells.maxtemperature (ºdC)',
- 0x4923 => 'battery.cells.mintemperature (ºdC)',
- 0x4933 => 'battery.cells.setcharging.voltage (cV)',
- 0x495D => 'battery.system.current (mA)',
- 0x295A => 'battery.system.soc (%)',
- 0x495B => 'battery.system.temperature (dºC)',
- 0x495C => 'battery.system.voltage (cV)',
+ 0x4922 => { name => 'battery.cells.maxtemperature', unit => 'ºC', factor => 0.1 },
+ 0x4923 => { name => 'battery.cells.mintemperature', unit => 'ºC', factor => 0.1 },
+ 0x4933 => { name => 'battery.cells.setcharging.voltage', unit => 'V', factor => 0.01 },
+ 0x495D => { name => 'battery.system.current', unit => 'A', factor => 0.001 },
+ 0x295A => { name => 'battery.system.soc', unit => '%' },
+ 0x495B => { name => 'battery.system.temperature', unit => 'ºC' },
+ 0x495C => { name => 'battery.system.voltage', unit => 'V', factor => 0.01 },
+ 0x2622 => { name => 'counter.day.yield', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
+ 0x462F => { name => 'counter.feedintime',unit => 's'},
+ 0x462E => { name => 'counter.operatingtime',unit => 's'},
+ 0x263F => { name => 'counter.total.feedin', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
+ 0x2601 => { name => 'counter.total.yield', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
+ 0x4521 => { name => 'dc.amperage', unit => 'A', factor => 0.001 },
+ 0x251E => { name => 'dc.power', unit => 'W'},
+ 0x451F => { name => 'dc.voltage', unit => 'V', factor => 0.01 },
+ 0x4164 => { name => 'grid.contactstatus'},
+ 0x464B => { name => 'grid.powerfactor.phaseA', unit => '%'},
+ 0x464C => { name => 'grid.powerfactor.phaseB', unit => '%'},
+ 0x464D => { name => 'grid.powerfactor.phaseC', unit => '%'},
+ 0x4653 => { name => 'grid.current.phaseA', unit => 'A', factor => 0.001 },
+ 0x4654 => { name => 'grid.current.phaseB', unit => 'A', factor => 0.001 },
+ 0x4655 => { name => 'grid.current.phaseC', unit => 'A', factor => 0.001 },
+ 0x4166 => { name => 'grid.feedinwaittime', unit => 's'},
+ 0x4657 => { name => 'grid.frequency', unit => 'Hz', factor => 0.001 },
+ 0x4640 => { name => 'grid.power.phaseA', unit => 'W'},
+ 0x4641 => { name => 'grid.power.phaseB', unit => 'W'},
+ 0x4642 => { name => 'grid.power.phaseC', unit => 'W'},
+ 0x4636 => { name => 'grid.total.feedin', unit => 'W'},
+ 0x4637 => { name => 'grid.total.usage', unit => 'W'},
+ 0x4648 => { name => 'grid.voltage.phaseA', unit => 'V', factor => 0.01 },
+ 0x4649 => { name => 'grid.voltage.phaseB', unit => 'V', factor => 0.01 },
+ 0x464A => { name => 'grid.voltage.phaseC', unit => 'V', factor => 0.01 },
+ 0x821F => { name => 'system.mainmodel'},
+ 0x821E => { name => 'system.name'},
+ 0x411E => { name => 'system.nominalpowerstatus'},
+ 0x4120 => { name => 'system.powerfault'},
+ 0x8234 => { name => 'system.softwareversion'},
+ 0x2148 => { name => 'system.status'},
+ 0x8220 => { name => 'system.type'},
+ 0x411F => { name => 'system.warning'},
+ 0x4924 => { name => 'type.unknown.maybe.battery.cells'},
+ 0x491E => { name => 'type.unknown.maybe.battery.counter.charges'},
+ 0x4926 => { name => 'type.unknown.maybe.battery.total.charge', unit => 'Ah'},
+ 0x4927 => { name => 'type.unknown.maybe.battery.total.discharge', unit => 'Ah'},
+ 0x4627 => { name => 'type.unknown.maybe.counter.day,feedin', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
+ 0x4628 => { name => 'type.unknown.maybe.counter.day.usage', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
+ 0x46AA => { name => 'type.unknown.maybe.counter.ownconsumption', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
+ 0x4626 => { name => 'type.unknown.maybe.counter.total.consumption', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
+ 0x4624 => { name => 'type.unknown.maybe.counter.total.feedin', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
+ 0x4623 => { name => 'type.unknown.maybe.counter.total.generation', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
+ 0x4625 => { name => 'type.unknown.maybe.counter.total.usage', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
+ 0x4650 => { name => 'type.unknown.maybe.grid.current.phaseA', unit => 'A', factor => 0.001 },
+ 0x4651 => { name => 'type.unknown.maybe.grid.current.phaseB', unit => 'A', factor => 0.001 },
+ 0x4652 => { name => 'type.unknown.maybe.grid.current.phaseC', unit => 'A', factor => 0.001 },
+ 0x4631 => { name => 'type.unknown.maybe.grid.failure'},
+ 0x463A => { name => 'type.unknown.maybe.grid.power.feedin', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
+ 0x463B => { name => 'type.unknown.maybe.grid.power.usage', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
+ 0x4639 => { name => 'type.unknown.maybe.grid.total.consumption', unit => 'W'},
+ 0x4635 => { name => 'type.unknown.maybe.grid.total.generation', unit => 'W'},
+ 0x46AB => { name => 'type.unknown.maybe.power.ownconsumption'},
+ 0x832A => { name => 'type.unknown.maybe.system.maximumpoweroutput'},
+ 0x2377 => { name => 'type.unknown.maybe.system.temperature'},
 
- 0x2622 => 'counter.day.yield (Wh)',
- 0x462F => 'counter.feedintime',
- 0x462E => 'counter.operatingtime',
- 0x263F => 'counter.total.feedin',
- 0x2601 => 'counter.total.yield (Wh)',
+ };
+    my $code = $$typeInformation{$number} || { name => 'type.unkown.'.sprintf("0x%04x",$number) };
 
- 0x4521 => 'dc.amperage (mA)',
- 0x251E => 'dc.power (W)',
- 0x451F => 'dc.voltage (cV)',
-
- 0x4164 => 'grid.contactstatus',
- 0x464B => 'grid.powerfactor.phaseA (%)',
- 0x464C => 'grid.powerfactor.phaseB (%)',
- 0x464D => 'grid.powerfactor.phaseC (%)',
- 0x4653 => 'grid.current.phaseA (mA)',
- 0x4654 => 'grid.current.phaseB (mA)',
- 0x4655 => 'grid.current.phaseC (mA)',
- 0x4166 => 'grid.feedinwaittime',
- 0x4657 => 'grid.frequency (cHz)',
- 0x4640 => 'grid.power.phaseA (W)',
- 0x4641 => 'grid.power.phaseB (W)',
- 0x4642 => 'grid.power.phaseC (W)',
- 0x4636 => 'grid.total.feedin (W)',
- 0x4637 => 'grid.total.usage (W)',
- 0x4648 => 'grid.voltage.phaseA (cV)',
- 0x4649 => 'grid.voltage.phaseB (cV)',
- 0x464A => 'grid.voltage.phaseC (cV)',
-
- 0x821F => 'system.mainmodel',
- 0x821E => 'system.name',
- 0x411E => 'system.nominalpowerstatus',
- 0x4120 => 'system.powerfault',
- 0x8234 => 'system.softwareversion',
- 0x2148 => 'system.status',
- 0x8220 => 'system.type',
- 0x411F => 'system.warning',
-
-
- 0x4924 => 'type.unknown.maybe.battery.cells',
- 0x491E => 'type.unknown.maybe.battery.counter.charges',
- 0x4926 => 'type.unknown.maybe.battery.total.charge (Ah)',
- 0x4927 => 'type.unknown.maybe.battery.total.discharge (Ah)',
- 0x4627 => 'type.unknown.maybe.counter.day,feedin',
- 0x4628 => 'type.unknown.maybe.counter.day.usage',
- 0x46AA => 'type.unknown.maybe.counter.ownconsumption (Wh)',
- 0x4626 => 'type.unknown.maybe.counter.total.consumption (Wh)',
- 0x4624 => 'type.unknown.maybe.counter.total.feedin (Wh)',
- 0x4623 => 'type.unknown.maybe.counter.total.generation (Wh)',
- 0x4625 => 'type.unknown.maybe.counter.total.usage (Wh)',
- 0x4650 => 'type.unknown.maybe.grid.current.phaseA (mA)',
- 0x4651 => 'type.unknown.maybe.grid.current.phaseB (mA)',
- 0x4652 => 'type.unknown.maybe.grid.current.phaseC (mA)',
- 0x4631 => 'type.unknown.maybe.grid.failure',
- 0x463A => 'type.unknown.maybe.grid.power.feedin (Wh)',
- 0x463B => 'type.unknown.maybe.grid.power.usage (Wh)',
- 0x4639 => 'type.unknown.maybe.grid.total.consumption (W)',
- 0x4635 => 'type.unknown.maybe.grid.total.generation (W)',
- 0x46AB => 'type.unknown.maybe.power.ownconsumption',
- 0x832A => 'type.unknown.maybe.system.maximumpoweroutput',
- 0x2377 => 'type.unknown.maybe.system.temperature',
- );
-    my $name = ''.$codes{$code};
-       $name =~ s/\s*$//;
-    return $name || 'type.unkown.'.sprintf("0x%04x",$code);
+    return $code;
 }
