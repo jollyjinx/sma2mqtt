@@ -187,7 +187,11 @@ The response data is an array of values of different length just concatinated, s
          |      |                   0x10 zero terminated string
          |      |                   0x08 version number
          |      |                   one caveat it seems that 0x8234 kind contains version numbers
-    0x04 | U32  |   unix timestamp
+    0x04 | U32  |   unix timestamp  usually the timestamp of the request (when the value was calculated)
+         |      |                   for aggregated values it's the time of aggregation
+         |      |                   aggregation happens usually every 5 minutes
+         |      |                   sometimes it contains wrong dates. Maybe a bug in the inverter
+         |      |                   when it updates the time and reads the time at the same time ?
 
 
 ## Value format 0x00 unsigned number / serial number
