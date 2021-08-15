@@ -8,6 +8,7 @@ use strict;
 use utf8;
 use IO::Socket::INET;
 use POSIX;
+use Data::Dumper;
 
 use constant USER_TYPE_ADMIN        => 0xBB;
 use constant USER_TYPE_USER         => 0x88;
@@ -51,24 +52,24 @@ my @commands = (
 #    "0000 0053 001E 2500 FF1E 2500 ",   # SpotDCPower      // SPOT_PDC1, SPOT_PDC2
 
 
-#    "0000 0051 001e 4100 ff20 4100 ",   # MaxACPower:     // INV_PACMAX1, INV_PACMAX2, INV_PACMAX3
-#    "0000 0051 001e 4900 ff5d 4900 ",   # BatteryInfo:
-#    "0000 0051 002a 8300 ff2a 8300 ",   # MaxACPower2:   // INV_PACMAX1_2
-#    "0000 0051 0036 4600 ff37 4600 ",   # MeteringGridMsTotW:
-#    "0000 0051 003f 2600 ff3f 2600 ",   # SpotACTotalPower  // SPOT_PACTOT
-#    "0000 0051 0040 4600 FF42 4600 ",   # SpotACPower:    // SPOT_PAC1, SPOT_PAC2, SPOT_PAC3
-#    "0000 0051 0048 4600 FF55 4600 ",   # SpotACVoltage: // SPOT_UAC1, SPOT_UAC2, SPOT_UAC3, SPOT_IAC1, SPOT_IAC2, SPOT_IAC3
-#    "0000 0051 0057 4600 FF57 4600 ",   # SpotGridFrequency // SPOT_FREQ
-#    "0000 0051 005a 2900 ff5a 2900 ",   # BatteryChargeStatus:
-#    "0000 8051 0048 2100 ff48 2100 ",   # DeviceStatus:   // INV_STATUS
-#    "0000 8051 0064 4100 ff64 4100 ",   # GridRelayStatus:   // INV_GRIDRELAY
-#    "0000 0052 0077 2300 ff77 2300 ",   # InverterTemperature:
-#    "0000 8053 001E 2500 FF1E 2500 ",   # SpotDCPower      // SPOT_PDC1, SPOT_PDC2
-#    "0000 8053 001F 4500 FF21 4500 ",   # SpotDCVoltage   // SPOT_UDC1, SPOT_UDC2, SPOT_IDC1, SPOT_IDC2
-#    "0000 0054 0001 2600 FF22 2600 ",   # EnergyProduction // SPOT_ETODAY, SPOT_ETOTAL
-#    "0000 0054 002e 4600 ff2F 4600 ",   # OperationTime:    // SPOT_OPERTM, SPOT_FEEDTM
-#    "0000 0058 001e 8200 ff20 8200 ",   # TypeLabel:    // INV_NAME, INV_TYPE, INV_CLASS
-#    "0000 0058 0034 8200 ff34 8200 ",   # SoftwareVersion:  // INV_SWVERSION
+    "0000 0051 001e 4100 ff20 4100 ",   # MaxACPower:     // INV_PACMAX1, INV_PACMAX2, INV_PACMAX3
+    "0000 0051 001e 4900 ff5d 4900 ",   # BatteryInfo:
+    "0000 0051 002a 8300 ff2a 8300 ",   # MaxACPower2:   // INV_PACMAX1_2
+    "0000 0051 0036 4600 ff37 4600 ",   # MeteringGridMsTotW:
+    "0000 0051 003f 2600 ff3f 2600 ",   # SpotACTotalPower  // SPOT_PACTOT
+    "0000 0051 0040 4600 FF42 4600 ",   # SpotACPower:    // SPOT_PAC1, SPOT_PAC2, SPOT_PAC3
+    "0000 0051 0048 4600 FF55 4600 ",   # SpotACVoltage: // SPOT_UAC1, SPOT_UAC2, SPOT_UAC3, SPOT_IAC1, SPOT_IAC2, SPOT_IAC3
+    "0000 0051 0057 4600 FF57 4600 ",   # SpotGridFrequency // SPOT_FREQ
+    "0000 0051 005a 2900 ff5a 2900 ",   # BatteryChargeStatus:
+    "0000 8051 0048 2100 ff48 2100 ",   # DeviceStatus:   // INV_STATUS
+    "0000 8051 0064 4100 ff64 4100 ",   # GridRelayStatus:   // INV_GRIDRELAY
+    "0000 0052 0077 2300 ff77 2300 ",   # InverterTemperature:
+    "0000 8053 001E 2500 FF1E 2500 ",   # SpotDCPower      // SPOT_PDC1, SPOT_PDC2
+    "0000 8053 001F 4500 FF21 4500 ",   # SpotDCVoltage   // SPOT_UDC1, SPOT_UDC2, SPOT_IDC1, SPOT_IDC2
+    "0000 0054 0001 2600 FF22 2600 ",   # EnergyProduction // SPOT_ETODAY, SPOT_ETOTAL
+    "0000 0054 002e 4600 ff2F 4600 ",   # OperationTime:    // SPOT_OPERTM, SPOT_FEEDTM
+    "0000 0058 001e 8200 ff20 8200 ",   # TypeLabel:    // INV_NAME, INV_TYPE, INV_CLASS
+    "0000 0058 0034 8200 ff34 8200 ",   # SoftwareVersion:  // INV_SWVERSION
 
 
 #    "0000 0264 008d 6100 ff8d 6100 ",   # sbftest: logout
@@ -80,9 +81,9 @@ my @commands = (
 
 
 my $loggedin = 0;
-my $loop     = 1;
+my $loop     = 0;
 
-while( $loop )
+do
 {
     my @work = @commands;
 
@@ -123,6 +124,8 @@ while( $loop )
 
     jnxsleep(5) if $loop;
 }
+while( $loop );
+
 exit;
 
 
@@ -301,11 +304,12 @@ sub printSMANetPacket
         my $type = unpack('C',substr($footer,3,1));
         my $time  = unpack('V',substr($footer,4,4));
         my $timestring = POSIX::strftime('%Y-%m-%dT%H:%M:%S',localtime($time));
-        my $typelength = 28;
+        my $typelength = 40;
 
         if( $time ne 0 && '2021' ne substr($timestring,0,4) )
         {
-            printf "Weird time %s raw: %s\n",$timestring,prettyhexdata($footer);
+            printf "Weird time %s raw: %s\n",$timestring,prettyhexdata( substr($footer,0,60) ).'...';
+            exit;
             $footer = substr($footer,1);
             next FOOTERPARSING;
         }
@@ -315,33 +319,57 @@ sub printSMANetPacket
 
             $name .= '.'.$number if $number > 0 && $number <7;
             $name .= ' ('.$$typeinformation{unit}.')' if $$typeinformation{unit};
-        printf "%s%s Code:0x%04x-0x%04x No:0x%02x Type:0x%02x %s %27s ",' ' x 7,$source,$command,$code,$number,$type,$timestring,$name;
 
-        $type = 0x08 if $code == 0x8234;
+#        print "\nFooter DATA:".prettyhexdata(substr($footer,0,40))."\n";
+
+        printf "%s%s Code:0x%04x-0x%04x No:0x%02x Type:0x%02x %s %27s ",' ' x 7,$source,$command,$code,$number,$type,$timestring,$name;
 
         ##### TYPE decoding
 
-        if( $type == 0x00 || $type == 0x40 )        # integer
+        if( $type == 0x00 || $type == 0x40 )    # integer
         {
-            my $value1  = unpack('V',substr($footer,8,4));
-            my $value2  = unpack('V',substr($footer,12,4));
-            my $value3  = unpack('V',substr($footer,16,4));
-            my $value4  = unpack('V',substr($footer,20,4));
-            my $length28 = unpack('V',substr($footer,24,4));
+            my  @values = map { unpack('V',substr($footer,8+(4*$_),4)) } (0..8);
+            my $shortmarker = @values[1];
+            my $longmarker = @values[4];
 
-            my  @values = ($value1,$value2,$value3,$value4);
-                @values = ($value1) if '' eq join('',map { $value1 == $_ ? '' : 'ne' } @values);  # print one value if all are same
-
-            unless( ($value1 == 0) && ($value2 == 0) && ($value3 == 0) && ($value4 == 0) && ($length28 == 0) )
+            if(         @values[0] == 0x0       # version number scheme
+                    &&  @values[1] == 0x0
+                    &&  @values[2] == 0xFFFFFFFE
+                    &&  @values[3] == 0xFFFFFFFE
+                    &&  @values[4] == @values[5]
+                    &&  @values[6] == 0x0
+                    &&  @values[7] == 0x0
+                )
             {
-                $typelength = 16 if $value2 == 0 && $length28 != 1;
-                $typelength = 16 if $value4 == $time;
+                $typelength = 40;
+                @values = unpack('C*',pack('N',@values[4]));
+            }
+            elsif(      $longmarker == 1
+                    ||  ($longmarker == 0 && @values[2] == 0 && @values[3] == 0)
+                )
+            {
+                $typelength = 28;
+                splice(@values,4);
+                splice(@values,1)  if '' eq join('',map { @values[$_-1] == @values[0] ? '' : 'somevalue' } (1..@values) );  # print one value if all are same
+            }
+            elsif(      $shortmarker == 0
+#                    &&  @values[0] == @values[1]
+#                    &&  @values[0] == @values[2]
+#                    &&  @values[0] == @values[3]
+                )
+            {
+                splice(@values,1);
+                $typelength = 16;
+            }
+            else
+            {
+               print "\nFooter DATA:".prettyhexdata(substr($footer,0,40))."\n";
+               print "Weird";
+                exit;
             }
 
-            splice(@values,1) if $typelength == 16;
-
-
             my @results;
+
             for my $value (@values)
             {
                 if( $type == 0x00 )
@@ -358,18 +386,16 @@ sub printSMANetPacket
         }
         elsif( $type == 0x10 )      # string
         {
-            $typelength = 40;
             my $value = unpack('Z*',substr($footer,8,32));
 
             printf "%30s ",$value;
         }
         elsif( $type == 0x08)      # dotted version
         {
-            $typelength = 40;
             my $position = 8;
             my @values = ();
 
-            while( $position < 38)
+            while( $position < 36)
             {
                 my $valueA   = unpack('v',substr($footer,$position,2));
                 my $valueB   = unpack('v',substr($footer,$position+2,2));
@@ -379,8 +405,6 @@ sub printSMANetPacket
                 push(@values, sprintf("%04d",$valueA) ) if $valueB & 0x100  ;
 
                 $position += 4;
-
-
             }
 
             printf "%30s ",join('.',@values);

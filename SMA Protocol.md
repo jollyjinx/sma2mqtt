@@ -190,23 +190,42 @@ The response data is an array of values of different length just concatinated, s
     0x04 | U32  |   unix timestamp
 
 
-## Value format 0x00 unsigned number
+## Value format 0x00 unsigned number / serial number
 
-Length 0x10 (16d) or 0x20 (24d) bytes. Can either contain one value or multiple values.
+### Normal number value format
 
      addr | type| explanation
     -----------------------------------
     0x08 | U32  |   value1, UInt32Max == NaN
-    0x0C | U32  |   value2, UInt32Max == NaN
-    optional values3 and value4
+    0x0C | U32  |   value2, UInt32Max == NaN, shortmarker
     0x10 | U32  |   value3, UInt32Max == NaN
     0x14 | U32  |   value4, UInt32Max == NaN
-    0x18 | U32  |   0x0000 0001 marker for 4 values
+    0x18 | U32  |   value5, long marker  0x0000 0001 for 1 value only. 
 
+    packet is long if longmarker == 1 or all content is zero
+    packet is short if its not long and shortmarker = 0
+
+### Serial Number
+
+    addr | type| explanation
+    -----------------------------------
+    0x08 | U32  |   0
+    0x0C | U32  |   0
+    0x10 | U32  |   0xFFFF FFFE
+    0x14 | U32  |   0xFFFF FFFE
+    0x10 | U8   |   Serial Number Type ( 4 = release ) ( none/experimental/alpha/beta/release/special)
+    0x11 | U8   |   Serial Number Build Number
+    0x12 | U8   |   Serial Number Minor Version
+    0x13 | U8   |   Serial Number Major Version
+    0x14 | U8*4 |   Serialnumber again 
+    0x18 | U32  |   0
+    0x1C | U32  |   0
+
+    
 
 ## Value format 0x40 signed number
 
-Same format as for unsigned except that values are S32 and test for NaN is Int32Min
+Same format as for unsigned except that values are S32 and test for NaN is Int32Min. 
 
 
 ## Value format 0x10 string
@@ -217,7 +236,7 @@ Length 0x24 (40d) bytes.
     -----------------------------------
     0x08....0x1C | U8  | String zero terminated
 
-## Value format 0x08 tuple/version
+## Value format 0x08 tuple
 
 Length 0x24 (40d) bytes. Contains tuples for requested kind.
 Contains tuples (key,value) value pairs of version data appended by 0xffff fffe.
@@ -229,7 +248,7 @@ Contains tuples (key,value) value pairs of version data appended by 0xffff fffe.
                  |     |    ---0 ---- invalid
                  |     |    ---1 ---- valid
                  |     | A is valid if bit5 is set in B
-                 |     | End of values if A == 0FFF && B == FFFE
+                 |     | End of values if A == 00FF && B == FFFE
                  |     |  
                 
                 A    B    
