@@ -36,38 +36,41 @@ my $sessionid   = sprintf '1234 %04x 4321',0; # int(rand(0x10000));
 my $inverterid  = 'ffff ffff ffff';
 
 my @commands = (
-#    "0000 0051 001e 4100 ff20 4100 ",   # MaxACPower:     // INV_PACMAX1, INV_PACMAX2, INV_PACMAX3
-
-#    "0000 0051 0040 4600 FF42 4600 ",   # SpotACPower:    // SPOT_PAC1, SPOT_PAC2, SPOT_PAC3
-
-#    "0000 8053 001E 2500 FF1E 2500 ",   # SpotDCPower      // SPOT_PDC1, SPOT_PDC2
 
 #    "0000 0052 0048 4600 ffff 4600 ",   # multivalues if first
-#    "0000 0051 0048 4600 ffff 4600 ",   # values over time
+#    "0000 0051 0048 4600 ffff 4600 ",   # normal values
+
+
+#    "0000 0051 001e 4100 ff20 4100 ",   # MaxACPower:     // INV_PACMAX1, INV_PACMAX2, INV_PACMAX3
+#    "0000 0051 0040 4600 FF42 4600 ",   # SpotACPower:    // SPOT_PAC1, SPOT_PAC2, SPOT_PAC3
+#    "0000 8053 001E 2500 FF1E 2500 ",   # SpotDCPower      // SPOT_PDC1, SPOT_PDC2
+
 
  #   "0000 0053 001E 2500 FF1E 2500 ",   # SpotDCPower      // SPOT_PDC1, SPOT_PDC2
 #    "0000 8053 001E 2500 FF1E 2500 ",   # SpotDCPower      // SPOT_PDC1, SPOT_PDC2
 #    "0000 0053 001E 2500 FF1E 2500 ",   # SpotDCPower      // SPOT_PDC1, SPOT_PDC2
 
 
-    "0000 0051 001e 4100 ff20 4100 ",   # MaxACPower:     // INV_PACMAX1, INV_PACMAX2, INV_PACMAX3
-    "0000 0051 001e 4900 ff5d 4900 ",   # BatteryInfo:
-    "0000 0051 002a 8300 ff2a 8300 ",   # MaxACPower2:   // INV_PACMAX1_2
-    "0000 0051 0036 4600 ff37 4600 ",   # MeteringGridMsTotW:
-    "0000 0051 003f 2600 ff3f 2600 ",   # SpotACTotalPower  // SPOT_PACTOT
-    "0000 0051 0040 4600 FF42 4600 ",   # SpotACPower:    // SPOT_PAC1, SPOT_PAC2, SPOT_PAC3
-    "0000 0051 0048 4600 FF55 4600 ",   # SpotACVoltage: // SPOT_UAC1, SPOT_UAC2, SPOT_UAC3, SPOT_IAC1, SPOT_IAC2, SPOT_IAC3
-    "0000 0051 0057 4600 FF57 4600 ",   # SpotGridFrequency // SPOT_FREQ
-    "0000 0051 005a 2900 ff5a 2900 ",   # BatteryChargeStatus:
-    "0000 8051 0048 2100 ff48 2100 ",   # DeviceStatus:   // INV_STATUS
-    "0000 8051 0064 4100 ff64 4100 ",   # GridRelayStatus:   // INV_GRIDRELAY
-    "0000 0052 0077 2300 ff77 2300 ",   # InverterTemperature:
-    "0000 8053 001E 2500 FF1E 2500 ",   # SpotDCPower      // SPOT_PDC1, SPOT_PDC2
-    "0000 8053 001F 4500 FF21 4500 ",   # SpotDCVoltage   // SPOT_UDC1, SPOT_UDC2, SPOT_IDC1, SPOT_IDC2
-    "0000 0054 0001 2600 FF22 2600 ",   # EnergyProduction // SPOT_ETODAY, SPOT_ETOTAL
-    "0000 0054 002e 4600 ff2F 4600 ",   # OperationTime:    // SPOT_OPERTM, SPOT_FEEDTM
-    "0000 0058 001e 8200 ff20 8200 ",   # TypeLabel:    // INV_NAME, INV_TYPE, INV_CLASS
-    "0000 0058 0034 8200 ff34 8200 ",   # SoftwareVersion:  // INV_SWVERSION
+#    "0000 0051 001e 4100 ff20 4100 ",   # MaxACPower:     // INV_PACMAX1, INV_PACMAX2, INV_PACMAX3
+#    "0000 0051 001e 4900 ff5d 4900 ",   # BatteryInfo:
+#    "0000 0051 002a 8300 ff2a 8300 ",   # MaxACPower2:   // INV_PACMAX1_2
+#    "0000 0051 0036 4600 ff37 4600 ",   # MeteringGridMsTotW:
+#    "0000 0051 003f 2600 ff3f 2600 ",   # SpotACTotalPower  // SPOT_PACTOT
+#    "0000 0051 0040 4600 FF42 4600 ",   # SpotACPower:    // SPOT_PAC1, SPOT_PAC2, SPOT_PAC3
+#    "0000 0051 0048 4600 FF55 4600 ",   # SpotACVoltage: // SPOT_UAC1, SPOT_UAC2, SPOT_UAC3, SPOT_IAC1, SPOT_IAC2, SPOT_IAC3
+#    "0000 0051 0057 4600 FF57 4600 ",   # SpotGridFrequency // SPOT_FREQ
+#    "0000 0051 005a 2900 ff5a 2900 ",   # BatteryChargeStatus:
+#    "0000 8051 0048 2100 ff48 2100 ",   # DeviceStatus:   // INV_STATUS
+#    "0000 8051 0064 4100 ff64 4100 ",   # GridRelayStatus:   // INV_GRIDRELAY
+#    "0000 0052 0077 2300 ff77 2300 ",   # InverterTemperature:
+#    "0000 8053 001E 2500 FF1E 2500 ",   # SpotDCPower      // SPOT_PDC1, SPOT_PDC2
+#    "0000 8053 001F 4500 FF21 4500 ",   # SpotDCVoltage   // SPOT_UDC1, SPOT_UDC2, SPOT_IDC1, SPOT_IDC2
+#    "0000 0054 0001 2600 FF22 2600 ",   # EnergyProduction // SPOT_ETODAY, SPOT_ETOTAL
+#    "0000 0054 002e 4600 ff2F 4600 ",   # OperationTime:    // SPOT_OPERTM, SPOT_FEEDTM
+#    "0000 0058 001e 8200 ff20 8200 ",   # TypeLabel:    // INV_NAME, INV_TYPE, INV_CLASS
+#    "0000 0058 0034 8200 ff34 8200 ",   # SoftwareVersion:  // INV_SWVERSION
+
+
 #    "0000 0264 008d 6100 ff8d 6100 ",   # sbftest: logout
 
 
@@ -77,8 +80,9 @@ my @commands = (
 
 
 my $loggedin = 0;
+my $loop     = 1;
 
-#while(1)
+while( $loop )
 {
     my @work = @commands;
 
@@ -116,7 +120,8 @@ my $loggedin = 0;
 
         jnxsleep(.5);
     }
-    jnxsleep(5);
+
+    jnxsleep(5) if $loop;
 }
 exit;
 
@@ -432,70 +437,77 @@ sub code2Name
     my($code) = @_;
 
  my %codes = (
- 0x2148 => 'system.status',
- 0x2377 => 'system.temperature',
- 0x251E => 'dc.power (W)',
- 0x2601 => 'counter.total.yield (Wh)',
+
+ 0x4922 => 'battery.cells.maxtemperature (ºdC)',
+ 0x4923 => 'battery.cells.mintemperature (ºdC)',
+ 0x4933 => 'battery.cells.setcharging.voltage (cV)',
+ 0x495D => 'battery.system.current (mA)',
+ 0x295A => 'battery.system.soc (%)',
+ 0x495B => 'battery.system.temperature (dºC)',
+ 0x495C => 'battery.system.voltage (cV)',
+
  0x2622 => 'counter.day.yield (Wh)',
- 0x263F => 'counter.total.feedin',
- 0x295A => 'bat.system.soc (%)',
- 0x411E => 'system.nominalpowerstatus',
- 0x411F => 'system.warning',
- 0x4120 => 'system.powerfault',
- 0x4164 => 'grid.contactstatus',
- 0x4166 => 'grid.feedinwaittime',
- 0x451F => 'cd.voltage (cV)',
- 0x4521 => 'cd.amperage (mA)',
- 0x4623 => 'counter.total.generation (Wh)',
- 0x4624 => 'counter.total.feedin (Wh)',
- 0x4625 => 'counter.total.usage (Wh)',
- 0x4626 => 'counter.total.consumption (Wh)',
- 0x4627 => 'counter.day,feedin',
- 0x4628 => 'counter.day.usage',
- 0x462E => 'counter.operatingtime',
  0x462F => 'counter.feedintime',
- 0x4631 => 'grid.failure',
- 0x4635 => 'grid.total.generation (W)',
- 0x4636 => 'grid.total.feedin (W)',
- 0x4637 => 'grid.total.usage (W)',
- 0x4639 => 'grid.total.consumption (W)',
- 0x463A => 'grid.power.feedin (Wh)',
- 0x463B => 'grid.power.usage (Wh)',
+ 0x462E => 'counter.operatingtime',
+ 0x263F => 'counter.total.feedin',
+ 0x2601 => 'counter.total.yield (Wh)',
+
+ 0x4521 => 'dc.amperage (mA)',
+ 0x251E => 'dc.power (W)',
+ 0x451F => 'dc.voltage (cV)',
+
+ 0x4164 => 'grid.contactstatus',
+ 0x464B => 'grid.powerfactor.phaseA (%)',
+ 0x464C => 'grid.powerfactor.phaseB (%)',
+ 0x464D => 'grid.powerfactor.phaseC (%)',
+ 0x4653 => 'grid.current.phaseA (mA)',
+ 0x4654 => 'grid.current.phaseB (mA)',
+ 0x4655 => 'grid.current.phaseC (mA)',
+ 0x4166 => 'grid.feedinwaittime',
+ 0x4657 => 'grid.frequency (cHz)',
  0x4640 => 'grid.power.phaseA (W)',
  0x4641 => 'grid.power.phaseB (W)',
  0x4642 => 'grid.power.phaseC (W)',
+ 0x4636 => 'grid.total.feedin (W)',
+ 0x4637 => 'grid.total.usage (W)',
  0x4648 => 'grid.voltage.phaseA (cV)',
  0x4649 => 'grid.voltage.phaseB (cV)',
  0x464A => 'grid.voltage.phaseC (cV)',
- 0x464B => 'grid.cosphi.phaseA (%)',
- 0x464C => 'grid.cosphi.phaseB (%)',
- 0x464D => 'grid.cosphi.phaseC (%)',
- 0x4650 => 'grid.current.phaseA (mA)',
- 0x4651 => 'grid.current.phaseB (mA)',
- 0x4652 => 'grid.current.phaseC (mA)',
- 0x4653 => 'grid.current.phaseA2 (mA)',
- 0x4654 => 'grid.current.phaseB2 (mA)',
- 0x4655 => 'grid.current.phaseC2 (mA)',
- 0x4657 => 'grid.frequency (cHz)',
- 0x46AA => 'counter.ownconsumption (Wh)',
- 0x46AB => 'power.ownconsumption',
- 0x491E => 'bat.counter.charges',
- 0x4922 => 'bat.cells.maxtemperature (ºdC) ',
- 0x4923 => 'bat.cells.mintemperature (ºdC) ',
- 0x4924 => 'bat.cells.type.unkown          ',
- 0x4933 => 'bat.cells.setcharging.voltage(cV)',
- 0x4926 => 'bat.total.charge (Ah)          ',
- 0x4927 => 'bat.total.discharge (Ah)       ',
- 0x495B => 'bat.system.temperature (ºdC)   ',
- 0x495C => 'bat.system.voltage (cV)        ',
- 0x495D => 'bat.system.current (mA)        ',
- 0x821E => 'system.name',
+
  0x821F => 'system.mainmodel',
- 0x8220 => 'system.type',
+ 0x821E => 'system.name',
+ 0x411E => 'system.nominalpowerstatus',
+ 0x4120 => 'system.powerfault',
  0x8234 => 'system.softwareversion',
- 0x832A => 'system.maximumpoweroutput',
+ 0x2148 => 'system.status',
+ 0x8220 => 'system.type',
+ 0x411F => 'system.warning',
+
+
+ 0x4924 => 'type.unknown.maybe.battery.cells',
+ 0x491E => 'type.unknown.maybe.battery.counter.charges',
+ 0x4926 => 'type.unknown.maybe.battery.total.charge (Ah)',
+ 0x4927 => 'type.unknown.maybe.battery.total.discharge (Ah)',
+ 0x4627 => 'type.unknown.maybe.counter.day,feedin',
+ 0x4628 => 'type.unknown.maybe.counter.day.usage',
+ 0x46AA => 'type.unknown.maybe.counter.ownconsumption (Wh)',
+ 0x4626 => 'type.unknown.maybe.counter.total.consumption (Wh)',
+ 0x4624 => 'type.unknown.maybe.counter.total.feedin (Wh)',
+ 0x4623 => 'type.unknown.maybe.counter.total.generation (Wh)',
+ 0x4625 => 'type.unknown.maybe.counter.total.usage (Wh)',
+ 0x4650 => 'type.unknown.maybe.grid.current.phaseA (mA)',
+ 0x4651 => 'type.unknown.maybe.grid.current.phaseB (mA)',
+ 0x4652 => 'type.unknown.maybe.grid.current.phaseC (mA)',
+ 0x4631 => 'type.unknown.maybe.grid.failure',
+ 0x463A => 'type.unknown.maybe.grid.power.feedin (Wh)',
+ 0x463B => 'type.unknown.maybe.grid.power.usage (Wh)',
+ 0x4639 => 'type.unknown.maybe.grid.total.consumption (W)',
+ 0x4635 => 'type.unknown.maybe.grid.total.generation (W)',
+ 0x46AB => 'type.unknown.maybe.power.ownconsumption',
+ 0x832A => 'type.unknown.maybe.system.maximumpoweroutput',
+ 0x2377 => 'type.unknown.maybe.system.temperature',
  );
     my $name = ''.$codes{$code};
        $name =~ s/\s*$//;
-    return $name || 'type.unkown';
+    return $name || 'type.unkown.'.sprintf("0x%04x",$code);
 }
