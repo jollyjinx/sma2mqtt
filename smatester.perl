@@ -371,13 +371,12 @@ sub printSMANetPacket
 
             while( $position < 38)
             {
-                my $value = unpack('V',substr($footer,$position,4));
-                last if $value == 0x00fffffe;
+                my $valueA   = unpack('v',substr($footer,$position,2));
+                my $valueB   = unpack('v',substr($footer,$position+2,2));
 
-                my $value1   = unpack('v',substr($footer,$position,2));
-                my $value2   = unpack('v',substr($footer,$position+2,2));
+                last if $valueB == 0xFFFE && $valueA == 0x00FF;
 
-                push(@values, sprintf("%04d",$value1) ) if $value2 & 0x100  ;
+                push(@values, sprintf("%04d",$valueA) ) if $valueB & 0x100  ;
 
                 $position += 4;
 

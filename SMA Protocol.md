@@ -225,15 +225,18 @@ Contains tuples (key,value) value pairs of version data appended by 0xffff fffe.
     addr         | type| explanation
     -----------------------------------
     0x08....0x1C | U16 | A: value  
-                 | U16 | B: is valid
+                 | U16 | B: valididation bit5
+                 |     |    ---0 ---- invalid
+                 |     |    ---1 ---- valid
+                 |     | A is valid if bit5 is set in B
+                 |     | End of values if A == 0FFF && B == FFFE
                  |     |  
-                 |     | A is valid if 0x0100 bit is set in B
-                 |     | AB = 0x0FF FFFE End of values 
-                 |     |  
-    Example: 0x1234 0100    1234 set as 0x1000
-             0x5678 0000    5678 not set
-             0x8001 0100    8001 set
-             0x00FF FFF     end of values
+                
+                A    B    
+    Example: 0x1234 0x0100    1234 set as 0x1000
+             0x5678 0x0000    5678 not set
+             0x8001 0x0100    8001 set
+             0x00FF 0xFFFE    end of values
         
     Result: value is: 1234.8001 
     
