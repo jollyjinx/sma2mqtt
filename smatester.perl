@@ -6,27 +6,105 @@
 
 use strict;
 use utf8;
+use FindBin; use lib "$FindBin::Bin/perl5/lib/perl5","$FindBin::Bin/JNX","$FindBin::Bin";
+
 use IO::Socket::INET;
+use IO::Socket::Multicast;
 use POSIX;
 use Data::Dumper;
 
 use constant USER_TYPE_ADMIN        => 0xBB;
 use constant USER_TYPE_USER         => 0x88;
-use constant MAXIMUM_PACKET_SIZE    => scalar 90000;
+use constant MAXIMUM_PACKET_SIZE    => scalar 9000;
 use constant TIMOUT_RECEIVE         => scalar 2;
 
+my $historyfile = 0;
 if( @ARGV == 1 )
 {
+    $historyfile = 1;
     dumpFile(@ARGV);
     exit;
 }
 die "Usage $0 <inputfilename> or <inverter host> <password> [outputfilename]\n" unless @ARGV >= 2;
 
 my ($hostname,$password,$filename) = @ARGV;
-my $portnumber = 9522;
 my $usertype   = USER_TYPE_USER;
 
-my  $socket = new IO::Socket::INET (PeerHost => $hostname,
+
+
+    my $broadcastpacket = "534d4100" . "0004" . "02a0" . "FFFF FFFF 0000 0020" . "0000 0000";
+       $broadcastpacket =~ s/ //g;
+    my $broadcastdata = pack "H*",$broadcastpacket;
+
+
+
+
+my $multicastgroup      = '239.12.255.254';
+my $multicastreceive    = '239.12.255.255';
+my $portnumber          = 9522;
+
+#my  $receivesocket = new IO::Socket::INET(
+##                                    LocalAddr   => '10.112.16.115',
+##                                    LocalAddr => '0.0.0.0',
+##                                    LocalAddr   => $multicastgroup,
+#                                    LocalAddr => $multicastreceive,
+#                                    LocalPort => 9522,
+#                                    Proto => 'udp',
+#                                    ReuseAddr => 1,
+#                                    Broadcast => 0,
+#                                    Timeout => 2
+#                                    )                                   || die "Can't open socket due to:$!\n";
+
+
+    my $receivesocket = IO::Socket::Multicast->new(Proto=>'udp',
+#                                    PeerHost => $multicastgroup,
+#                                    PeerPort => $portnumber,
+#                                    LocalAddr   => '10.112.16.115',
+                                    LocalAddr => '0.0.0.0',
+#                                    LocalAddr   => $multicastgroup,
+#                                    LocalAddr => $multicastreceive,
+                                    LocalPort => $portnumber,
+                                    Timeout => 2,
+                                    ReuseAddr => 1,
+#                                    Broadcast => 1,
+) || die "error creating mcast socket: $!" ;
+    $receivesocket->mcast_if('vlan2') || die "no vlan access $!";
+    $receivesocket->mcast_ttl(4);
+
+#
+#        if( ! fork() )
+#        {
+#            my $size = $receivesocket->mcast_send($broadcastdata,"$multicastgroup:$portnumber");
+#            my $size = $receivesocket->mcast_send($broadcastdata,"$multicastgroup:$portnumber");
+#            my $size = $receivesocket->mcast_send($broadcastdata,"$multicastgroup:$portnumber");
+#            my $size = $receivesocket->mcast_send($broadcastdata,"$multicastgroup:$portnumber");
+#            my $size = $receivesocket->mcast_send($broadcastdata,"$multicastgroup:$portnumber");
+#            my $size = $receivesocket->mcast_send($broadcastdata,"$multicastgroup:$portnumber");
+##            my $size = $receivesocket->mcast_send($broadcastdata,"$multicastreceive:$portnumber");
+##            my $size = $receivesocket->send($broadcastdata,0,"$multicastgroup:$portnumber");
+#            print "sent $multicastgroup:$portnumber -> size:$size\n";
+#
+#            exit;
+#        }
+#    exit;
+    $receivesocket->mcast_add($multicastreceive) || die "Couldn't add group: $!\n";
+    $receivesocket->mcast_add('239.12.1.87') || die "Couldn't add group: $!\n";
+    $receivesocket->mcast_add($multicastgroup) || die "Couldn't add group: $!\n";
+    $receivesocket->setsockopt(SOL_SOCKET, SO_RCVTIMEO, pack('l!l!', TIMOUT_RECEIVE, 0))   || die "error setting SO_RCVTIMEO: $!";
+
+    for my $counter (1..10)
+    {
+#        $receivesocket->mcast_add($multicastreceive) || die "Couldn't set group: $!\n";
+
+ #       $receivesocket->setsockopt(SOL_SOCKET,SO_BROADCAST,1);
+        while( receiveCommand($receivesocket) ){}
+    }
+exit;
+
+
+
+my  $socket = new IO::Socket::INET(
+                                    PeerHost => $hostname, # 239.12.255.254
                                     PeerPort => $portnumber,
                                     Proto => 'udp',
                                     Timeout => 2)                                   || die "Can't open socket due to:$!\n";
@@ -36,49 +114,69 @@ my  $socket = new IO::Socket::INET (PeerHost => $hostname,
 my $sessionid   = sprintf '1234 %04x 4321',0; # int(rand(0x10000));
 my $inverterid  = 'ffff ffff ffff';
 
+
 my @commands = (
 
-#    "0000 0052 0048 4600 ffff 4600 ",   # multivalues if first
-#    "0000 0051 0048 4600 ffff 4600 ",   # normal values
 
 
 #    "0000 0051 001e 4100 ff20 4100 ",   # MaxACPower:     // INV_PACMAX1, INV_PACMAX2, INV_PACMAX3
+#    "0000 0051 001e 4900 ff5d 4900 ",   # BatteryInfo:
+#    "0000 0051 002a 8300 ff2a 8300 ",   # MaxACPower2:   // INV_PACMAX1_2
+
+
+#    "0000 0051 0036 4600 ff37 4600 ",   # MeteringGridMsTotW:
+#    "0000 0051 003f 2600 ff3f 2600 ",   # SpotACTotalPower  // SPOT_PACTOT
 #    "0000 0051 0040 4600 FF42 4600 ",   # SpotACPower:    // SPOT_PAC1, SPOT_PAC2, SPOT_PAC3
+#    "0000 0051 0048 4600 FF55 4600 ",   # SpotACVoltage: // SPOT_UAC1, SPOT_UAC2, SPOT_UAC3, SPOT_IAC1, SPOT_IAC2, SPOT_IAC3
+#    "0000 0051 0057 4600 FF57 4600 ",   # SpotGridFrequency // SPOT_FREQ
+#    "0000 8051 0048 2100 ff48 2100 ",   # DeviceStatus:   // INV_STATUS
+#    "0000 8051 0064 4100 ff64 4100 ",   # GridRelayStatus:   // INV_GRIDRELAY
+#    "0000 0052 0077 2300 ff77 2300 ",   # InverterTemperature:
 #    "0000 8053 001E 2500 FF1E 2500 ",   # SpotDCPower      // SPOT_PDC1, SPOT_PDC2
+#    "0000 8053 001F 4500 FF21 4500 ",   # SpotDCVoltage   // SPOT_UDC1, SPOT_UDC2, SPOT_IDC1, SPOT_IDC2
+#    "0000 0054 0001 2600 FF22 2600 ",   # EnergyProduction // SPOT_ETODAY, SPOT_ETOTAL
+#    "0000 0054 002e 4600 ff2F 4600 ",   # OperationTime:    // SPOT_OPERTM, SPOT_FEEDTM
 
 
- #   "0000 0053 001E 2500 FF1E 2500 ",   # SpotDCPower      // SPOT_PDC1, SPOT_PDC2
+
+#    "0000 0051 001e 4100 ff20 4100 ",   # MaxACPower:     // INV_PACMAX1, INV_PACMAX2, INV_PACMAX3
+#    "0000 0051 001e 4900 ff5d 4900 ",   # BatteryInfo:
+#    "0000 0051 002a 8300 ff2a 8300 ",   # MaxACPower2:   // INV_PACMAX1_2
+#    "0000 0051 0036 4600 ff37 4600 ",   # MeteringGridMsTotW:
+#    "0000 0051 003f 2600 ff3f 2600 ",   # SpotACTotalPower  // SPOT_PACTOT
+#    "0000 0051 0040 4600 FF42 4600 ",   # SpotACPower:    // SPOT_PAC1, SPOT_PAC2, SPOT_PAC3
+#    "0000 0051 0048 4600 FF55 4600 ",   # SpotACVoltage: // SPOT_UAC1, SPOT_UAC2, SPOT_UAC3, SPOT_IAC1, SPOT_IAC2, SPOT_IAC3
+#    "0000 0051 0057 4600 FF57 4600 ",   # SpotGridFrequency // SPOT_FREQ
+#    "0000 0051 005a 2900 ff5a 2900 ",   # BatteryChargeStatus:
+#    "0000 8051 0048 2100 ff48 2100 ",   # DeviceStatus:   // INV_STATUS
+#    "0000 8051 0064 4100 ff64 4100 ",   # GridRelayStatus:   // INV_GRIDRELAY
+#    "0000 0052 0077 2300 ff77 2300 ",   # InverterTemperature:
 #    "0000 8053 001E 2500 FF1E 2500 ",   # SpotDCPower      // SPOT_PDC1, SPOT_PDC2
-#    "0000 0053 001E 2500 FF1E 2500 ",   # SpotDCPower      // SPOT_PDC1, SPOT_PDC2
-
-
-    "0000 0051 001e 4100 ff20 4100 ",   # MaxACPower:     // INV_PACMAX1, INV_PACMAX2, INV_PACMAX3
-    "0000 0051 001e 4900 ff5d 4900 ",   # BatteryInfo:
-    "0000 0051 002a 8300 ff2a 8300 ",   # MaxACPower2:   // INV_PACMAX1_2
-    "0000 0051 0036 4600 ff37 4600 ",   # MeteringGridMsTotW:
-    "0000 0051 003f 2600 ff3f 2600 ",   # SpotACTotalPower  // SPOT_PACTOT
-    "0000 0051 0040 4600 FF42 4600 ",   # SpotACPower:    // SPOT_PAC1, SPOT_PAC2, SPOT_PAC3
-    "0000 0051 0048 4600 FF55 4600 ",   # SpotACVoltage: // SPOT_UAC1, SPOT_UAC2, SPOT_UAC3, SPOT_IAC1, SPOT_IAC2, SPOT_IAC3
-    "0000 0051 0057 4600 FF57 4600 ",   # SpotGridFrequency // SPOT_FREQ
-    "0000 0051 005a 2900 ff5a 2900 ",   # BatteryChargeStatus:
-    "0000 8051 0048 2100 ff48 2100 ",   # DeviceStatus:   // INV_STATUS
-    "0000 8051 0064 4100 ff64 4100 ",   # GridRelayStatus:   // INV_GRIDRELAY
-    "0000 0052 0077 2300 ff77 2300 ",   # InverterTemperature:
-    "0000 8053 001E 2500 FF1E 2500 ",   # SpotDCPower      // SPOT_PDC1, SPOT_PDC2
-    "0000 8053 001F 4500 FF21 4500 ",   # SpotDCVoltage   // SPOT_UDC1, SPOT_UDC2, SPOT_IDC1, SPOT_IDC2
-    "0000 0054 0001 2600 FF22 2600 ",   # EnergyProduction // SPOT_ETODAY, SPOT_ETOTAL
-    "0000 0054 002e 4600 ff2F 4600 ",   # OperationTime:    // SPOT_OPERTM, SPOT_FEEDTM
-    "0000 0058 001e 8200 ff20 8200 ",   # TypeLabel:    // INV_NAME, INV_TYPE, INV_CLASS
-    "0000 0058 0034 8200 ff34 8200 ",   # SoftwareVersion:  // INV_SWVERSION
+#    "0000 8053 001F 4500 FF21 4500 ",   # SpotDCVoltage   // SPOT_UDC1, SPOT_UDC2, SPOT_IDC1, SPOT_IDC2
+#    "0000 0054 0001 2600 FF22 2600 ",   # EnergyProduction // SPOT_ETODAY, SPOT_ETOTAL
+#    "0000 0054 002e 4600 ff2F 4600 ",   # OperationTime:    // SPOT_OPERTM, SPOT_FEEDTM
+#    "0000 0058 001e 8200 ff20 8200 ",   # TypeLabel:    // INV_NAME, INV_TYPE, INV_CLASS
+#    "0000 0058 0034 8200 ff34 8200 ",   # SoftwareVersion:  // INV_SWVERSION
 
 
 #    "0000 0264 008d 6100 ff8d 6100 ",   # sbftest: logout
 
 
     #"0C04 fdff ffffffff ",   # logout, shuts down socket for quite some time
-    );
+);
 
-
+for my $command (0x51 .. 0x60)
+{
+    for my $cmdtype (0x20 .. 0x80)
+    {
+        for my $range (0x00 .. 0xFF)
+        {
+            push(@commands,''.sprintf("0000 00%02x 00%02x %02x00 FF%02x %02x00 ",$command,$range,$cmdtype,$range,$cmdtype));
+        }
+    }
+}
+print join("\n",@commands);
+#exit;
 
 my $loggedin = 0;
 my $loop     = 0;
@@ -119,7 +217,7 @@ do
             }
         }
 
-        jnxsleep(.5);
+        jnxsleep(.3);
     }
 
     jnxsleep(5) if $loop;
@@ -135,7 +233,17 @@ sub sendReceiveCommand
     my $data;
 
     sendCommand($socket,$command,$sessionid,$inverterid);
-	$socket->recv($data, MAXIMUM_PACKET_SIZE);
+
+    return receiveCommand($socket)
+}
+
+sub receiveCommand
+{
+    my($socket) = @_;
+
+    my $data;
+
+    my $srcpaddr = $socket->recv($data, MAXIMUM_PACKET_SIZE);
 
     if( 0 == length($data) )
     {
@@ -143,11 +251,16 @@ sub sendReceiveCommand
         return undef;
     }
 
+    if( $srcpaddr )
+    {
+        my ($port, $ipaddr) = sockaddr_in($srcpaddr);
+        print "Read " . (gethostbyaddr($ipaddr, AF_INET) || "UNKNOWN") . ", + " . inet_ntoa($ipaddr) ."\n";
+    }
     writeDataToFile($data);
     my $response = printSMAPacket('recv',$data);
 
     print "\n\n";
-    return $response;
+    return 1;
 }
 
 
@@ -226,26 +339,116 @@ sub printSMAPacket
     my($prefix,$data) = @_;
 
     my $smaheader   = unpack('N',substr($data,0,4));
-    my $proto       = unpack('n',substr($data,16,2));
-    my $length      = unpack('C',substr($data,18,1)) * 4;
-    my $expectedlen = length($data) -18 - 4;
-    my $footer      = unpack('N',substr($data,-4));
-
-    if(     $smaheader != 0x534d4100
-        ||  $proto     != 0x6065
-        ||  $footer    != 0x0
-        ||  $length    != $expectedlen
-        )
+    if($smaheader != 0x534d4100)
     {
-        printf "%s: invalid SMA packet: %0x %0x %d=%d %0x %s\n",$prefix,$smaheader,$proto,$length,$expectedlen,$footer,prettyhexdata($data);
+        printf "SMApacket: SMA prefix missing data:%s\n",prettyhexdata($data);
         return undef;
     }
 
-    printf "%5s SMAPacket: %s\n",$prefix,prettyhexdata(substr($data,0,18));
+    printf "%s SMApacket: length:%d raw:%s\n",$prefix,length($data),prettyhexdata($data);
 
-    my $smanetdata  = substr($data,18,$length);
+    my $smadata = substr($data,4);
 
-    printSMANetPacket($smanetdata);
+    SMADATA: while( length($smadata) >= 4 )
+    {
+        my $length      = unpack('n',substr($smadata,0,2));
+        my $tag         = unpack('n',substr($smadata,2,2));
+
+        printf "SMApacket: Tag:0x%04x length:%d\n",$tag,$length;
+
+        $smadata = substr($smadata,4);
+
+        if( $length > length($smadata) )
+        {
+            printf "SMApacket: Invalid remaining size:%d\n",length($smadata);
+            next SMADATA;
+        }
+
+        my $tagdata = substr($smadata,0,$length);
+        $smadata = substr($smadata,$length);
+
+
+        if( $tag == 0x2a0 )  # discovery request
+        {
+            print "SMAPacket: discovery request.\n";
+
+            my $expectedlength = $length;
+
+            if( length($tagdata) < $expectedlength)
+            {
+                printf "SMApacket: discovery request too short: %d < expected:%d %s\n",length($tagdata),$expectedlength,prettyhexdata($tagdata);
+                next SMADATA;
+            }
+
+            my $value = unpack('N',substr($tagdata,0,4));
+
+            my %knownvalues = ( 0xffffffff => 'REQUEST', 0x0000001 => 'ANSWER' );
+
+            printf "SMApacket: discovery request:%s\n", $knownvalues{$value} || 'UNKNOWN.'.$value;
+
+            next SMADATA;
+        }
+
+        if( $tag == 0x02C0 )  # group content
+        {
+            print "SMAPacket: group tag.\n";
+
+            if( length($tagdata) >=4 )
+            {
+                printf "SMApacket: Group Number 0x%08\n",unpack('N',$tagdata);
+            }
+            else
+            {
+                printf "SMApacket: Invalid remaining size:%d\n",length($tagdata);
+            }
+
+            next SMADATA;
+        }
+
+        if( $tag == 0x0 )  # End of packets
+        {
+            print "SMAPacket: END tag.\n";
+
+            if( length($tagdata) != 0 )
+            {
+                printf "SMAPacket: END tag reached but still have data left length:%d\n",length($smadata);
+            }
+            next SMADATA;
+        }
+
+        if( $tag == 0x10 )  # SMAnet
+        {
+            print "SMAPacket: SMAnet tag.\n";
+
+            if( length($tagdata) < 2 )
+            {
+                printf "SMAPacket: SMAnet packet. too small: %d data: %s\n",length($tagdata),prettyhexdata($tagdata);
+                next SMADATA;
+            }
+
+            my $protocolid = unpack('n',substr($tagdata,0,2));
+            printf "SMAPacket: SMAnet packet protocol 0x%04x\n",$protocolid;
+
+            if( $protocolid == 0x6065 )
+            {
+                printSMANetPacket( substr($tagdata,2) );
+                next SMADATA;
+            }
+            print "SMANetPacket: can't decode protocol - skipping packet\n";
+            next SMADATA;
+        }
+
+        # unknown tags
+
+        printf "SMAPacket: tag:0x%04x length:%d %s\n",$tag,$length,$length>0 ? 'raw:'.prettyhexdata($tagdata) :'';
+
+
+    }
+
+    if( length($smadata) > 0 )
+    {
+        printf "SMApacket: unexpexted data at end: %s\n",prettyhexdata($smadata);
+    }
 }
 
 sub printSMANetPacket
@@ -258,8 +461,8 @@ sub printSMANetPacket
         my $smanet_length = unpack('C',substr($data,0,1)) * 4;
 
         if(    length($data) < 2
-            || length($data) != $smanet_length
             || $smanet_length < 32
+            || length($data) != $smanet_length
           )
         {
             printf "Invalid SMANet packet: %d != %d < 32 :%s\n",$smanet_length,length($data),prettyhexdata($data);
@@ -285,31 +488,44 @@ sub printSMANetPacket
     }
 
     {
-        my $valuetype   = unpack('V',substr($data,28,4));
-        my $valuecount  = unpack('V',substr($data,32,4));
+        my $option1 = unpack('V',substr($data,28,4));
+        my $option2 = unpack('V',substr($data,32,4));
 
         my $header = substr($data,0,36);
-
-        printf "type:0x%08x count:0x%08x raw:%s\n",$valuetype,$valuecount,prettyhexdata($header);
+        my $test = unpack('V',substr($data,36+4,4));
+#        printf "type:0x%08x count:0x%08x raw:%s\n",$valuetype,$valuecount,prettyhexdata($header);
+        printf "opt1:0x%08x opt2:0x%08x test:%5d raw:%s\n",$option1,$option2,$test,prettyhexdata(substr($data,36));
     }
+
 
     my $footer  = substr($data,36);
     my $source  = unpack('H*',substr($data,10,6));
     my $command = unpack('v',substr($data,26,2));
 
+    return undef if $command == 0x2800;
+
     FOOTERPARSING: while( length($footer) > 7 )
     {
-        my $number = unpack('C',substr($footer,0,1));
-        my $code = unpack('v',substr($footer,1,2));
-        my $type = unpack('C',substr($footer,3,1));
-        my $time  = unpack('V',substr($footer,4,4));
-        my $timestring = POSIX::strftime('%Y-%m-%dT%H:%M:%S',localtime($time));
+        my $number      = unpack('C',substr($footer,0,1));
+        my $code        = unpack('v',substr($footer,1,2));
+        my $type        = unpack('C',substr($footer,3,1));
+        my $packtettime = unpack('V',substr($footer,4,4));
+
+        my $packet_timestring = POSIX::strftime('%Y-%m-%dT%H:%M:%S',localtime($packtettime));
         my $typelength = 40;
 
-        if( $time ne 0 && '2021' ne substr($timestring,0,4) )
+        if( $packtettime eq 0
+            || ( abs(time() - $packtettime) < ($historyfile ? 86400 * 30 : 100) )
+            || '1970-01-03T04:13:18' eq $packet_timestring
+            || '1970-01-03T06:33:02' eq $packet_timestring
+            )
         {
-            printf "Weird time %s raw: %s\n",$timestring,prettyhexdata( substr($footer,0,60) ).'...';
-            exit;
+            # time ok
+        }
+        else
+        {
+            printf "Weird time %s raw: %s\n",$packet_timestring,prettyhexdata( substr($footer,0,60) ).'...';
+            # exit;
             $footer = substr($footer,1);
             next FOOTERPARSING;
         }
@@ -322,7 +538,7 @@ sub printSMANetPacket
 
 #        print "\nFooter DATA:".prettyhexdata(substr($footer,0,40))."\n";
 
-        printf "%s%s Code:0x%04x-0x%04x No:0x%02x Type:0x%02x %s %27s ",' ' x 7,$source,$command,$code,$number,$type,$timestring,$name;
+        printf "%s%s Code:0x%04x-0x%04x No:0x%02x Type:0x%02x %s %27s ",' ' x 7,$source,$command,$code,$number,$type,$packet_timestring,$name;
 
         ##### TYPE decoding
 
@@ -334,8 +550,9 @@ sub printSMANetPacket
 
             if(         @values[0] == 0x0       # version number scheme
                     &&  @values[1] == 0x0
-                    &&  @values[2] == 0xFFFFFFFE
-                    &&  @values[3] == 0xFFFFFFFE
+                    &&  (   (@values[2] == 0xFFFFFED8 && @values[3] == 0xFFFFFED8 )
+                         || (@values[2] == 0xFFFFFFFE && @values[3] == 0xFFFFFFFE )
+                        )
                     &&  @values[4] == @values[5]
                     &&  @values[6] == 0x0
                     &&  @values[7] == 0x0
@@ -364,8 +581,9 @@ sub printSMANetPacket
             else
             {
                print "\nFooter DATA:".prettyhexdata(substr($footer,0,40))."\n";
-               print "Weird";
-                exit;
+               print "Weird NUmber";
+               $footer = substr($footer,1);
+               next FOOTERPARSING;
             }
 
             my @results;
@@ -475,11 +693,11 @@ sub code2Typeinformation
  0x295A => { name => 'battery.system.soc', unit => '%' },
  0x495B => { name => 'battery.system.temperature', unit => 'ºC' },
  0x495C => { name => 'battery.system.voltage', unit => 'V', factor => 0.01 },
- 0x2622 => { name => 'counter.day.yield', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
+ 0x2622 => { name => 'counter.day.yield', unit => 'kWh', factor => ( 1.0 / 1000 ) },
  0x462F => { name => 'counter.feedintime',unit => 's'},
  0x462E => { name => 'counter.operatingtime',unit => 's'},
- 0x263F => { name => 'counter.total.feedin', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
- 0x2601 => { name => 'counter.total.yield', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
+ 0x263F => { name => 'grid.power.feedin', unit => 'W'},
+ 0x2601 => { name => 'counter.total.yield', unit => 'kWh', factor => ( 1.0 / 1000 ) },
  0x4521 => { name => 'dc.amperage', unit => 'A', factor => 0.001 },
  0x251E => { name => 'dc.power', unit => 'W'},
  0x451F => { name => 'dc.voltage', unit => 'V', factor => 0.01 },
@@ -487,6 +705,7 @@ sub code2Typeinformation
  0x464B => { name => 'grid.powerfactor.phaseA', unit => '%'},
  0x464C => { name => 'grid.powerfactor.phaseB', unit => '%'},
  0x464D => { name => 'grid.powerfactor.phaseC', unit => '%'},
+ 0x464E => { name => 'grid.displacementfactor', unit => '%'},
  0x4653 => { name => 'grid.current.phaseA', unit => 'A', factor => 0.001 },
  0x4654 => { name => 'grid.current.phaseB', unit => 'A', factor => 0.001 },
  0x4655 => { name => 'grid.current.phaseC', unit => 'A', factor => 0.001 },
@@ -512,19 +731,19 @@ sub code2Typeinformation
  0x491E => { name => 'type.unknown.maybe.battery.counter.charges'},
  0x4926 => { name => 'type.unknown.maybe.battery.total.charge', unit => 'Ah'},
  0x4927 => { name => 'type.unknown.maybe.battery.total.discharge', unit => 'Ah'},
- 0x4627 => { name => 'type.unknown.maybe.counter.day,feedin', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
- 0x4628 => { name => 'type.unknown.maybe.counter.day.usage', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
- 0x46AA => { name => 'type.unknown.maybe.counter.ownconsumption', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
- 0x4626 => { name => 'type.unknown.maybe.counter.total.consumption', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
- 0x4624 => { name => 'type.unknown.maybe.counter.total.feedin', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
- 0x4623 => { name => 'type.unknown.maybe.counter.total.generation', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
- 0x4625 => { name => 'type.unknown.maybe.counter.total.usage', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
+ 0x4627 => { name => 'type.unknown.maybe.counter.day.feedin', unit => 'kWh', factor => ( 1.0 / 1000 ) },
+ 0x4628 => { name => 'type.unknown.maybe.counter.day.usage', unit => 'kWh', factor => ( 1.0 / 1000 ) },
+ 0x46AA => { name => 'type.unknown.maybe.counter.ownconsumption', unit => 'kWh', factor => ( 1.0 / 1000 ) },
+ 0x4626 => { name => 'type.unknown.maybe.counter.total.consumption', unit => 'kWh', factor => ( 1.0 / 1000 ) },
+ 0x4624 => { name => 'type.unknown.maybe.counter.total.feedin', unit => 'kWh', factor => ( 1.0 / 1000 ) },
+ 0x4623 => { name => 'type.unknown.maybe.counter.total.generation', unit => 'kWh', factor => ( 1.0 / 1000 ) },
+ 0x4625 => { name => 'type.unknown.maybe.counter.total.usage', unit => 'kWh', factor => ( 1.0 / 1000 ) },
  0x4650 => { name => 'type.unknown.maybe.grid.current.phaseA', unit => 'A', factor => 0.001 },
  0x4651 => { name => 'type.unknown.maybe.grid.current.phaseB', unit => 'A', factor => 0.001 },
  0x4652 => { name => 'type.unknown.maybe.grid.current.phaseC', unit => 'A', factor => 0.001 },
  0x4631 => { name => 'type.unknown.maybe.grid.failure'},
- 0x463A => { name => 'type.unknown.maybe.grid.power.feedin', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
- 0x463B => { name => 'type.unknown.maybe.grid.power.usage', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
+ 0x463A => { name => 'type.unknown.maybe.grid.power.feedin', unit => 'kWh', factor => ( 1.0 / 1000 ) },
+ 0x463B => { name => 'type.unknown.maybe.grid.power.usage', unit => 'kWh', factor => ( 1.0 / 1000 ) },
  0x4639 => { name => 'type.unknown.maybe.grid.total.consumption', unit => 'W'},
  0x4635 => { name => 'type.unknown.maybe.grid.total.generation', unit => 'W'},
  0x46AB => { name => 'type.unknown.maybe.power.ownconsumption'},

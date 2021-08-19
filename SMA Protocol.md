@@ -4,6 +4,7 @@ I did not find any thorough documentation on the SMA UDP Protocol, so I started 
 
 ## References:
 
+- [Speedwire Discovery Protocol](https://www.sma.de/fileadmin/content/global/Partner/Documents/sma_developer/SpeedwireDD-TI-en-10.pdf)
 - Sunny Home Manger protocol 0x6069 [EMETER-Protokoll-T1-de-10.pdf](https://www.sma.de/fileadmin/content/global/Partner/Documents/SMA_Labs/EMETER-Protokoll-TI-en-10.pdf)
 - SBSpot [SBSpot](https://github.com/SBFspot/SBFspot) seems to have a few things correct
 - SMA old Protocol [smadat-11-ze2203.pdf](http://test.sma.de/dateien/1995/SMADAT-11-ZE2203.pdf)
@@ -20,10 +21,21 @@ Sma Protocol starts with 'SMA\0' and then packets in big-endian order follow.
     0x06 | U16    | Tag     0xABBC   A = 0 , B = Tag ID, C = 0
          |        |         0x02C0 = 0x2C: Group number
          |        |         0x0010 = 0x01: SMA Net Version 1
-         |        |         0x0000 = 0x00: End of packet
+         |        |         0x0000 = 0x00: End of packets
+         |        |         0x02A0 = 0x2A: Discovery Request  
     0x08 | U8*len | packet content
 
 
+Discovery Request
+=============
+
+    length of packet seems to mean length in words
+    
+    addr | type   | explanation
+    -----------------------------------
+    0x00 | U32    | 0xFFFF FFFF
+    0x00 | U32    | 0x0000 0020 
+         |        |   
 
 Group Content
 =============
@@ -33,14 +45,16 @@ Group Content
     0x00 | U32    |   Group number ( usually 0x0000 0001 )
          |        |                  0xFF03 bluethooth ?
 
+
+
 SMA Net Version 1 Content
 ===============
 
     addr | type   | explanation
     -----|--------|--------------------
-    0x00 | U16    |       Protocol ID:    0x6069 Sunny Home Manger
-         |        |                       0x6065 Inverter Communication
-    0x02 | length |     Data
+    0x00 | U16    | Protocol ID:    0x6069 Sunny Home Manger
+         |        |                 0x6065 Inverter Communication
+    0x02 | length | Data
 
 
 ## 0x6069 Protocol: Sunny Home Manger
@@ -52,7 +66,7 @@ SMA Net Version 1 Content
     0x06 |   U32  |   Source Time in ms
     0x0A |        |   0x6069 data packets follow:
 
-## 0x069 data packets
+## 0x069 data packets (Big Endian)
 
     addr | type    | explanation
     -----|---------|--------------------
@@ -65,7 +79,7 @@ SMA Net Version 1 Content
     0x04 | U32|U64 |           BE: value byte length
 
 
-## 0x6065 Protocol: Inverter Communication
+## 0x6065 Protocol: Inverter Communication (Little Endian)
 =========================================
 
 Warning this protocol uses little endian format. Requests and responses share the same header format. 
@@ -166,13 +180,25 @@ I've not seen any response from a logout.
          |     |                        1 = answer
          |     |            ---- X--0b  8 -> response 9 as if adding one to the request
     0x17 | U8  | ?? usually 02
-    0x18 | U16 | Command used
+    0x18 | U16 | Command used ( 0x2800 special multicast answer )
     0x1A | U32 | option 1  / Range Start
     0x20 | U32 | option 2  / Range End
     0x24 - End of packet | Array of values 
 
 
-## Array of values format
+## 0x2800 command answer
+
+If command is 0x2800 the answers seem to differ completly. option1 is then 0x500300 and option2 contains milliseconds.
+
+    addr | type| explanation
+    -----------------------------------
+    0x00 | U32  |   value mostly 0x0000
+    0x04 | U32  |   wattage ? other time ?
+    ...             unknown
+
+
+
+## Array of values format when not 0x2800
 
 The response data is an array of values of different length just concatinated, starting at offset zero here for easier translation to code.
 
@@ -215,8 +241,8 @@ The response data is an array of values of different length just concatinated, s
     -----------------------------------
     0x08 | U32  |   0
     0x0C | U32  |   0
-    0x10 | U32  |   0xFFFF FFFE
-    0x14 | U32  |   0xFFFF FFFE
+    0x10 | U32  |   0xFFFF FFFE  | 0xFFFF FED8
+    0x14 | U32  |   0xFFFF FFFE  | 0xFFFF FED8
     0x10 | U8   |   Serial Number Type ( 4 = release ) ( none/experimental/alpha/beta/release/special)
     0x11 | U8   |   Serial Number Build Number
     0x12 | U8   |   Serial Number Minor Version
