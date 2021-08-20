@@ -370,21 +370,19 @@ sub printSMAPacket
 
         if( $tag == 0x2a0 )  # discovery request
         {
-            print "SMAPacket: discovery request.\n";
-
             my $expectedlength = $length;
 
             if( length($tagdata) < $expectedlength)
             {
-                printf "SMApacket: discovery request too short: %d < expected:%d %s\n",length($tagdata),$expectedlength,prettyhexdata($tagdata);
+                printf "SMApacket: discovery type too short: %d < expected:%d %s\n",length($tagdata),$expectedlength,prettyhexdata($tagdata);
                 next SMADATA;
             }
 
             my $value = unpack('N',substr($tagdata,0,4));
 
-            my %knownvalues = ( 0xffffffff => 'REQUEST', 0x0000001 => 'ANSWER' );
+            my %knownvalues = ( 0xffffffff => 'DISCOVERY', 0x0000001 => 'NORMAL' );
 
-            printf "SMApacket: discovery request:%s\n", $knownvalues{$value} || 'UNKNOWN.'.$value;
+            printf "SMApacket: discovery type:0x%08x %s\n",$value, $knownvalues{$value} || 'UNKNOWN.'.$value;
 
             next SMADATA;
         }
@@ -413,7 +411,7 @@ sub printSMAPacket
             {
                 printf "SMAPacket: END tag reached but still have data left length:%d\n",length($smadata);
             }
-            next SMADATA;
+            last SMADATA;
         }
 
         if( $tag == 0x10 )  # SMAnet
@@ -427,7 +425,7 @@ sub printSMAPacket
             }
 
             my $protocolid = unpack('n',substr($tagdata,0,2));
-            printf "SMAPacket: SMAnet packet protocol 0x%04x\n",$protocolid;
+            printf "SMAPacket: SMAnet packet protocol 0x%04x length:%d\n",$protocolid,$length;
 
             if( $protocolid == 0x6065 )
             {
@@ -447,8 +445,9 @@ sub printSMAPacket
 
     if( length($smadata) > 0 )
     {
-        printf "SMApacket: unexpexted data at end: %s\n",prettyhexdata($smadata);
+        printf "SMApacket: unexpected %dd bytes data at end: %s...\n",length($smadata),prettyhexdata(substr($smadata,0,40));
     }
+    print "\n";
 }
 
 sub printSMANetPacket
@@ -461,11 +460,11 @@ sub printSMANetPacket
         my $smanet_length = unpack('C',substr($data,0,1)) * 4;
 
         if(    length($data) < 2
-            || $smanet_length < 32
+            || $smanet_length < 20
             || length($data) != $smanet_length
           )
         {
-            printf "Invalid SMANet packet: %d != %d < 32 :%s\n",$smanet_length,length($data),prettyhexdata($data);
+            printf "weird SMANet packet: %d != %d < 20 :%s\n",$smanet_length,length($data),prettyhexdata($data);
             return undef;
         }
     }
@@ -487,48 +486,63 @@ sub printSMANetPacket
         }
     }
 
-    {
-        my $option1 = unpack('V',substr($data,28,4));
-        my $option2 = unpack('V',substr($data,32,4));
-
-        my $header = substr($data,0,36);
-        my $test = unpack('V',substr($data,36+4,4));
-#        printf "type:0x%08x count:0x%08x raw:%s\n",$valuetype,$valuecount,prettyhexdata($header);
-        printf "opt1:0x%08x opt2:0x%08x test:%5d raw:%s\n",$option1,$option2,$test,prettyhexdata(substr($data,36));
-    }
-
-
     my $footer  = substr($data,36);
     my $source  = unpack('H*',substr($data,10,6));
     my $command = unpack('v',substr($data,26,2));
+    my $option1 = unpack('V',substr($data,28,4));
+    my $option2 = unpack('V',substr($data,32,4));
+
+    printf "opt1:0x%08x opt2:0x%08x ",$option1,$option2;
+
+    my $shortnumberformat = 0;
+
+    if(
+            $option1 == 0x04    # 0100
+        ||  $option1 == 0x38    # 1000
+        ||  $option1 == 0x3a    # 1010
+        ||  $option1 == 0x3b    # 1010
+        ||  $option1 == 0x39    # 1001
+        )
+    {
+        print "SHORTNUMBER ";
+        $shortnumberformat = 1;
+        $footer = substr($data,32);
+    }
+
+    print 'raw:'.prettyhexdata(substr($data,28))."\n";
 
     return undef if $command == 0x2800;
+
+
 
     FOOTERPARSING: while( length($footer) > 7 )
     {
         my $number      = unpack('C',substr($footer,0,1));
         my $code        = unpack('v',substr($footer,1,2));
         my $type        = unpack('C',substr($footer,3,1));
-        my $packtettime = unpack('V',substr($footer,4,4));
+        my $packettime  = unpack('V',substr($footer,4,4));
 
-        my $packet_timestring = POSIX::strftime('%Y-%m-%dT%H:%M:%S',localtime($packtettime));
+        my $packet_timestring = POSIX::strftime('%Y-%m-%dT%H:%M:%S',localtime($packettime));
         my $typelength = 40;
 
-        if( $packtettime eq 0
-            || ( abs(time() - $packtettime) < ($historyfile ? 86400 * 30 : 100) )
-            || '1970-01-03T04:13:18' eq $packet_timestring
-            || '1970-01-03T06:33:02' eq $packet_timestring
-            )
+        if( $packettime == 0 || abs($packettime - time()) < 1000)
         {
             # time ok
         }
         else
         {
-            printf "Weird time %s raw: %s\n",$packet_timestring,prettyhexdata( substr($footer,0,60) ).'...';
-            # exit;
-            $footer = substr($footer,1);
-            next FOOTERPARSING;
+            if( $packettime < 10*365*86400 ) # everything that is below ten years might be a running time
+            {
+                $packet_timestring = sprintf("runtime: %0dd %02d:%02d:%02d",int($packettime/86400),int( ($packettime%86400)/3600),int(($packettime%3600)/60),int($packettime%60));
+            }
+            elsif( ($packettime < 0x60000000) || ($packettime >(time() + 1000)) )  # everything before the program existed or in the future is weird
+            {
+                printf "Weird time %s raw: %s\n",$packet_timestring,prettyhexdata( substr($footer,0,60) ).'...';
+                $footer = substr($footer,1);
+                next FOOTERPARSING;
+            }
         }
+#        $type = 0 if $shortnumberformat ;
 
         my  $typeinformation = code2Typeinformation($code);
         my  $name = $$typeinformation{name};
@@ -542,50 +556,64 @@ sub printSMANetPacket
 
         ##### TYPE decoding
 
-        if( $type == 0x00 || $type == 0x40 )    # integer
+        if( $type == 0x00 || $type == 0x40 || $shortnumberformat )    # integer
         {
-            my  @values = map { unpack('V',substr($footer,8+(4*$_),4)) } (0..8);
-            my $shortmarker = @values[1];
-            my $longmarker = @values[4];
+#            my  @values = map { unpack('V',substr($footer,8+(4*$_),4)) } (0..8);
+            my @values = unpack('V*',substr($footer,8,28));
 
-            if(         @values[0] == 0x0       # version number scheme
-                    &&  @values[1] == 0x0
-                    &&  (   (@values[2] == 0xFFFFFED8 && @values[3] == 0xFFFFFED8 )
-                         || (@values[2] == 0xFFFFFFFE && @values[3] == 0xFFFFFFFE )
-                        )
-                    &&  @values[4] == @values[5]
-                    &&  @values[6] == 0x0
-                    &&  @values[7] == 0x0
-                )
+            if( $shortnumberformat )
             {
-                $typelength = 40;
-                @values = unpack('C*',pack('N',@values[4]));
-            }
-            elsif(      $longmarker == 1
-                    ||  ($longmarker == 0 && @values[2] == 0 && @values[3] == 0)
-                )
-            {
-                $typelength = 28;
-                splice(@values,4);
-                splice(@values,1)  if '' eq join('',map { @values[$_-1] == @values[0] ? '' : 'somevalue' } (1..@values) );  # print one value if all are same
-            }
-            elsif(      $shortmarker == 0
-#                    &&  @values[0] == @values[1]
-#                    &&  @values[0] == @values[2]
-#                    &&  @values[0] == @values[3]
-                )
-            {
-                splice(@values,1);
+                splice(@values,2);
                 $typelength = 16;
             }
             else
             {
-               print "\nFooter DATA:".prettyhexdata(substr($footer,0,40))."\n";
-               print "Weird NUmber";
-               $footer = substr($footer,1);
-               next FOOTERPARSING;
-            }
+                my $shortmarker =   @values[1] == 0
+                                    || (@values[0] == 0xffffffff && @values[1] == 0xffffffff)
+                                    || (@values[0] == 0xffffffff && @values[1] == 0xffffff07)
+                                    ? 1 : 0;
+                my $longmarker  =   (       (@values[0] == 0 && @values[1] == 0 && @values[2] == 0 && @values[3] == 0)
+                                        ||  ( ((@values[2] & 0xffff0000) == 0xffff0000) && ((@values[3] & 0xffff0000) == 0xffff0000) )
+    #                                    ||  (@values[0] == 0xffffffff && @values[1] == 0xffffffff && @values[2] == 0xffffffff && @values[3] == 0xffffffff)
+                                        ||  !$shortmarker
+                                    )
+                                    && (@values[4] == 1 || @values[4] == 0)
+                                    ? 1 : 0;
+#                # 56012b7fbc76 Code:0x6400-0x543a No:0x01 Type:0x00 2021-08-20T16:39:59
+#                printf "S:%d L:%d 0x%08x 0x%08x",$shortmarker,$longmarker,@values[2] & 0xffff0000,@values[3] & 0xffff0000;
 
+                if(         @values[0] == 0x0       # version number scheme
+                        &&  @values[1] == 0x0
+                        &&  (   (@values[2] == 0xFFFFFED8 && @values[3] == 0xFFFFFED8 )
+                             || (@values[2] == 0xFFFFFFFE && @values[3] == 0xFFFFFFFE )
+                            )
+                        &&  @values[4] == @values[5]
+                        &&  @values[6] == 0x0
+                        &&  @values[7] == 0x0
+                    )
+                {
+                    $typelength = 40;
+                    @values = unpack('C*',pack('N',@values[4]));
+                }
+                elsif( $longmarker )
+                {
+                    $typelength = 28;
+                    splice(@values,4);
+                    splice(@values,1)  if '' eq join('',map { @values[$_-1] == @values[0] ? '' : 'somevalue' } (1..@values) );  # print one value if all are same
+                }
+                elsif( $shortmarker )
+                {
+                    splice(@values,1);
+                    $typelength = 16;
+                }
+                else
+                {
+                   print "\nFooter DATA:".prettyhexdata(substr($footer,0,40))."\n";
+                   print "Weird NUmber";
+                   $footer = substr($footer,1);
+                   next FOOTERPARSING;
+                }
+            }
             my @results;
 
             for my $value (@values)
@@ -625,7 +653,7 @@ sub printSMANetPacket
                 $position += 4;
             }
 
-            printf "%30s ",join('.',@values);
+            printf "%30s ",'v:'.join('.',@values);
         }
         else
         {

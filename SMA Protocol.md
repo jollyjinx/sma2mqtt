@@ -27,30 +27,33 @@ Sma Protocol starts with 'SMA\0' and then packets in big-endian order follow.
     0x08 | U8*len | packet content
 
 
-End of packets 0x0000
-=============
+
+### End of packets 0x0000
 
     addr | type   | explanation
     -----------------------------------
     0x00 | U16    | 0x0000 end of transmission
 
 
-End of discovery 0x0200
-=============
+
+### End of discovery 0x0200
+
 
     addr | type   | explanation
     -----------------------------------
     0x00 | U16    | 0x0200 end of discovery request ?
 
 
-Discovery Request 0x02a0
-=============
+
+### Discovery Request 0x02a0
 
 Discovery request has 4 bytes of data containing 0xff.
     
     addr | type   | explanation
     -----------------------------------
     0x00 | U32    | 0xFFFF FFFF requesting discovery reply
+         |        | 0x0000 0001 normal request
+
 
     A full discovery request looks like this:
     
@@ -69,8 +72,7 @@ Discovery request has 4 bytes of data containing 0xff.
     0x12 | U16    | 0x0000      | tag ( End of packets )
 
 
-Group Content 0x02C0
-=============
+### Group Content 0x02C0
 
     addr | type   | explanation
     -----------------------------------
@@ -78,8 +80,7 @@ Group Content 0x02C0
          |        |                  0xFF03 bluethooth ?
 
 
-SMA Net Version 1 0x0010
-===============
+# SMA Net Version 1 0x0010
 
     addr | type   | explanation
     -----|--------|--------------------
@@ -97,6 +98,7 @@ SMA Net Version 1 0x0010
     0x06 |   U32  |   Source Time in ms
     0x0A |        |   0x6069 data packets follow:
 
+
 ## 0x069 data packets (Big Endian)
 
     addr | type    | explanation
@@ -110,8 +112,8 @@ SMA Net Version 1 0x0010
     0x04 | U32|U64 |           BE: value byte length
 
 
+
 ## 0x6065 Protocol: Inverter Communication (Little Endian)
-=========================================
 
 Warning this protocol uses little endian format. Requests and responses share the same header format. 
 Requests to the inverter send the header followed by a command (e.g. logon, logoff, data request ).
@@ -123,7 +125,7 @@ Responses from the inverter have the same header with data then attached (e.g. a
     -----------------------------------
     0x00 | U8  | Length in 32bit words, to get length in bytes * 4
     0x01 | U8  | Type        0xA0  1010 0000b    Dest.SysID != 0xF4
-         |     |             0xE0  1110 0000b    Dest.SysID == 0xF4 // 244 = 1111 0100
+         |     |             0xE0  1110 0000b    Dest.SysID == 0xF4 == 244 = 1111 0100
          |     |                    -X-- ----     0 network address ?
          |     |                                  1 group address ?
 
@@ -211,21 +213,28 @@ I've not seen any response from a logout.
          |     |                        1 = answer
          |     |            ---- X--0b  8 -> response 9 as if adding one to the request
     0x17 | U8  | ?? usually 02
-    0x18 | U16 | Command used ( 0x2800 special multicast answer )
-    0x1A | U32 | option 1  (sometimes Range Start)
+    0x18 | U16 | Command used in request 
+         |     |    0x5180 keep alive - contains no data only option1&2 are set to 0x0021 4800 and 0x0041 4aff
+         |     |    0x2800 special multicast answer
+         |     |
+         |     |    
+         |     |
+         |     |
+    0x1A | U32 | option 1  (sometimes Range Start)  does 0x4 mean only short numbers are coming ? 
     0x20 | U32 | option 2  (sometimes Range End)
+         |     |
     0x24 - End of packet | Array of values 
 
 
-## 0x2800 command answer
+## 0x2800, 0x6a02,0x71e0 command answer
 
-If command is 0x2800 the answers seem to differ completly. option1 is then 0x500300 and option2 contains milliseconds.
+With these commands the answer seem to differ completly and the packets are very short.
 
-    addr | type| explanation
-    -----------------------------------
-    0x00 | U32  |   value mostly 0x0000
-    0x04 | U32  |   wattage ? other time ?
-    ...             unknown
+If command is 0x2800 the answers option1 is then 0x500300 and option2 contains some timer counting up - it's not milliseconds.
+Maybe it's an answer to a discovery request ? it seems to contain static data but some of the data do change over time but not coherently. There seems to be more noise at the beginning of the packet when the sun is up - so maybe there is sunpower encoded in there.
+
+
+
 
 
 
@@ -233,17 +242,23 @@ If command is 0x2800 the answers seem to differ completly. option1 is then 0x500
 
 The response data is an array of values of different length just concatinated, starting at offset zero here for easier translation to code.
 
-## Value header
+Value headers:
 
     addr | type| explanation
     -----------------------------------
-    0x00 | U8   |   number
+    0x00 | U8   |   number (like a string number) 
+         |      |   0x00 not seen
+         |      |   0x01-0x06 string
+         |      |   0x07  number 0x07 no string 
+         |      |
     0x01 | U16  |   kind (a number in the range specified by the request)
+         |      |
     0x03 | U8   |   data format     0x00 usigned number(s)
          |      |                   0x40 signed number(s)
          |      |                   0x10 zero terminated string
          |      |                   0x08 version number
          |      |                   one caveat it seems that 0x8234 kind contains version numbers
+         |      |
     0x04 | U32  |   unix timestamp  usually the timestamp of the request (when the value was calculated)
          |      |                   for aggregated values it's the time of aggregation
          |      |                   aggregation happens usually every 5 minutes
@@ -321,4 +336,23 @@ Contains tuples (key,value) value pairs of version data appended by 0xffff fffe.
     Result: value is: 1234.8001 
     
 
+Real world example: (Type 0x08 like system.mainmodel.1, system.type.1,... )
+
+     SMApacket: length:458 raw:534d 4100 0004 02a0 0000 0001 01b6 0010 6065 6da0 1234 0000 4321 00a1 0011 2233 4455 0001 0000 0000 d489 0102 0058 0100 0000 0a00 0000 011e 8210 4032 1961 7375 6e6e 7962 6f79 3400 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 011f 8208 4032 1961 411f 0001 feff ff00 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0120 8208 4032 1961 b924 0000 ba24 0000 bb24 0001 bc24 0000 bd24 0000 feff ff00 0000 0000 0000 0000 0121 8208 9a39 1661 5902 0001 5b02 0001 5d02 0001 5e02 0001 5f02 0000 6202 0001 6302 0001 6a02 0001 0121 8208 9a39 1661 6f02 0001 7802 0001 7902 0001 7a02 0001 7b02 0001 7c02 0001 7d02 0001 8002 0001 0121 8208 9a39 1661 8102 0001 8702 0001 8802 0001 feff ff00 0000 0000 0000 0000 0000 0000 0000 0000 0125 8200 4032 1961 0000 0000 0000 0000 d8fe ffff d8fe ffff 1847 0000 1847 0000 0000 0000 0000 0000 0128 8208 8939 1661 2e01 0001 6904 0000 6a04 0000 feff ff00 0000 0000 0000 0000 0000 0000 0000 0000 012b 8208 8939 1661 cd01 0001 feff ff00 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0134 8200 a339 1661 0000 0000 0000 0000 feff ffff feff ffff 0424 1003 0424 1003 0000 0000 0000 0000 0000 0000 
+    SMApacket: Tag:0x02a0 length:4
+    SMApacket: discovery type:0x00000001 NORMAL
+    SMApacket: Tag:0x0010 length:438
+    SMAPacket: SMAnet tag.
+    SMAPacket: SMAnet packet protocol 0x6065 length:438
+    SMANet Packet:command:5800 response:0000: source:001122334455 destination:123400004321 pktflg:1 pktid:0x09d4 opt1:0x00000001 opt2:0x0000000a raw:0100 0000 0a00 0000 011e 8210 4032 1961 7375 6e6e 7962 6f79 3400 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 011f 8208 4032 1961 411f 0001 feff ff00 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0120 8208 4032 1961 b924 0000 ba24 0000 bb24 0001 bc24 0000 bd24 0000 feff ff00 0000 0000 0000 0000 0121 8208 9a39 1661 5902 0001 5b02 0001 5d02 0001 5e02 0001 5f02 0000 6202 0001 6302 0001 6a02 0001 0121 8208 9a39 1661 6f02 0001 7802 0001 7902 0001 7a02 0001 7b02 0001 7c02 0001 7d02 0001 8002 0001 0121 8208 9a39 1661 8102 0001 8702 0001 8802 0001 feff ff00 0000 0000 0000 0000 0000 0000 0000 0000 0125 8200 4032 1961 0000 0000 0000 0000 d8fe ffff d8fe ffff 1847 0000 1847 0000 0000 0000 0000 0000 0128 8208 8939 1661 2e01 0001 6904 0000 6a04 0000 feff ff00 0000 0000 0000 0000 0000 0000 0000 0000 012b 8208 8939 1661 cd01 0001 feff ff00 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0134 8200 a339 1661 0000 0000 0000 0000 feff ffff feff ffff 0424 1003 0424 1003 0000 0000 0000 0000 
+    001122334455 Code:0x5800-0x821e No:0x01 Type:0x10 2021-08-15T17:26:56               system.name.1                      sunnyboy4 realtype:0x10 len:40 raw: 011e 8210 4032 1961 7375 6e6e 7962 6f79 3400 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 
+    001122334455 Code:0x5800-0x821f No:0x01 Type:0x08 2021-08-15T17:26:56          system.mainmodel.1                         v:8001 realtype:0x08 len:40 raw: 011f 8208 4032 1961 411f 0001 feff ff00 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 
+    001122334455 Code:0x5800-0x8220 No:0x01 Type:0x08 2021-08-15T17:26:56               system.type.1                         v:9403 realtype:0x08 len:40 raw: 0120 8208 4032 1961 b924 0000 ba24 0000 bb24 0001 bc24 0000 bd24 0000 feff ff00 0000 0000 0000 0000 
+    001122334455 Code:0x5800-0x8221 No:0x01 Type:0x08 2021-08-13T11:21:30        type.unkown.0x8221.1 v:0601.0603.0605.0606.0610.0611 realtype:0x08 len:40 raw: 0121 8208 9a39 1661 5902 0001 5b02 0001 5d02 0001 5e02 0001 5f02 0000 6202 0001 6302 0001 6a02 0001 
+    001122334455 Code:0x5800-0x8221 No:0x01 Type:0x08 2021-08-13T11:21:30        type.unkown.0x8221.1 v:0623.0632.0633.0634.0635.0636.0637 realtype:0x08 len:40 raw: 0121 8208 9a39 1661 6f02 0001 7802 0001 7902 0001 7a02 0001 7b02 0001 7c02 0001 7d02 0001 8002 0001 
+    001122334455 Code:0x5800-0x8221 No:0x01 Type:0x08 2021-08-13T11:21:30        type.unkown.0x8221.1               v:0641.0647.0648 realtype:0x08 len:40 raw: 0121 8208 9a39 1661 8102 0001 8702 0001 8802 0001 feff ff00 0000 0000 0000 0000 0000 0000 0000 0000 
+    001122334455 Code:0x5800-0x8225 No:0x01 Type:0x00 2021-08-15T17:26:56        type.unkown.0x8225.1                      0:0:71:24 realtype:0x00 len:40 raw: 0125 8200 4032 1961 0000 0000 0000 0000 d8fe ffff d8fe ffff 1847 0000 1847 0000 0000 0000 0000 0000 
+    001122334455 Code:0x5800-0x8228 No:0x01 Type:0x08 2021-08-13T11:21:13        type.unkown.0x8228.1                         v:0302 realtype:0x08 len:40 raw: 0128 8208 8939 1661 2e01 0001 6904 0000 6a04 0000 feff ff00 0000 0000 0000 0000 0000 0000 0000 0000 
+    001122334455 Code:0x5800-0x822b No:0x01 Type:0x08 2021-08-13T11:21:13        type.unkown.0x822b.1                         v:0461 realtype:0x08 len:40 raw: 012b 8208 8939 1661 cd01 0001 feff ff00 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 
+    001122334455 Code:0x5800-0x8234 No:0x01 Type:0x00 2021-08-13T11:21:39    system.softwareversion.1                      3:16:36:4 realtype:0x00 len:40 raw: 0134 8200 a339 1661 0000 0000 0000 0000 feff ffff feff ffff 0424 1003 0424 1003 0000 0000 0000 0000 
 
