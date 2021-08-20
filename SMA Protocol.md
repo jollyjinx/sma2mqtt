@@ -19,25 +19,57 @@ Sma Protocol starts with 'SMA\0' and then packets in big-endian order follow.
     0x00 | U32    | 0x534D4100 == 'SMA\0'  Magic Number
     0x04 | U16    | length of packet
     0x06 | U16    | Tag     0xABBC   A = 0 , B = Tag ID, C = 0
-         |        |         0x02C0 = 0x2C: Group number
-         |        |         0x0010 = 0x01: SMA Net Version 1
          |        |         0x0000 = 0x00: End of packets
+         |        |         0x0010 = 0x01: SMA Net Version 1
+         |        |         0x0200 = 0x20: End of discovery request ?
          |        |         0x02A0 = 0x2A: Discovery Request  
+         |        |         0x02C0 = 0x2C: Group number
     0x08 | U8*len | packet content
 
 
-Discovery Request
+End of packets 0x0000
 =============
 
-    length of packet seems to mean length in words
+    addr | type   | explanation
+    -----------------------------------
+    0x00 | U16    | 0x0000 end of transmission
+
+
+End of discovery 0x0200
+=============
+
+    addr | type   | explanation
+    -----------------------------------
+    0x00 | U16    | 0x0200 end of discovery request ?
+
+
+Discovery Request 0x02a0
+=============
+
+Discovery request has 4 bytes of data containing 0xff.
     
     addr | type   | explanation
     -----------------------------------
-    0x00 | U32    | 0xFFFF FFFF
-    0x00 | U32    | 0x0000 0020 
-         |        |   
+    0x00 | U32    | 0xFFFF FFFF requesting discovery reply
 
-Group Content
+    A full discovery request looks like this:
+    
+    addr | type   | value       | explanation
+    ------------------------------------
+    0x00 | U32    | 0x534D4100  | 'SMA\0'  Magic Number
+    -----|--------|-------------|-------
+    0x04 | U16    | 0x0004      | length of packet
+    0x06 | U16    | 0x02a0      | tag ( Discovery Request )
+    0x08 | U32    | 0xFFFF FFFF | requesting discovery reply
+    -----|--------|-------------|-------
+    0x0C | U16    | 0x0000      | length of packet
+    0x0E | U16    | 0x0200      | tag ( Discovery End? )
+    -----|--------|-------------|-------
+    0x10 | U16    | 0x0000      | length of packet
+    0x12 | U16    | 0x0000      | tag ( End of packets )
+
+
+Group Content 0x02C0
 =============
 
     addr | type   | explanation
@@ -46,8 +78,7 @@ Group Content
          |        |                  0xFF03 bluethooth ?
 
 
-
-SMA Net Version 1 Content
+SMA Net Version 1 0x0010
 ===============
 
     addr | type   | explanation
@@ -181,8 +212,8 @@ I've not seen any response from a logout.
          |     |            ---- X--0b  8 -> response 9 as if adding one to the request
     0x17 | U8  | ?? usually 02
     0x18 | U16 | Command used ( 0x2800 special multicast answer )
-    0x1A | U32 | option 1  / Range Start
-    0x20 | U32 | option 2  / Range End
+    0x1A | U32 | option 1  (sometimes Range Start)
+    0x20 | U32 | option 2  (sometimes Range End)
     0x24 - End of packet | Array of values 
 
 
@@ -216,8 +247,8 @@ The response data is an array of values of different length just concatinated, s
     0x04 | U32  |   unix timestamp  usually the timestamp of the request (when the value was calculated)
          |      |                   for aggregated values it's the time of aggregation
          |      |                   aggregation happens usually every 5 minutes
-         |      |                   sometimes it contains wrong dates. Maybe a bug in the inverter
-         |      |                   when it updates the time and reads the time at the same time ?
+         |      |                   if the timestamp is not 0 or at the current time,
+         |      |                   it's the running time in seconds
 
 
 ## Value format 0x00 unsigned number / serial number
