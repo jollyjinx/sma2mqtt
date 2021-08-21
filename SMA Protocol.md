@@ -91,6 +91,9 @@ Discovery request has 4 bytes of data containing 0xff.
 
 ## 0x6069 Protocol: Sunny Home Manger
 
+The information on  the Sunny Home Manger protocol 0x6069 [EMETER-Protokoll-T1-de-10.pdf](https://www.sma.de/fileadmin/content/global/Partner/Documents/SMA_Labs/EMETER-Protokoll-TI-en-10.pdf) is enough to figure it out. 
+Exact values I figured out can be found in [Obis.swift](Sources/sma2mqtt/Obis.swift)
+
     addr | type   | explanation
     -----|--------|--------------------
     0x00 |   U16  |   Source SysID
@@ -99,7 +102,7 @@ Discovery request has 4 bytes of data containing 0xff.
     0x0A |        |   0x6069 data packets follow:
 
 
-## 0x069 data packets (Big Endian)
+## 0x6069 data packets (Big Endian)
 
     addr | type    | explanation
     -----|---------|--------------------
