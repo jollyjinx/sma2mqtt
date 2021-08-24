@@ -30,7 +30,9 @@ let package = Package(
                                         .product(name: "MQTTNIO", package: "mqtt-nio"),
                                         .product(name: "BinaryCoder", package: "BinaryCoder"),
                                         .product(name: "JLog", package: "JLog")
-                                        ]
+                                       ],
+                        resources: [ .copy("obisdefinition.json")
+                                    ]
                         ),
         .testTarget(    name: "sma2mqttTests",
                         dependencies: [ "sma2mqtt",

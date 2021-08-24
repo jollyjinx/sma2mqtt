@@ -28,13 +28,13 @@ struct SMAMulticastPacket: BinaryDecodable
 
     var interestingValues : [InterestingValue] { get { return obis.compactMap{ obisValue in
                                 
-                                                                    if let interestingValue = obisDefinitions[obisValue.id]
+                                                                    if let interestingValue = Obis.obisDefinitions[obisValue.id]
                                                                     {
                                                                         return InterestingValue(id: obisValue.id,
-                                                                                                topic: interestingValue["topic"]!,
-                                                                                                name: interestingValue["name"]!,
-                                                                                                title: interestingValue["title"]!,
-                                                                                                unit: interestingValue["unit"]!,
+                                                                                                topic: interestingValue.topic,
+                                                                                                name: interestingValue.name,
+                                                                                                title: interestingValue.title,
+                                                                                                unit: interestingValue.unit,
 //                                                                                                ipaddress: ipaddress.ipv4String,
                                                                                                 value: obisValue.value,
                                                                                                 payload : obisValue.value

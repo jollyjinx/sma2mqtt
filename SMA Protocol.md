@@ -151,7 +151,7 @@ Responses from the inverter have the same header with data then attached (e.g. a
          |     |              0x0002  0000 0010b  incorrect command ?
          |     |              0x0014              unkown command ?
          |     |              0x0015  0000 1111b  no values
-         |     |              0x0017  0001 1111b  not logged in
+         |     |              0x0017  0001 0001b  not logged in
          |     |              0x0102              login not possible (busy)?
 
     0x14 | U16 | Bit 0-14 packet id
@@ -217,9 +217,10 @@ I've not seen any response from a logout.
          |     |            ---- X--0b  8 -> response 9 as if adding one to the request
     0x17 | U8  | ?? usually 02
     0x18 | U16 | Command used in request 
-         |     |    0x5180 keep alive - contains no data only option1&2 are set to 0x0021 4800 and 0x0041 4aff
-         |     |    0x2800 special multicast answer
-         |     |
+         |     |    0x0000 keep alive ? contains no data option 1 & 2 : 0x0000 0000 & 0x0000 00ff
+         |     |                        can contain 56 static bytes as well 
+         |     |    0x5180 keep alive ? contains no data option 1 & 2 : 0x0021 4800 and 0x0041 4aff
+         |     |    0x2800 special multicast answer ?
          |     |    
          |     |
          |     |

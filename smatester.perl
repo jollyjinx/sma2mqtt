@@ -576,11 +576,12 @@ sub printSMANetPacket
                                         ||  ( ((@values[2] & 0xffff0000) == 0xffff0000) && ((@values[3] & 0xffff0000) == 0xffff0000) )
     #                                    ||  (@values[0] == 0xffffffff && @values[1] == 0xffffffff && @values[2] == 0xffffffff && @values[3] == 0xffffffff)
                                         ||  !$shortmarker
+#                                        || (@values[0] != 0 && @values[1] != 0 && @values[2] != 0 && @values[3] != 0)
                                     )
                                     && (@values[4] == 1 || @values[4] == 0)
                                     ? 1 : 0;
 #                # 56012b7fbc76 Code:0x6400-0x543a No:0x01 Type:0x00 2021-08-20T16:39:59
-#                printf "S:%d L:%d 0x%08x 0x%08x",$shortmarker,$longmarker,@values[2] & 0xffff0000,@values[3] & 0xffff0000;
+                printf "S:%d L:%d 0x%08x 0x%08x",$shortmarker,$longmarker,@values[2] & 0xffff0000,@values[3] & 0xffff0000;
 
                 if(         @values[0] == 0x0       # version number scheme
                         &&  @values[1] == 0x0
