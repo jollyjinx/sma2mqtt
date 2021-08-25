@@ -13,7 +13,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser", from: "0.3.2"),
-        .package(url: "https://github.com/apple/swift-nio", from: "2.0.0"),
+        .package(url: "https://github.com/apple/swift-nio", from: "2.32.0"),
         .package(url: "https://github.com/jollyjinx/mqtt-nio", from: "1.0.1"),
         .package(url: "https://github.com/jollyjinx/BinaryCoder", from: "2.2.3"),
 //        .package(url: "/Users/jolly/Documents/GitHub/BinaryCoder", .revision("f2e6dad") ),
@@ -31,7 +31,7 @@ let package = Package(
                                         .product(name: "BinaryCoder", package: "BinaryCoder"),
                                         .product(name: "JLog", package: "JLog")
                                        ],
-                        resources: [ .copy("obisdefinition.json")
+                        resources: [ .copy("Resources/obisdefinition.json")
                                     ]
                         ),
         .testTarget(    name: "sma2mqttTests",

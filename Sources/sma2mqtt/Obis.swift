@@ -2,21 +2,21 @@ import Foundation
 import BinaryCoder
 import JLog
 
-enum ObisType:String,Decodable
+enum ObisDefinitionType:String,Encodable,Decodable
 {
     case version    = "softwareversion"
     case ipv4address
 
-    case uint32x10
-    case int32x1000
+    case uint32
+    case int32
     case uint64
-    case uint32x1000
 }
 
-struct ObisDefinition:Decodable
+struct ObisDefinition:Encodable,Decodable
 {
     let id:String
-    let type:ObisType
+    let type:ObisDefinitionType
+    let factor:Double?
     let unit:String
     let topic:String
     let name:String
@@ -26,45 +26,143 @@ struct ObisDefinition:Decodable
 struct Obis
 {
     static let obisDefinitions:[String:ObisDefinition] = {
-            if  let url = Bundle.module.url(forResource: "obisdefinition", withExtension: "json"),
-                let jsonData = try? Data(contentsOf: url),
-                let obisDefinitions = try? JSONDecoder().decode([ObisDefinition].self, from: jsonData)
+            if  let url = Bundle.module.url(forResource: "obisdefinition", withExtension: "json")
             {
-                return Dictionary(uniqueKeysWithValues: obisDefinitions.map { ($0.id, $0) })
+                if  let jsonData = try? Data(contentsOf: url),
+                    let obisDefinitions = try? JSONDecoder().decode([ObisDefinition].self, from: jsonData)
+                {
+                    return Dictionary(uniqueKeysWithValues: obisDefinitions.map { ($0.id, $0) })
+                }
+                JLog.error("Could not decode obisdefintion resource file")
+                return [String:ObisDefinition]()
             }
+            JLog.error("Could not find obisdefintion resource file")
             return [String:ObisDefinition]()
         }()
 }
 
-
-func obisDetection(binaryDecoder:BinaryDecoder) -> [ObisValue]
+extension Array where Element == ObisValue
 {
-    var obisvalues = [ObisValue]()
-
-    while !binaryDecoder.isAtEnd
+    init(fromBinary decoder:BinaryDecoder)
     {
-        let currentposition = binaryDecoder.position
+        var obisvalues = [ObisValue]()
 
-        do
+        while !decoder.isAtEnd
         {
-            let aObis = try ObisValue(fromBinary: binaryDecoder )
-            obisvalues.append(aObis)
+            let currentposition = decoder.position
+
+            do
+            {
+                let aObis = try ObisValue(fromBinary: decoder )
+                obisvalues.append(aObis)
+            }
+            catch let error
+            {
+                JLog.error("Got decoding error:\(error) advancing 1 byte")
+                decoder.position = currentposition + 1
+            }
         }
-        catch let error
-        {
-            JLog.error("Got decoding error:\(error) advancing 1 byte")
-            binaryDecoder.position = currentposition + 1
-        }
+        self = obisvalues
     }
-    return obisvalues
 }
 
-struct ObisValue:BinaryDecodable, Encodable
+
+enum ObisType
+{
+    case string(String)
+    case uint(UInt64)
+    case int(Int64)
+
+    var description:String
+    {
+        switch self
+        {
+            case .string(let value):    return value.description
+            case .uint(let value):      return value.description
+            case .int(let value):      return value.description
+        }
+    }
+}
+
+extension ObisType:Decodable,Encodable
+{
+    private enum CodingKeys: String, CodingKey {
+        case string
+        case uint
+        case int
+    }
+
+    enum PostTypeCodingError: Error
+    {
+        case decoding(String)
+    }
+
+    init(from decoder: Decoder) throws
+    {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+
+        if let value = try? values.decode(String.self, forKey: .string)
+        {
+            self = .string(value)
+            return
+        }
+        if let value = try? values.decode(UInt64.self, forKey: .uint)
+        {
+            self = .uint(value)
+            return
+        }
+        if let value = try? values.decode(Int64.self, forKey: .int)
+        {
+            self = .int(value)
+            return
+        }
+        throw PostTypeCodingError.decoding("Whoops! \(dump(values))")
+    }
+
+    func encode(to encoder: Encoder) throws
+    {
+        var container = encoder.singleValueContainer()
+
+        switch self
+        {
+            case .string(let value):    try container.encode(value)
+            case .uint(let value):      try container.encode(value)
+            case .int(let value):       try container.encode(value)
+        }
+    }
+}
+
+
+
+
+
+struct ObisValue:Encodable
 {
     let id:String
-    let value:String
+    let value:ObisType
+}
+
+//
+//extension ObisValue:Encodable
+//{
+//    func encode(to encoder: Encoder) throws
+//    {
+//        var container = encoder.singleValueContainer()
+//
+//        switch self
+//        {
+//            case .string(let value):    try container.encode(value)
+//            case .uint(let value):      try container.encode(value)
+//            case .int(let value):       try container.encode(value)
+//        }
+//    }
+//}
+//
 
 
+
+extension ObisValue:BinaryDecodable
+{
     init(fromBinary decoder: BinaryDecoder) throws
     {
         JLog.debug("Decoding ObisValue")
@@ -84,27 +182,23 @@ struct ObisValue:BinaryDecodable, Encodable
             {
                 case .version:      let intValue = try decoder.decode(Int32.self).bigEndian
                                     JLog.trace("name: \(obisDefinition.name) value:\(String(format:"%08x",intValue))")
-                                    self.value = "major:\(intValue>>24) minor:\(intValue>>16 & 0xFF) build:\(intValue>>8 & 0xFF) revision:\(String(format:"%c",intValue & 0xFF))"
+                                    self.value = .string("major:\(intValue>>24) minor:\(intValue>>16 & 0xFF) build:\(intValue>>8 & 0xFF) revision:\(String(format:"%c",intValue & 0xFF))")
 
                 case .ipv4address:  let intValue = try decoder.decode(UInt32.self).bigEndian
                                     JLog.trace("name: \(obisDefinition.name) value:\(String(format:"%08x",intValue))")
-                                    self.value = intValue.ipv4String
+                                    self.value = .string(intValue.ipv4String)
 
-                case .uint32x10:    let intValue = try decoder.decode(UInt32.self).bigEndian
+                case .uint32:       let intValue = try decoder.decode(UInt32.self).bigEndian
                                     JLog.trace("name: \(obisDefinition.name) value:\(String(format:"%08x",intValue))")
-                                    self.value = "\(intValue/10).\(intValue%10)"
+                                    self.value = .uint(UInt64(intValue))
 
-                case .int32x1000:   let intValue = try decoder.decode(Int32.self).bigEndian
+                case .int32:        let intValue = try decoder.decode(Int32.self).bigEndian
                                     JLog.trace("name: \(obisDefinition.name) value:\(String(format:"%08x",intValue))")
-                                    self.value = "\(intValue/1000).\(intValue%1000)"
-
-                case .uint32x1000:  let intValue = try decoder.decode(UInt32.self).bigEndian
-                                    JLog.trace("name: \(obisDefinition.name) value:\(String(format:"%08x",intValue))")
-                                    self.value = "\(intValue/1000).\(intValue%1000)"
+                                    self.value = .int(Int64(intValue))
 
                 case .uint64:       let intValue = try decoder.decode(UInt64.self).bigEndian
                                     JLog.trace("name: \(obisDefinition.name) value:\(String(format:"%16x",intValue))")
-                                    self.value = String(intValue)
+                                    self.value = .uint(UInt64(intValue))
             }
         }
         else
@@ -113,9 +207,26 @@ struct ObisValue:BinaryDecodable, Encodable
             throw BinaryDecoder.Error.typeNotConformingToBinaryDecodable(ObisValue.self)
         }
         JLog.debug("Decoded corretly \(self.id) \(self.value)")
-
     }
-
-    var description:String { "\(id) : \(value)  \( Obis.obisDefinitions[id]?.topic ?? "" )"}
 }
 
+//
+//extension ObisValue: Decodable
+//{
+////    enum CodingKeys: String, CodingKey
+////    {
+////        case id
+////        case value
+////    }
+//
+//    init(from decoder: Decoder) throws
+//    {
+//        let values  = try decoder.container(keyedBy: CodingKeys.self)
+//        self.id     = try values.decode(Double.self, forKey: .id
+//        self.value  = try values.decode(Double.self, forKey: .value)
+//
+//        let additionalInfo = try values.nestedContainer(keyedBy: AdditionalInfoKeys.self, forKey: .additionalInfo)
+//        elevation = try additionalInfo.decode(Double.self, forKey: .elevation)
+//    }
+//}
+//

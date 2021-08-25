@@ -10,11 +10,10 @@ struct InterestingValue : Encodable
     let name:   String
     let title:  String
     let unit:   String
-//    let ipaddress: String
     let value:  String
     let payload: String
     let devicename = "sunnymanager"
-    let time = "\(Date())"
+    let time = Date()
 }
 
 
@@ -26,24 +25,30 @@ struct SMAMulticastPacket: BinaryDecodable
     var serialnumber:UInt32?
     var currenttimems:UInt32?
 
-    var interestingValues : [InterestingValue] { get { return obis.compactMap{ obisValue in
-                                
-                                                                    if let interestingValue = Obis.obisDefinitions[obisValue.id]
-                                                                    {
-                                                                        return InterestingValue(id: obisValue.id,
-                                                                                                topic: interestingValue.topic,
-                                                                                                name: interestingValue.name,
-                                                                                                title: interestingValue.title,
-                                                                                                unit: interestingValue.unit,
-//                                                                                                ipaddress: ipaddress.ipv4String,
-                                                                                                value: obisValue.value,
-                                                                                                payload : obisValue.value
-                                                                            )
-                                                                    }
-                                                                    JLog.error("Could not decode obisValue:\(obisValue)")
-                                                                    return nil
-                                                                }
-                                        } }
+//    var interestingValues : [InterestingValue]
+//            { get   {
+//                        let jsonData = try! JSONEncoder().encode(obis)
+//                        return String(data:jsonData,encoding:.utf8)
+//
+////                        return obis.compactMap{ obisValue in
+////                            if let interestingValue = Obis.obisDefinitions[obisValue.id]
+////                            {
+////
+////                                return InterestingValue(id: obisValue.id,
+////                                                        topic: interestingValue.topic,
+////                                                        name: interestingValue.name,
+////                                                        title: interestingValue.title,
+////                                                        unit: interestingValue.unit,
+////
+////                                                        value: obisValue.value.description,
+////                                                        payload : obisValue.value.description
+////                                    )
+////                            }
+////                            JLog.error("Could not decode obisValue:\(obisValue)")
+////                            return nil
+//                        }
+//                    }
+//            }
 
     init(fromBinary decoder: BinaryDecoder) throws
     {
@@ -90,7 +95,7 @@ struct SMAMulticastPacket: BinaryDecodable
 
                                         switch protocolid
                                         {
-                                            case 0x6069:    JLog.debug("recgonizing BigEndian obis protocol")
+                                            case 0x6069:    JLog.debug("recognizing BigEndian obis protocol")
 
                                                             if  let systemid        = try? smaNetDecoder.decode(UInt16.self).bigEndian,
                                                                 let serialnumber    = try? smaNetDecoder.decode(UInt32.self).bigEndian,
@@ -101,7 +106,7 @@ struct SMAMulticastPacket: BinaryDecodable
                                                                 self.currenttimems = currenttimems
                                                                 JLog.debug("got \(String(format:"systemid:0x%x serialnumber:0x%x time:0x%xms",systemid,serialnumber,currenttimems))")
 
-                                                                obisvalues = obisDetection(binaryDecoder: smaNetDecoder)
+                                                                obisvalues = Array<ObisValue>(fromBinary: smaNetDecoder)
                                                             }
                                                             else
                                                             {
@@ -109,7 +114,7 @@ struct SMAMulticastPacket: BinaryDecodable
                                                             }
 
 
-                                            case 0x6065:    JLog.debug("recgonizing LittleEndian speedwire protocol")
+                                            case 0x6065:    JLog.debug("recognizing LittleEndian speedwire protocol")
 
                                                             if  let fourbytecount   = try? smaNetDecoder.decode(UInt8.self),
                                                                 let countertype     = try? smaNetDecoder.decode(UInt8.self)
@@ -136,7 +141,8 @@ struct SMAMulticastPacket: BinaryDecodable
                                                             {
                                                                 JLog.debug("packetidhigh:\(packetidhigh) low:\(packetidlow) somevalue:\(somevalue) littleEndian: sysid:\(sysID) serial:\(serial)")
 
-                                                                obisvalues = obisDetection(binaryDecoder: smaNetDecoder)
+                                                                obisvalues = Array<ObisValue>(fromBinary: smaNetDecoder)
+
                                                             }
                                                             else
                                                             {
@@ -150,7 +156,8 @@ struct SMAMulticastPacket: BinaryDecodable
                                                             }
 
                                             default:        JLog.error("prototocol unknown - will try decoding")
-                                                            obisvalues = obisDetection(binaryDecoder: smaNetDecoder)
+                                                            obisvalues = Array<ObisValue>(fromBinary: smaNetDecoder)
+
                                         }
                                     }
                                     else
@@ -159,7 +166,7 @@ struct SMAMulticastPacket: BinaryDecodable
                                     }
 
                     default:        JLog.warning("Could not decode tag:\(tag) length:\(length) data:\(smaNetData.dump) trying detection")
-                                    obisvalues = obisDetection(binaryDecoder: smaNetDecoder)
+                                    obisvalues = Array<ObisValue>(fromBinary: smaNetDecoder)
                 }
             }
         }
@@ -169,7 +176,7 @@ struct SMAMulticastPacket: BinaryDecodable
 
     var description : String
     {
-        return "Decoded: \( obis.map{ $0.description + "\n"}.joined() ) \n"
+        return "Decoded: \( obis.map{ $0.value.description + "\n"}.joined() ) \n"
 //        return "Decoded: \(self.id) \(self.time_in_ms) \( obis.map{ $0.description + "\n"}.joined() ) \n"
     }
 }

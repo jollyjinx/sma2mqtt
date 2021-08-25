@@ -189,7 +189,7 @@ final class SMAMessageReceiver: ChannelInboundHandler
                 let jsonEncoder = JSONEncoder()
                //     jsonEncoder.dateEncodingStrategy = .iso8601
 
-                let jsonData = try! jsonEncoder.encode(sma.interestingValues)
+                let jsonData = try! jsonEncoder.encode(sma.obis)
                 let jsonString = String(data: jsonData, encoding: .utf8)!
 
 
