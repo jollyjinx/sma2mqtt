@@ -16,7 +16,7 @@ struct ObisDefinition:Encodable,Decodable
 {
     let id:String
     let type:ObisDefinitionType
-    let factor:Double?
+    let factor:Decimal?
     let unit:String
     let topic:String
     let name:String
@@ -79,7 +79,7 @@ enum ObisType
         {
             case .string(let value):    return value.description
             case .uint(let value):      return value.description
-            case .int(let value):      return value.description
+            case .int(let value):       return value.description
         }
     }
 }
@@ -136,28 +136,68 @@ extension ObisType:Decodable,Encodable
 
 
 
-struct ObisValue:Encodable
+struct ObisValue
 {
     let id:String
     let value:ObisType
 }
 
-//
-//extension ObisValue:Encodable
-//{
-//    func encode(to encoder: Encoder) throws
-//    {
-//        var container = encoder.singleValueContainer()
-//
-//        switch self
-//        {
-//            case .string(let value):    try container.encode(value)
-//            case .uint(let value):      try container.encode(value)
-//            case .int(let value):       try container.encode(value)
-//        }
-//    }
-//}
-//
+
+extension ObisValue:Encodable
+{
+    func encode(to encoder: Encoder) throws
+    {
+        let obisDefinition = Obis.obisDefinitions[id]!
+
+        enum CodingKeys: String, CodingKey
+        {
+            case id,
+//            type,
+//            factor,
+            unit,
+            topic,
+            name,
+            title,
+            value
+        }
+        var container = encoder.container(keyedBy:CodingKeys.self)
+
+        try container.encode(obisDefinition.id      ,forKey:.id)
+//        try container.encode(obisDefinition.type    ,forKey:.type)
+
+        try container.encode(obisDefinition.unit    ,forKey:.unit)
+        try container.encode(obisDefinition.topic   ,forKey:.topic)
+        try container.encode(obisDefinition.name    ,forKey:.name)
+        try container.encode(obisDefinition.title   ,forKey:.title)
+
+        let factor      = obisDefinition.factor
+        let hasFactor   = obisDefinition.factor != nil && obisDefinition.factor! != 0
+
+        switch value
+        {
+            case .string(let value):    try container.encode(value,forKey:.value)
+            case .uint(let value):      if value == UInt64.max
+                                        {
+                                            let string:String? = nil
+                                            try container.encode(string ,forKey:.value)
+                                        }
+                                        else
+                                        {
+                                            try container.encode( hasFactor ? Decimal(value) / factor! : Decimal(value),forKey:.value)
+                                        }
+            case .int(let value):       if value == UInt64.min
+                                        {
+                                            let string:String? = nil
+                                            try container.encode(string ,forKey:.value)
+                                        }
+                                        else
+                                        {
+                                            try container.encode( hasFactor ? Decimal(value) / factor! : Decimal(value),forKey:.value)
+                                        }
+        }
+    }
+}
+
 
 
 
@@ -190,15 +230,15 @@ extension ObisValue:BinaryDecodable
 
                 case .uint32:       let intValue = try decoder.decode(UInt32.self).bigEndian
                                     JLog.trace("name: \(obisDefinition.name) value:\(String(format:"%08x",intValue))")
-                                    self.value = .uint(UInt64(intValue))
+                                    self.value = .uint( intValue == UInt32.max ? UInt64.max : UInt64(intValue) )
 
                 case .int32:        let intValue = try decoder.decode(Int32.self).bigEndian
                                     JLog.trace("name: \(obisDefinition.name) value:\(String(format:"%08x",intValue))")
-                                    self.value = .int(Int64(intValue))
+                                    self.value = .int( intValue == UInt32.min ? Int64.min : Int64(intValue) )
 
                 case .uint64:       let intValue = try decoder.decode(UInt64.self).bigEndian
                                     JLog.trace("name: \(obisDefinition.name) value:\(String(format:"%16x",intValue))")
-                                    self.value = .uint(UInt64(intValue))
+                                    self.value = .uint( intValue )
             }
         }
         else
@@ -209,24 +249,3 @@ extension ObisValue:BinaryDecodable
         JLog.debug("Decoded corretly \(self.id) \(self.value)")
     }
 }
-
-//
-//extension ObisValue: Decodable
-//{
-////    enum CodingKeys: String, CodingKey
-////    {
-////        case id
-////        case value
-////    }
-//
-//    init(from decoder: Decoder) throws
-//    {
-//        let values  = try decoder.container(keyedBy: CodingKeys.self)
-//        self.id     = try values.decode(Double.self, forKey: .id
-//        self.value  = try values.decode(Double.self, forKey: .value)
-//
-//        let additionalInfo = try values.nestedContainer(keyedBy: AdditionalInfoKeys.self, forKey: .additionalInfo)
-//        elevation = try additionalInfo.decode(Double.self, forKey: .elevation)
-//    }
-//}
-//
