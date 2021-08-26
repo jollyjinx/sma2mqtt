@@ -35,7 +35,7 @@ struct sma2mqtt: ParsableCommand
     var json:Bool = false
 
     @Option(name: .long, help: "MQTT Server hostname")
-    var mqqtServername: String = "mqtt"
+    var mqttServername: String = "mqtt"
 
     @Option(name: .long, help: "MQTT Server port")
     var mqttPort: UInt16 = 1883;
@@ -60,7 +60,7 @@ struct sma2mqtt: ParsableCommand
 
     mutating func run() throws
     {
-        let mqttServer  = JNXMQTTServer(server: JNXServer(hostname: mqqtServername, port: mqttPort), emitInterval: interval, topic: topic)
+        let mqttServer  = JNXMQTTServer(server: JNXServer(hostname: mqttServername, port: mqttPort), emitInterval: interval, topic: topic)
         let mcastServer = JNXMCASTGroup(server: JNXServer(hostname: mcastAddress, port: mcastPort), bind: JNXServer(hostname: bindAddress, port: bindPort) )
 
         if debug > 0
@@ -186,20 +186,35 @@ final class SMAMessageReceiver: ChannelInboundHandler
             {
                 JLog.debug("Decoded: \(sma)")
 
-                let jsonEncoder = JSONEncoder()
-               //     jsonEncoder.dateEncodingStrategy = .iso8601
+                for obisvalue in sma.obis
+                {
+                    let jsonEncoder = JSONEncoder()
+                    let jsonData = try! jsonEncoder.encode(obisvalue)
+                    let jsonString = String(data: jsonData, encoding: .utf8)!
 
-                let jsonData = try! jsonEncoder.encode(sma.obis)
-                let jsonString = String(data: jsonData, encoding: .utf8)!
-
-
-                JLog.debug("JSON:\(jsonString)")
-                if jsonOutput { print("\(jsonString)") }
-
-                mqttClient.publish( topic: mqttServer.topic,
-                                    payload: jsonString,
-                                    retain: true
+                    let topic = "\(mqttServer.topic)/\(obisvalue.topic)/\(obisvalue.name)"
+                    mqttClient.publish( topic: topic,
+                                        payload: jsonString,
+                                        retain: true
                                     )
+                }
+//
+//
+//                let jsonEncoder = JSONEncoder()
+//               //     jsonEncoder.dateEncodingStrategy = .iso8601
+//
+//                let jsonData = try! jsonEncoder.encode(sma.obis)
+//                let jsonString = String(data: jsonData, encoding: .utf8)!
+//
+//
+//
+//                JLog.debug("JSON:\(jsonString)")
+//                if jsonOutput { print("\(jsonString)") }
+//
+//                mqttClient.publish( topic: mqttServer.topic,
+//                                    payload: jsonString,
+//                                    retain: true
+//                                    )
                 lasttime = timenow
             }
             else

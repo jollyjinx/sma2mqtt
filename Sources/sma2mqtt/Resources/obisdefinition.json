@@ -79,5 +79,5 @@
     { "id" :  "1:73.4.0" , "type"  : "uint32" , "factor" : 10       , "unit" : "%"  , "topic"   : "phase3"  , "name" : "powerfactor"            , "title" : "Phase 3 Power factor"},
     { "id" :  "1:74.4.0" , "type"  : "uint32" , "factor" : 1000	    , "unit" : "Hz" , "topic"   : "phase3"  , "name" : "gridfrequency"          , "title" : "Phase 3 Grid Frequency"},
 
-    { "id" :  "144:0.0.0", "type"  : "softwareversion"              , "unit" : "none", "topic"   : "info"    , "name" : "version"                , "title" : "Software Version"}
+    { "id" :  "144:0.0.0", "type"  : "softwareversion"              , "unit" : "none", "topic"   : "generic"    , "name" : "version"                , "title" : "Software Version"}
  ]

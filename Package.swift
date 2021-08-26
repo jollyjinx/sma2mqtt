@@ -21,8 +21,6 @@ let package = Package(
 //        .package(url: "/Users/jolly/Documents/GitHub/JLog", .revision("440b721") ),
     ],
     targets: [
-        // Targets are the basic building blocks of a package. A target can define a module or a test suite.
-        // Targets can depend on other targets in this package, and on products in packages this package depends on.
         .executableTarget(
                         name: "sma2mqtt",
                         dependencies: [ .product(name: "NIO", package: "swift-nio"),

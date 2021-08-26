@@ -140,6 +140,9 @@ struct ObisValue
 {
     let id:String
     let value:ObisType
+
+    var topic:String { get { Obis.obisDefinitions[id]?.topic ?? "notopic" } }
+    var name:String { get { Obis.obisDefinitions[id]?.name ?? "noname" } }
 }
 
 
