@@ -188,11 +188,14 @@ final class SMAMessageReceiver: ChannelInboundHandler
 
                 for var obisvalue in sma.obis
                 {
-                    let topic = "\(mqttServer.topic)/\(obisvalue.topic)"
-                    mqttClient.publish( topic: topic,
-                                        payload: obisvalue.json,
-                                        retain: obisvalue.retain
-                                    )
+                    if obisvalue.mqtt
+                    {
+                        let topic = "\(mqttServer.topic)/\(obisvalue.topic)"
+                        mqttClient.publish( topic: topic,
+                                            payload: obisvalue.json,
+                                            retain: obisvalue.retain
+                                           )
+                    }
                     if jsonOutput
                     {
                         obisvalue.includeTopic = true

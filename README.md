@@ -11,7 +11,11 @@ Inside the repository is a *build.sh* shell script that creates a docker contain
 
 Output of __sma2mqtt__ will look like this on a mqtt broker:
 
-![SunnyManager mqtt example](Images/sunnymanager.mqtt.png)
+![SunnyManager mqtt example](Images/sunnymanager.mqtt.short.png)
+
+Or if you change the obisdefinitions to show all values it will look more like this:
+
+![SunnyManager mqtt example](Images/sunnymanager.mqtt.long.png)
 
 
 ## Future

@@ -21,6 +21,7 @@ struct ObisDefinition:Encodable,Decodable
     let topic:String
     let title:String
     let retain:Bool
+    let mqtt:Bool
 }
 
 struct Obis
@@ -143,6 +144,7 @@ struct ObisValue
 
     var topic:String { Obis.obisDefinitions[id]?.topic ?? "id/\(id)" }
     var retain:Bool  { Obis.obisDefinitions[id]?.retain ?? false }
+    var mqtt:Bool  { Obis.obisDefinitions[id]?.mqtt ?? false }
 
 
     var includeTopic:Bool = false
