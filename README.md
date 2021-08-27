@@ -20,12 +20,12 @@ I started reversing the [SMA inverter protocol](SMA%20Protocol.md) to get sma2mq
 
 
 ```
-USAGE: sma2mqtt [--debug ...] [--json] [--mqqt-servername <mqqt-servername>] [--mqtt-port <mqtt-port>] [--interval <interval>] [--topic <topic>] [--bind-address <bind-address>] [--bind-port <bind-port>] [--mcast-address <mcast-address>] [--mcast-port <mcast-port>]
+USAGE: sma2mqtt [--debug ...] [--json] [--mqtt-servername <mqtt-servername>] [--mqtt-port <mqtt-port>] [--interval <interval>] [--topic <topic>] [--bind-address <bind-address>] [--bind-port <bind-port>] [--mcast-address <mcast-address>] [--mcast-port <mcast-port>]
 
 OPTIONS:
   -d, --debug             optional debug output 
   --json                  send json output to stdout 
-  --mqqt-servername <mqqt-servername>
+  --mqtt-servername <mqtt-servername>
                           MQTT Server hostname (default: mqtt)
   --mqtt-port <mqtt-port> MQTT Server port (default: 1883)
   -i, --interval <interval>
@@ -47,48 +47,42 @@ OPTIONS:
 Start with --json option which will print the json that is sent to the mqtt server to stdout. jq is used just for formatting.
 ```
 $./sma2mqtt --json |jq . 
-[
-  {
-    "unit": "W",
-    "devicename": "sunnymanager",
-    "id": "1:1.4.0",
-    "time": "2021-08-07 07:58:31 +0000",
-    "title": "Grid Usage",
-    "payload": 0,
-    "topic": "sums",
-    "value": 0,
-    "name": "usage"
-  },
-  {
-    "unit": "Ws",
-    "devicename": "sunnymanager",
-    "id": "1:1.8.0",
-    "time": "2021-08-07 07:58:31 +0000",
-    "title": "Grid Usage Counter",
-    "payload": 2961.7594,
-    "topic": "sums",
-    "value": 2961.7594,
-    "name": "usagecounter"
-  },
-  {
-    "unit": "W",
-    "devicename": "sunnymanager",
-    "id": "1:2.4.0",
-    "time": "2021-08-07 07:58:31 +0000",
-    "title": "Grid Feedin",
-    "payload": 2902.5,
-    "topic": "sums",
-    "value": 2902.5,
-    "name": "feedin"
-  },
-  {
-    "unit": "Ws",
-    "devicename": "sunnymanager",
-    "id": "1:2.8.0",
-    "time": "2021-08-07 07:58:31 +0000",
-    "title": "Grid Feedin Counter",
-    "payload": 7655.8808,
-    "topic": "sums",
+{
+  "id": "1:1.4.0",
+  "title": "Grid Usage",
+  "value": 17.9,
+  "unit": "W"
+}
+{
+  "id": "1:1.8.0",
+  "title": "Grid Usage Counter",
+  "value": 2963.1604,
+  "unit": "kWh"
+}
+{
+  "id": "1:2.4.0",
+  "title": "Grid Feedin",
+  "value": 0,
+  "unit": "W"
+}
+{
+  "id": "1:2.8.0",
+  "title": "Grid Feedin Counter",
+  "value": 8038.2811,
+  "unit": "kWh"
+}
+{
+  "id": "1:3.4.0",
+  "title": "Reactive Usage",
+  "value": 0,
+  "unit": "W"
+}
+{
+  "id": "1:3.8.0",
+  "title": "Reactive Usage Counter",
+  "value": 356.2985,
+  "unit": "kWh"
+}
 .
 .
 .
