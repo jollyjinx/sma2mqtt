@@ -17,7 +17,7 @@ let package = Package(
         .package(url: "https://github.com/jollyjinx/mqtt-nio", from: "1.0.1"),
         .package(url: "https://github.com/jollyjinx/BinaryCoder", from: "2.2.3"),
 //        .package(url: "/Users/jolly/Documents/GitHub/BinaryCoder", .revision("f2e6dad") ),
-        .package(url: "https://github.com/jollyjinx/JLog", from:"0.0.2"),
+        .package(url: "https://github.com/jollyjinx/JLog", from:"0.0.4"),
 //        .package(url: "/Users/jolly/Documents/GitHub/JLog", .revision("440b721") ),
     ],
     targets: [
@@ -31,12 +31,12 @@ let package = Package(
                                        ],
                         resources: [ .copy("Resources/obisdefinition.json")
                                     ]
-                        ),
-        .testTarget(    name: "sma2mqttTests",
-                        dependencies: [ "sma2mqtt",
-                                        .product(name: "BinaryCoder", package: "BinaryCoder"),
-                                        .product(name: "JLog", package: "JLog")
-                                    ]
+//                        ),
+//        .testTarget(    name: "sma2mqttTests",
+//                        dependencies: [ "sma2mqtt",
+//                                        .product(name: "BinaryCoder", package: "BinaryCoder"),
+//                                        .product(name: "JLog", package: "JLog")
+//                                    ]
                     )
     ]
 )
