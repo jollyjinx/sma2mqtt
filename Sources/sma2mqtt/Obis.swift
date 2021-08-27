@@ -19,7 +19,7 @@ struct ObisDefinition:Encodable,Decodable
     let factor:Decimal?
     let unit:String
     let topic:String
-    let name:String
+//    let name:String
     let title:String
 }
 
@@ -142,7 +142,7 @@ struct ObisValue
     let value:ObisType
 
     var topic:String { get { Obis.obisDefinitions[id]?.topic ?? "notopic" } }
-    var name:String { get { Obis.obisDefinitions[id]?.name ?? "noname" } }
+//    var name:String { get { Obis.obisDefinitions[id]?.name ?? "noname" } }
 }
 
 
@@ -224,23 +224,23 @@ extension ObisValue:BinaryDecodable
             switch obisDefinition.type
             {
                 case .version:      let intValue = try decoder.decode(Int32.self).bigEndian
-                                    JLog.trace("name: \(obisDefinition.name) value:\(String(format:"%08x",intValue))")
+                                    JLog.trace("name: \(obisDefinition.topic) value:\(String(format:"%08x",intValue))")
                                     self.value = .string("major:\(intValue>>24) minor:\(intValue>>16 & 0xFF) build:\(intValue>>8 & 0xFF) revision:\(String(format:"%c",intValue & 0xFF))")
 
                 case .ipv4address:  let intValue = try decoder.decode(UInt32.self).bigEndian
-                                    JLog.trace("name: \(obisDefinition.name) value:\(String(format:"%08x",intValue))")
+                                    JLog.trace("name: \(obisDefinition.topic) value:\(String(format:"%08x",intValue))")
                                     self.value = .string(intValue.ipv4String)
 
                 case .uint32:       let intValue = try decoder.decode(UInt32.self).bigEndian
-                                    JLog.trace("name: \(obisDefinition.name) value:\(String(format:"%08x",intValue))")
+                                    JLog.trace("name: \(obisDefinition.topic) value:\(String(format:"%08x",intValue))")
                                     self.value = .uint( intValue == UInt32.max ? UInt64.max : UInt64(intValue) )
 
                 case .int32:        let intValue = try decoder.decode(Int32.self).bigEndian
-                                    JLog.trace("name: \(obisDefinition.name) value:\(String(format:"%08x",intValue))")
+                                    JLog.trace("name: \(obisDefinition.topic) value:\(String(format:"%08x",intValue))")
                                     self.value = .int( intValue == UInt32.min ? Int64.min : Int64(intValue) )
 
                 case .uint64:       let intValue = try decoder.decode(UInt64.self).bigEndian
-                                    JLog.trace("name: \(obisDefinition.name) value:\(String(format:"%16x",intValue))")
+                                    JLog.trace("name: \(obisDefinition.topic) value:\(String(format:"%16x",intValue))")
                                     self.value = .uint( intValue )
             }
         }
