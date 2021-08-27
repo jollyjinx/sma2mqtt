@@ -7,7 +7,7 @@ Tools to get SMA live data feed published to MQTT.
 __sma2mqtt__ reads data from Sunny HomeManager and publishes the data to MQTT.
 __sma2mqtt__ joins the SMA multicast and listens to the announcements that Sunny HomeManager does in that group. It works only inside the local network as multicast only works there.
 
-Inside the repository is a *build.sh* shell script that creats a Docker container building and running *sma2mqtt* inside. You need to adjust it to your needs if you want to run *sma2mqtt* in docker as your docker setup is probably different then mine.
+Inside the repository is a *build.sh* shell script that creates a docker container with *sma2mqtt* inside. You need to adjust it to your needs, as your docker setup is probably different then mine.
 
 Output of __sma2mqtt__ will look like this on a mqtt broker:
 
