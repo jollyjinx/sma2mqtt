@@ -9,6 +9,11 @@ The build.sh is a build script to create a docker container to compile and run t
 
 *sma2mqtt* reads data via joining the SMA multicast group (so it currently works only inside the local network). 
 
+On the mqtt broker it will look like this:
+
+![SunnyManager mqtt example](Images/sunnymanager.mqtt.png)
+
+
 I started reversing the [SMA inverter protocol](SMA%20Protocol.md) to get sma2mqtt read values from all SMA prodcuts and publish them on MQTT.
 
 ### Usage
