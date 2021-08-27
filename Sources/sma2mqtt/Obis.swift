@@ -158,8 +158,8 @@ extension ObisValue:Encodable
 //            type,
 //            factor,
             unit,
-            topic,
-            name,
+//            topic,
+//            name,
             title,
             value
         }
@@ -169,8 +169,8 @@ extension ObisValue:Encodable
 //        try container.encode(obisDefinition.type    ,forKey:.type)
 
         try container.encode(obisDefinition.unit    ,forKey:.unit)
-        try container.encode(obisDefinition.topic   ,forKey:.topic)
-        try container.encode(obisDefinition.name    ,forKey:.name)
+//        try container.encode(obisDefinition.topic   ,forKey:.topic)
+//        try container.encode(obisDefinition.name    ,forKey:.name)
         try container.encode(obisDefinition.title   ,forKey:.title)
 
         let factor      = obisDefinition.factor

@@ -69,15 +69,15 @@
     { "id" :  "1:64.4.0" , "type"  : "uint32" , "factor" : 10       , "unit" : "W"   , "topic"   : "phase3"  , "name" : "reactivefeedin"         , "title" : "Phase 3 Reactive Feedin"},
     { "id" :  "1:64.8.0" , "type"  : "uint64" , "factor" : 3600000  , "unit" : "kWh" , "topic"   : "phase3"  , "name" : "reactivefeedincounter"  , "title" : "Phase 3 Reactive Feedin Counter"},
 
-    { "id" :  "1:69.4.0" , "type"  : "uint32" , "factor" : 10       , "unit" : "W"  , "topic"   : "phase3"  , "name" : "apparentusage"          , "title" : "Phase 3 Apparent Usage"},
+    { "id" :  "1:69.4.0" , "type"  : "uint32" , "factor" : 10       , "unit" : "W"   , "topic"   : "phase3"  , "name" : "apparentusage"          , "title" : "Phase 3 Apparent Usage"},
     { "id" :  "1:69.8.0" , "type"  : "uint64" , "factor" : 3600000  , "unit" : "kWh" , "topic"   : "phase3"  , "name" : "apparentusagecounter"   , "title" : "Phase 3 Apparent Usage Counter"},
-    { "id" :  "1:70.4.0" , "type"  : "uint32" , "factor" : 10       , "unit" : "W"  , "topic"   : "phase3"  , "name" : "apparentfeedin"         , "title" : "Phase 3 Apparent Feedin"},
+    { "id" :  "1:70.4.0" , "type"  : "uint32" , "factor" : 10       , "unit" : "W"   , "topic"   : "phase3"  , "name" : "apparentfeedin"         , "title" : "Phase 3 Apparent Feedin"},
     { "id" :  "1:70.8.0" , "type"  : "uint64" , "factor" : 3600000  , "unit" : "kWh" , "topic"   : "phase3"  , "name" : "apparentfeedincounter"  , "title" : "Phase 3 Apparent Feedin Counter"},
 
-    { "id" :  "1:71.4.0" , "type"  : "uint32" , "factor" : 1000	    , "unit" : "A"  , "topic"   : "phase3"  , "name" : "current"                , "title" : "Phase 3 Current"},
-    { "id" :  "1:72.4.0" , "type"  : "uint32" , "factor" : 1000	    , "unit" : "V"  , "topic"   : "phase3"  , "name" : "voltage"                , "title" : "Phase 3 Voltage"},
-    { "id" :  "1:73.4.0" , "type"  : "uint32" , "factor" : 10       , "unit" : "%"  , "topic"   : "phase3"  , "name" : "powerfactor"            , "title" : "Phase 3 Power factor"},
-    { "id" :  "1:74.4.0" , "type"  : "uint32" , "factor" : 1000	    , "unit" : "Hz" , "topic"   : "phase3"  , "name" : "gridfrequency"          , "title" : "Phase 3 Grid Frequency"},
+    { "id" :  "1:71.4.0" , "type"  : "uint32" , "factor" : 1000	    , "unit" : "A"   , "topic"   : "phase3"  , "name" : "current"                , "title" : "Phase 3 Current"},
+    { "id" :  "1:72.4.0" , "type"  : "uint32" , "factor" : 1000	    , "unit" : "V"   , "topic"   : "phase3"  , "name" : "voltage"                , "title" : "Phase 3 Voltage"},
+    { "id" :  "1:73.4.0" , "type"  : "uint32" , "factor" : 10       , "unit" : "%"   , "topic"   : "phase3"  , "name" : "powerfactor"            , "title" : "Phase 3 Power factor"},
+    { "id" :  "1:74.4.0" , "type"  : "uint32" , "factor" : 1000	    , "unit" : "Hz"  , "topic"   : "phase3"  , "name" : "gridfrequency"          , "title" : "Phase 3 Grid Frequency"},
 
-    { "id" :  "144:0.0.0", "type"  : "softwareversion"              , "unit" : "none", "topic"   : "generic"    , "name" : "version"                , "title" : "Software Version"}
+    { "id" :  "144:0.0.0", "type"  : "softwareversion"              , "unit" : "none", "topic"   : "generic" , "name" : "version"                , "title" : "Software Version"}
  ]
