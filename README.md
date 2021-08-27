@@ -4,17 +4,19 @@ Tools to get SMA live data feed published to MQTT.
 
 ## sma2mqtt
 
-*sma2mqtt* currently publishes HomeManager data to MQTT. 
-The build.sh is a build script to create a docker container to compile and run the actual swift program inside the container. It's been hacked together to see if a swift program is feasable and doable at all, on linux inside a docker container. It uses docker network to connect to the correct VLAN - my network is heavily split up in different VLANs. 
+__sma2mqtt__ reads data from Sunny HomeManager and publishes the data to MQTT.
+__sma2mqtt__ joins the SMA multicast and listens to the announcements that Sunny HomeManager does in that group. It works only inside the local network as multicast only works there.
 
-*sma2mqtt* reads data via joining the SMA multicast group (so it currently works only inside the local network). 
+Inside the repository is a *build.sh* shell script that creats a Docker container building and running *sma2mqtt* inside. You need to adjust it to your needs if you want to run *sma2mqtt* in docker as your docker setup is probably different then mine.
 
-On the mqtt broker it will look like this:
+Output of __sma2mqtt__ will look like this on a mqtt broker:
 
 ![SunnyManager mqtt example](Images/sunnymanager.mqtt.png)
 
 
-I started reversing the [SMA inverter protocol](SMA%20Protocol.md) to get sma2mqtt read values from all SMA prodcuts and publish them on MQTT.
+## Future
+
+I use __sma2mqtt__ in 'production' and it works fine. Inverter values are currently read out via modbus, but I started reversing the [SMA inverter protocol](SMA%20Protocol.md) to get sma2mqtt read values from all SMA prodcuts via UDP. Modbus seems to have problems on SMA inverters, that's why I want to switch.
 
 ### Usage
 
