@@ -20,6 +20,7 @@ struct ObisDefinition:Encodable,Decodable
     let unit:String
     let topic:String
     let title:String
+    let retain:Bool
 }
 
 struct Obis
@@ -140,7 +141,8 @@ struct ObisValue
     let id:String
     let value:ObisType
 
-    var topic:String { get { Obis.obisDefinitions[id]?.topic ?? "id/\(id)" } }
+    var topic:String { Obis.obisDefinitions[id]?.topic ?? "id/\(id)" }
+    var retain:Bool  { Obis.obisDefinitions[id]?.retain ?? false }
 }
 
 
