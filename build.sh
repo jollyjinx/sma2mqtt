@@ -1,48 +1,65 @@
 #!/bin/bash
+
+if [[ $EUID -eq 0 ]]; then
+   echo "This script must NOT run as root"
+   exit 1
+fi
+
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 echo "DIR:$DIR"
-
 cd ${DIR}
 
-buildpath=.build
-name=$(perl -ne  'BEGIN{ $/=undef; } print "$1\n" if /Package\(\s+name\:\s+\"(.*?)\"/;' <Package.swift)
 
-if [[ -z $name ]]
+packagedir="$DIR/sma2mqtt"
+buildpath=.build
+programname=sma2mqtt
+releasepath=release
+if [[ ! -d "$packagedir" ]];
 then
-    echo "Could not find destination name in Package.swift"
-    exit 1
+	echo "$packagedir does not exist."
+	exit 1
 fi
 
-mkdir ${buildpath}
-cat >${buildpath}/buildandstart.sh <<EOF
-#!/bin/sh
-swift build -c release --build-path=${buildpath}
-exec ${buildpath}/release/${name}
+cd "$packagedir"
+mkdir "$buildpath"    2>/dev/null
 
+cat >"buildandstart.sh" <<EOF
+#!/bin/bash
+
+executable="$buildpath/$releasepath/$programname"
+if [[ ! -x "\$executable" ]];
+then
+	echo "Did not find executable \$executable - building"
+	swift build -c release --build-path="$buildpath"
+fi
+echo "Executing \$executable"
+exec "\$executable" --interval 10
 EOF
-chmod ugo+x ${buildpath}/buildandstart.sh
+
+chmod ugo+x "buildandstart.sh"
 
 cat >Dockerfile <<EOF
-FROM th089/swift:latest
-
+FROM swiftarm/swift:latest
 WORKDIR /home
-
-CMD ["${buildpath}/buildandstart.sh"]
-
+CMD ["/home/buildandstart.sh"]
 EOF
 
-docker image inspect swift:latest || docker build -t swift:latest .
+docker build -t swift:latest .
 
-docker stop $name
-docker container rm $name
+# docker image inspect swift:latest >/dev/null 2>/dev/null  || docker build -t swift:latest .
+
+docker stop $programname
+docker container rm $programname
+
+        #-u $(id -u ${USER}):$(id -g ${USER}) \
 
 docker run \
         --detach --restart=always \
-        -u $(id -u ${USER}):$(id -g ${USER}) \
         --net service16 \
         --log-opt max-size=1m --log-opt max-file=2 \
-        -v ${DIR}/:/home \
-        --name $name \
+        -v "$packagedir":/home \
+        --name "$programname" \
         swift:latest
-docker network connect mqtt-net $name
+
+docker network connect mqtt-net "$programname"
