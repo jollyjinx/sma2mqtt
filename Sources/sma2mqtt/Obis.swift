@@ -143,7 +143,18 @@ struct ObisValue
 
     var topic:String { Obis.obisDefinitions[id]?.topic ?? "id/\(id)" }
     var retain:Bool  { Obis.obisDefinitions[id]?.retain ?? false }
+
+
+    var includeTopic:Bool = false
+    var json:String
+    {
+        let jsonEncoder = JSONEncoder()
+        let jsonData = try! jsonEncoder.encode(self)
+        return String(data: jsonData, encoding: .utf8)!
+    }
+
 }
+
 
 
 extension ObisValue:Encodable
@@ -157,13 +168,19 @@ extension ObisValue:Encodable
             case id,
             unit,
             title,
-            value
+            value,
+            topic
         }
         var container = encoder.container(keyedBy:CodingKeys.self)
 
         try container.encode(obisDefinition.id      ,forKey:.id)
         try container.encode(obisDefinition.unit    ,forKey:.unit)
         try container.encode(obisDefinition.title   ,forKey:.title)
+
+        if includeTopic
+        {
+            try container.encode(obisDefinition.topic   ,forKey:.topic)
+        }
 
         let factor      = obisDefinition.factor
         let hasFactor   = obisDefinition.factor != nil && obisDefinition.factor! != 0

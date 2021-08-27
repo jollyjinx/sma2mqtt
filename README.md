@@ -48,39 +48,31 @@ Start with --json option which will print the json that is sent to the mqtt serv
 ```
 $./sma2mqtt --json |jq . 
 {
-  "id": "1:1.4.0",
-  "title": "Grid Usage",
-  "value": 17.9,
+  "id": "1:4.4.0",
+  "title": "Reactive Feedin",
+  "topic": "immediate/reactivefeedin",
+  "value": 103.4,
   "unit": "W"
 }
 {
-  "id": "1:1.8.0",
-  "title": "Grid Usage Counter",
-  "value": 2963.1604,
+  "id": "1:4.8.0",
+  "title": "Reactive Feedin Counter",
+  "topic": "counter/reactivefeedin",
+  "value": 3544.3821,
   "unit": "kWh"
 }
 {
-  "id": "1:2.4.0",
-  "title": "Grid Feedin",
-  "value": 0,
+  "id": "1:9.4.0",
+  "title": "Apparent Usage",
+  "topic": "immediate/apparentusage",
+  "value": 104.8,
   "unit": "W"
 }
 {
-  "id": "1:2.8.0",
-  "title": "Grid Feedin Counter",
-  "value": 8038.2811,
-  "unit": "kWh"
-}
-{
-  "id": "1:3.4.0",
-  "title": "Reactive Usage",
-  "value": 0,
-  "unit": "W"
-}
-{
-  "id": "1:3.8.0",
-  "title": "Reactive Usage Counter",
-  "value": 356.2985,
+  "id": "1:9.8.0",
+  "title": "Apparent Usage Counter",
+  "topic": "counter/apparentusage",
+  "value": 4246.7811,
   "unit": "kWh"
 }
 .

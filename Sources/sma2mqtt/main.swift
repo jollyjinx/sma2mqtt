@@ -186,18 +186,18 @@ final class SMAMessageReceiver: ChannelInboundHandler
             {
                 JLog.debug("Decoded: \(sma)")
 
-                for obisvalue in sma.obis
+                for var obisvalue in sma.obis
                 {
-                    let jsonEncoder = JSONEncoder()
-                    let jsonData = try! jsonEncoder.encode(obisvalue)
-                    let jsonString = String(data: jsonData, encoding: .utf8)!
-
                     let topic = "\(mqttServer.topic)/\(obisvalue.topic)"
                     mqttClient.publish( topic: topic,
-                                        payload: jsonString,
+                                        payload: obisvalue.json,
                                         retain: obisvalue.retain
                                     )
-                    if jsonOutput { print("\(jsonString)") }
+                    if jsonOutput
+                    {
+                        obisvalue.includeTopic = true
+                        print("\(obisvalue.json)")
+                    }
                 }
                 lasttime = timenow
             }
