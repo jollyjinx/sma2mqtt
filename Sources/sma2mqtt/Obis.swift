@@ -19,7 +19,6 @@ struct ObisDefinition:Encodable,Decodable
     let factor:Decimal?
     let unit:String
     let topic:String
-//    let name:String
     let title:String
 }
 
@@ -141,8 +140,7 @@ struct ObisValue
     let id:String
     let value:ObisType
 
-    var topic:String { get { Obis.obisDefinitions[id]?.topic ?? "notopic" } }
-//    var name:String { get { Obis.obisDefinitions[id]?.name ?? "noname" } }
+    var topic:String { get { Obis.obisDefinitions[id]?.topic ?? "id/\(id)" } }
 }
 
 
@@ -155,22 +153,14 @@ extension ObisValue:Encodable
         enum CodingKeys: String, CodingKey
         {
             case id,
-//            type,
-//            factor,
             unit,
-//            topic,
-//            name,
             title,
             value
         }
         var container = encoder.container(keyedBy:CodingKeys.self)
 
         try container.encode(obisDefinition.id      ,forKey:.id)
-//        try container.encode(obisDefinition.type    ,forKey:.type)
-
         try container.encode(obisDefinition.unit    ,forKey:.unit)
-//        try container.encode(obisDefinition.topic   ,forKey:.topic)
-//        try container.encode(obisDefinition.name    ,forKey:.name)
         try container.encode(obisDefinition.title   ,forKey:.title)
 
         let factor      = obisDefinition.factor
