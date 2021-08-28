@@ -20,11 +20,6 @@ then
 	exit 1
 fi
 
-#
-# as long as swift does not run as user
-# make the container files at least be our group
-chmod g+s "$packagedir"
-
 cd "$packagedir"
 mkdir "$buildpath"    2>/dev/null
 
@@ -43,10 +38,18 @@ EOF
 
 chmod ugo+x "buildandstart.sh"
 
+DOCKER_UID=$(id -u ${USER})
+DOCKER_GID=$(id -g ${USER})
+
 docker build -t swift:latest -<<EOF
 FROM swiftarm/swift:latest
-WORKDIR /home
-CMD ["/home/buildandstart.sh"]
+
+RUN groupadd -g $DOCKER_GID swift
+RUN useradd -m -u $DOCKER_UID -g swift swift
+USER swift
+
+WORKDIR /home/swift
+CMD ["/home/swift/buildandstart.sh"]
 EOF
 
 # docker image inspect swift:latest >/dev/null 2>/dev/null  || docker build -t swift:latest .
@@ -54,17 +57,14 @@ EOF
 docker stop $programname
 docker container rm $programname
 
-        # futurejones swift was able to run as user in docker
-        # current version does not ;-(
-        #-u $(id -u ${USER}):$(id -g ${USER}) \
-
 docker run \
         --detach --restart=always \
-        --user :$(id -g ${USER}) \
+        -u $DOCKER_UID:$DOCKER_GID \
         --net service16 \
         --log-opt max-size=1m --log-opt max-file=2 \
-        -v "$packagedir":/home \
+        -v "$packagedir":/home/swift \
         --name "$programname" \
         swift:latest
 
 docker network connect mqtt-net "$programname"
+
