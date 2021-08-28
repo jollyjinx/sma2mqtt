@@ -156,11 +156,9 @@ func startSma2mqtt(mcastServer:JNXMCASTGroup,mqttServer:JNXMQTTServer,jsonOutput
 final class SMAMessageReceiver: ChannelInboundHandler
 {
     public typealias InboundIn = AddressedEnvelope<ByteBuffer>
-    var lasttime:Date = Date.distantPast
     let mqttServer:JNXMQTTServer
     let mqttClient:MQTTClient
     let jsonOutput:Bool
-
 
     init(mqttClient:MQTTClient,mqttServer:JNXMQTTServer,jsonOutput:Bool = false)
     {
@@ -174,6 +172,7 @@ final class SMAMessageReceiver: ChannelInboundHandler
         let envelope = self.unwrapInboundIn(data)
         var buffer = envelope.data
 
+        var lasttime:Date = Date.distantPast
         let timenow = Date()
 
         if  timenow.timeIntervalSince(lasttime) > mqttServer.emitInterval,
