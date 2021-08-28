@@ -2,7 +2,7 @@ import Foundation
 import BinaryCoder
 import JLog
 
-enum ObisDefinitionType:String,Encodable,Decodable
+fileprivate enum ObisDefinitionType:String,Encodable,Decodable
 {
     case version    = "softwareversion"
     case ipv4address
@@ -12,7 +12,7 @@ enum ObisDefinitionType:String,Encodable,Decodable
     case uint64
 }
 
-struct ObisDefinition:Encodable,Decodable
+fileprivate struct ObisDefinition:Encodable,Decodable
 {
     let id:String
     let type:ObisDefinitionType
@@ -24,7 +24,7 @@ struct ObisDefinition:Encodable,Decodable
     let mqtt:Bool
 }
 
-struct Obis
+fileprivate struct Obis
 {
     static let obisDefinitions:[String:ObisDefinition] = {
             if  let url = Bundle.module.url(forResource: "obisdefinition", withExtension: "json")
@@ -132,9 +132,6 @@ extension ObisType:Decodable,Encodable
         }
     }
 }
-
-
-
 
 
 struct ObisValue

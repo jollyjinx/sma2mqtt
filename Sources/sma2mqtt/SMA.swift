@@ -3,19 +3,6 @@ import BinaryCoder
 import JLog
 
 
-struct InterestingValue : Encodable
-{
-    let id:     String
-    let topic:  String
-    let name:   String
-    let title:  String
-    let unit:   String
-    let value:  String
-    let payload: String
-    let devicename = "sunnymanager"
-    let time = Date()
-}
-
 
 struct SMAMulticastPacket: BinaryDecodable
 {
@@ -24,31 +11,6 @@ struct SMAMulticastPacket: BinaryDecodable
     var systemid:UInt16?
     var serialnumber:UInt32?
     var currenttimems:UInt32?
-
-//    var interestingValues : [InterestingValue]
-//            { get   {
-//                        let jsonData = try! JSONEncoder().encode(obis)
-//                        return String(data:jsonData,encoding:.utf8)
-//
-////                        return obis.compactMap{ obisValue in
-////                            if let interestingValue = Obis.obisDefinitions[obisValue.id]
-////                            {
-////
-////                                return InterestingValue(id: obisValue.id,
-////                                                        topic: interestingValue.topic,
-////                                                        name: interestingValue.name,
-////                                                        title: interestingValue.title,
-////                                                        unit: interestingValue.unit,
-////
-////                                                        value: obisValue.value.description,
-////                                                        payload : obisValue.value.description
-////                                    )
-////                            }
-////                            JLog.error("Could not decode obisValue:\(obisValue)")
-////                            return nil
-//                        }
-//                    }
-//            }
 
     init(fromBinary decoder: BinaryDecoder) throws
     {
@@ -177,7 +139,6 @@ struct SMAMulticastPacket: BinaryDecodable
     var description : String
     {
         return "Decoded: \( obis.map{ $0.value.description + "\n"}.joined() ) \n"
-//        return "Decoded: \(self.id) \(self.time_in_ms) \( obis.map{ $0.description + "\n"}.joined() ) \n"
     }
 }
 
