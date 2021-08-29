@@ -84,20 +84,18 @@ struct SMAMulticastPacket: BinaryDecodable
                                                                     JLog.error("Expected expectinglength:\(expectinglength) but seems to have more - ignoring")
                                                                 }
 
-                                                            if  let packetidlow  = try? littleEndianDecoder.decode(UInt32.self).littleEndian,
-                                                                let packetidhigh = try? littleEndianDecoder.decode(UInt16.self).littleEndian,
-                                                                let somevalue  = try? littleEndianDecoder.decode(UInt16.self),
-                                                                let sysID      = try? littleEndianDecoder.decode(UInt16.self).littleEndian,
-                                                                let serial     = try? littleEndianDecoder.decode(UInt32.self).littleEndian
-                                                            {
-                                                                JLog.debug("packetidhigh:\(packetidhigh) low:\(packetidlow) somevalue:\(somevalue) littleEndian: sysid:\(sysID) serial:\(serial)")
-
-                                                            }
-                                                            else
-                                                            {
-                                                                JLog.error("littleEndianDecoder header decoding error:\(littleEndianData.dump)")
-
-                                                            }
+                                                                if  let packetidlow  = try? littleEndianDecoder.decode(UInt32.self).littleEndian,
+                                                                    let packetidhigh = try? littleEndianDecoder.decode(UInt16.self).littleEndian,
+                                                                    let somevalue  = try? littleEndianDecoder.decode(UInt16.self),
+                                                                    let sysID      = try? littleEndianDecoder.decode(UInt16.self).littleEndian,
+                                                                    let serial     = try? littleEndianDecoder.decode(UInt32.self).littleEndian
+                                                                {
+                                                                    JLog.debug("packetidhigh:\(packetidhigh) low:\(packetidlow) somevalue:\(somevalue) littleEndian: sysid:\(sysID) serial:\(serial)")
+                                                                }
+                                                                else
+                                                                {
+                                                                    JLog.error("littleEndianDecoder header decoding error:\(littleEndianData.dump)")
+                                                                }
                                                             }
                                                             else
                                                             {
