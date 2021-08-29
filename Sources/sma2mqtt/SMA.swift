@@ -59,20 +59,9 @@ struct SMAMulticastPacket: BinaryDecodable
                                         {
                                             case 0x6069:    JLog.debug("recognizing BigEndian obis protocol")
 
-                                                            if  let systemid        = try? smaNetDecoder.decode(UInt16.self).bigEndian,
-                                                                let serialnumber    = try? smaNetDecoder.decode(UInt32.self).bigEndian,
-                                                                let currenttimems   = try? smaNetDecoder.decode(UInt32.self).bigEndian
+                                                            if let obisProtocol = try? ObisProtocol.init(fromBinary: smaNetDecoder)
                                                             {
-                                                                self.systemid     = systemid
-                                                                self.serialnumber = serialnumber
-                                                                self.currenttimems = currenttimems
-                                                                JLog.debug("got \(String(format:"systemid:0x%x serialnumber:0x%x time:0x%xms",systemid,serialnumber,currenttimems))")
-
-                                                                obisvalues = Array<ObisValue>(fromBinary: smaNetDecoder)
-                                                            }
-                                                            else
-                                                            {
-                                                                JLog.error("BigEndian header decoding error:\(smaNetData.dump)")
+                                                                obisvalues = obisProtocol.obisvalues
                                                             }
 
 
@@ -103,8 +92,6 @@ struct SMAMulticastPacket: BinaryDecodable
                                                             {
                                                                 JLog.debug("packetidhigh:\(packetidhigh) low:\(packetidlow) somevalue:\(somevalue) littleEndian: sysid:\(sysID) serial:\(serial)")
 
-                                                                obisvalues = Array<ObisValue>(fromBinary: smaNetDecoder)
-
                                                             }
                                                             else
                                                             {
@@ -117,8 +104,9 @@ struct SMAMulticastPacket: BinaryDecodable
                                                                 JLog.error("littleEndianData header decoding error:\(smaNetData.dump)")
                                                             }
 
-                                            default:        JLog.error("prototocol unknown - will try decoding")
-                                                            obisvalues = Array<ObisValue>(fromBinary: smaNetDecoder)
+                                            default:        JLog.error("prototocol unknown.")
+
+
 
                                         }
                                     }
@@ -128,7 +116,7 @@ struct SMAMulticastPacket: BinaryDecodable
                                     }
 
                     default:        JLog.warning("Could not decode tag:\(tag) length:\(length) data:\(smaNetData.dump) trying detection")
-                                    obisvalues = Array<ObisValue>(fromBinary: smaNetDecoder)
+
                 }
             }
         }
@@ -138,7 +126,7 @@ struct SMAMulticastPacket: BinaryDecodable
 
     var description : String
     {
-        return "Decoded: \( obis.map{ $0.value.description + "\n"}.joined() ) \n"
+        return "Decoded: \( obis.description ) \n"
     }
 }
 

@@ -2,149 +2,34 @@ import Foundation
 import BinaryCoder
 import JLog
 
-fileprivate enum ObisDefinitionType:String,Encodable,Decodable
+struct ObisValue
 {
-    case version    = "softwareversion"
-    case ipv4address
 
-    case uint32
-    case int32
-    case uint64
-}
-
-fileprivate struct ObisDefinition:Encodable,Decodable
-{
     let id:String
-    let type:ObisDefinitionType
-    let factor:Decimal?
-    let unit:String
-    let topic:String
-    let title:String
-    let retain:Bool
-    let mqtt:Bool
-}
+    let value:ObisType
 
-fileprivate struct Obis
-{
-    static let obisDefinitions:[String:ObisDefinition] = {
-            if  let url = Bundle.module.url(forResource: "obisdefinition", withExtension: "json")
-            {
-                if  let jsonData = try? Data(contentsOf: url),
-                    let obisDefinitions = try? JSONDecoder().decode([ObisDefinition].self, from: jsonData)
-                {
-                    return Dictionary(uniqueKeysWithValues: obisDefinitions.map { ($0.id, $0) })
-                }
-                JLog.error("Could not decode obisdefintion resource file")
-                return [String:ObisDefinition]()
-            }
-            JLog.error("Could not find obisdefintion resource file")
-            return [String:ObisDefinition]()
-        }()
-}
+    var includeTopicInJSON  = false
+    var topic:String        { ObisDefinition.obisDefinitions[id]?.topic   ?? "id/\(id)" }
 
-extension Array where Element == ObisValue
-{
-    init(fromBinary decoder:BinaryDecoder)
+    enum MQTTVisibilty:String,Encodable,Decodable
     {
-        var obisvalues = [ObisValue]()
-
-        while !decoder.isAtEnd
-        {
-            let currentposition = decoder.position
-
-            do
-            {
-                let aObis = try ObisValue(fromBinary: decoder )
-                obisvalues.append(aObis)
-            }
-            catch let error
-            {
-                JLog.error("Got decoding error:\(error) advancing 1 byte")
-                decoder.position = currentposition + 1
-            }
-        }
-        self = obisvalues
+        case invisible,visible,retained
     }
+    var mqtt:MQTTVisibilty  { ObisDefinition.obisDefinitions[id]?.mqtt ?? .invisible }
 }
-
 
 enum ObisType
 {
     case string(String)
     case uint(UInt64)
     case int(Int64)
-
-    var description:String
-    {
-        switch self
-        {
-            case .string(let value):    return value.description
-            case .uint(let value):      return value.description
-            case .int(let value):       return value.description
-        }
-    }
 }
+extension ObisType:Decodable {}
 
-extension ObisType:Decodable,Encodable
+
+
+extension ObisValue:Encodable
 {
-    private enum CodingKeys: String, CodingKey {
-        case string
-        case uint
-        case int
-    }
-
-    enum PostTypeCodingError: Error
-    {
-        case decoding(String)
-    }
-
-    init(from decoder: Decoder) throws
-    {
-        let values = try decoder.container(keyedBy: CodingKeys.self)
-
-        if let value = try? values.decode(String.self, forKey: .string)
-        {
-            self = .string(value)
-            return
-        }
-        if let value = try? values.decode(UInt64.self, forKey: .uint)
-        {
-            self = .uint(value)
-            return
-        }
-        if let value = try? values.decode(Int64.self, forKey: .int)
-        {
-            self = .int(value)
-            return
-        }
-        throw PostTypeCodingError.decoding("Whoops! \(dump(values))")
-    }
-
-    func encode(to encoder: Encoder) throws
-    {
-        var container = encoder.singleValueContainer()
-
-        switch self
-        {
-            case .string(let value):    try container.encode(value)
-            case .uint(let value):      try container.encode(value)
-            case .int(let value):       try container.encode(value)
-        }
-    }
-}
-
-
-struct ObisValue
-{
-    let id:String
-    let value:ObisType
-
-    var topic:String { Obis.obisDefinitions[id]?.topic ?? "id/\(id)" }
-    var retain:Bool  { Obis.obisDefinitions[id]?.retain ?? false }
-    var mqtt:Bool  { Obis.obisDefinitions[id]?.mqtt ?? false }
-
-
-    var includeTopic:Bool = false
     var json:String
     {
         let jsonEncoder = JSONEncoder()
@@ -152,15 +37,9 @@ struct ObisValue
         return String(data: jsonData, encoding: .utf8)!
     }
 
-}
-
-
-
-extension ObisValue:Encodable
-{
     func encode(to encoder: Encoder) throws
     {
-        let obisDefinition = Obis.obisDefinitions[id]!
+        let obisDefinition = ObisDefinition.obisDefinitions[id]!
 
         enum CodingKeys: String, CodingKey
         {
@@ -176,7 +55,7 @@ extension ObisValue:Encodable
         try container.encode(obisDefinition.unit    ,forKey:.unit)
         try container.encode(obisDefinition.title   ,forKey:.title)
 
-        if includeTopic
+        if includeTopicInJSON
         {
             try container.encode(obisDefinition.topic   ,forKey:.topic)
         }
@@ -229,7 +108,7 @@ extension ObisValue:BinaryDecodable
 
         let value:ObisType
 
-        if let obisDefinition = Obis.obisDefinitions[id]
+        if let obisDefinition = ObisDefinition.obisDefinitions[id]
         {
             switch obisDefinition.type
             {
