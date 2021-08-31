@@ -42,7 +42,7 @@ DOCKER_UID=$(id -u ${USER})
 DOCKER_GID=$(id -g ${USER})
 
 docker build -t swift:latest -<<EOF
-FROM swiftarm/swift:latest
+FROM swiftlang/swift:nightly-focal
 
 RUN groupadd -g $DOCKER_GID swift
 RUN useradd -m -u $DOCKER_UID -g swift swift

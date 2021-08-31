@@ -4,7 +4,6 @@ import JLog
 
 struct ObisValue
 {
-
     let id:String
     let value:ObisType
 
