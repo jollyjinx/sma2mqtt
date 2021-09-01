@@ -3,7 +3,6 @@ import Foundation
 
 import NIO
 import MQTTNIO
-import BinaryCoder
 import ArgumentParser
 import JLog
 import sma2mqttLibrary
@@ -172,17 +171,16 @@ final class SMAMessageReceiver: ChannelInboundHandler
     {
         let envelope = self.unwrapInboundIn(data)
         var buffer = envelope.data
-
         var lasttime:Date = Date.distantPast
         let timenow = Date()
 
         if  timenow.timeIntervalSince(lasttime) > mqttServer.emitInterval,
-            let byteData = buffer.readBytes(length: buffer.readableBytes)
+            let byteArray = buffer.readBytes(length: buffer.readableBytes)
         {
-            JLog.debug("\(timenow) Data: \(byteData.count) from: \(envelope.remoteAddress) ")
+            JLog.debug("\(timenow) Data: \(byteArray.count) from: \(envelope.remoteAddress) ")
 
-            let binaryDecoder = BinaryDecoder(data: byteData )
-            if let sma = try? binaryDecoder.decode(SMAMulticastPacket.self)
+
+            if let sma = try? SMAMulticastPacket(byteArray:byteArray)
             {
                 JLog.debug("Decoded: \(sma)")
 

@@ -12,6 +12,19 @@ public struct SMAMulticastPacket: BinaryDecodable
     var serialnumber:UInt32?
     var currenttimems:UInt32?
 
+    public init(data:Data) throws
+    {
+        let byteArray = [UInt8](data)
+        let binaryDecoder = BinaryDecoder(data: byteArray)
+        self = try binaryDecoder.decode(SMAMulticastPacket.self)
+    }
+
+    public init(byteArray:[UInt8]) throws
+    {
+        let binaryDecoder = BinaryDecoder(data: byteArray)
+        self = try binaryDecoder.decode(SMAMulticastPacket.self)
+    }
+
     public init(fromBinary decoder: BinaryDecoder) throws
     {
         JLog.debug("Decoding SMAMulticastPacket")

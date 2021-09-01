@@ -31,7 +31,6 @@ let package = Package(
                                         .product(name: "NIO", package: "swift-nio"),
                                         .product(name: "ArgumentParser", package: "swift-argument-parser"),
                                         .product(name: "MQTTNIO", package: "mqtt-nio"),
-                                        .product(name: "BinaryCoder", package: "BinaryCoder"),
                                         .product(name: "JLog", package: "JLog")
                                        ]
                         ),
