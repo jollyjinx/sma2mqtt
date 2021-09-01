@@ -2,22 +2,22 @@ import Foundation
 import BinaryCoder
 import JLog
 
-struct ObisValue
+public struct ObisValue
 {
     let id:String
     let value:ObisType
 
-    var includeTopicInJSON  = false
-    var topic:String        { ObisDefinition.obisDefinitions[id]?.topic   ?? "id/\(id)" }
+    public var includeTopicInJSON  = false
+    public var topic:String        { ObisDefinition.obisDefinitions[id]?.topic   ?? "id/\(id)" }
 
-    enum MQTTVisibilty:String,Encodable,Decodable
+    public enum MQTTVisibilty:String,Encodable,Decodable
     {
         case invisible,visible,retained
     }
-    var mqtt:MQTTVisibilty  { ObisDefinition.obisDefinitions[id]?.mqtt ?? .invisible }
+    public var mqtt:MQTTVisibilty  { ObisDefinition.obisDefinitions[id]?.mqtt ?? .invisible }
 }
 
-enum ObisType
+public enum ObisType
 {
     case string(String)
     case uint(UInt64)
@@ -29,14 +29,14 @@ extension ObisType:Decodable {}
 
 extension ObisValue:Encodable
 {
-    var json:String
+    public var json:String
     {
         let jsonEncoder = JSONEncoder()
         let jsonData = try! jsonEncoder.encode(self)
         return String(data: jsonData, encoding: .utf8)!
     }
 
-    func encode(to encoder: Encoder) throws
+    public func encode(to encoder: Encoder) throws
     {
         let obisDefinition = ObisDefinition.obisDefinitions[id]!
 
@@ -92,7 +92,7 @@ extension ObisValue:Encodable
 
 extension ObisValue:BinaryDecodable
 {
-    init(fromBinary decoder: BinaryDecoder) throws
+    public init(fromBinary decoder: BinaryDecoder) throws
     {
         JLog.debug("Decoding ObisValue")
 

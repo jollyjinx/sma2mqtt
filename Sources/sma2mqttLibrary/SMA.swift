@@ -4,15 +4,15 @@ import JLog
 
 
 
-struct SMAMulticastPacket: BinaryDecodable
+public struct SMAMulticastPacket: BinaryDecodable
 {
-    let obis:[ObisValue]
+    public let obis:[ObisValue]
     var group:UInt32?
     var systemid:UInt16?
     var serialnumber:UInt32?
     var currenttimems:UInt32?
 
-    init(fromBinary decoder: BinaryDecoder) throws
+    public init(fromBinary decoder: BinaryDecoder) throws
     {
         JLog.debug("Decoding SMAMulticastPacket")
 
@@ -21,7 +21,7 @@ struct SMAMulticastPacket: BinaryDecodable
         if smaprefix != 0x534d4100 // == 'SMA\0'
         {
             JLog.error("packet does not start with SMA header (SMA\0)")
-            throw BinaryDecoder.Error.typeNotConformingToBinaryDecodable(ObisValue.self)
+            throw BinaryDecoder.Error.typeNotConformingToBinaryDecodable(SMAMulticastPacket.self)
         }
 
         JLog.debug("Valid SMA Header")
@@ -103,18 +103,14 @@ struct SMAMulticastPacket: BinaryDecodable
                                                             }
 
                                             default:        JLog.error("prototocol unknown.")
-
-
-
                                         }
                                     }
                                     else
                                     {
-                                        JLog.error("Could not decode prototocol:\(tag) length:\(length) data:\(smaNetData.dump)")
+                                        JLog.error("Could not decode protocol:\(tag) length:\(length) data:\(smaNetData.dump)")
                                     }
 
                     default:        JLog.warning("Could not decode tag:\(tag) length:\(length) data:\(smaNetData.dump) trying detection")
-
                 }
             }
         }

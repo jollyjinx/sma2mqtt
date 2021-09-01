@@ -6,6 +6,7 @@ import MQTTNIO
 import BinaryCoder
 import ArgumentParser
 import JLog
+import sma2mqttLibrary
 
 struct JNXServer
 {

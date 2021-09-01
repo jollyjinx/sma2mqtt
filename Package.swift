@@ -11,6 +11,10 @@ let package = Package(
         .tvOS(.v13),
         .watchOS(.v6)
     ],
+    products: [
+        .executable(name: "sma2mqtt", targets: ["sma2mqtt"]),
+        .library(name: "sma2mqttLibrary", targets: ["sma2mqttLibrary"]),
+    ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser", from: "0.3.2"),
         .package(url: "https://github.com/apple/swift-nio", from: "2.32.0"),
@@ -23,20 +27,27 @@ let package = Package(
     targets: [
         .executableTarget(
                         name: "sma2mqtt",
-                        dependencies: [ .product(name: "NIO", package: "swift-nio"),
+                        dependencies: [ "sma2mqttLibrary",
+                                        .product(name: "NIO", package: "swift-nio"),
                                         .product(name: "ArgumentParser", package: "swift-argument-parser"),
                                         .product(name: "MQTTNIO", package: "mqtt-nio"),
                                         .product(name: "BinaryCoder", package: "BinaryCoder"),
                                         .product(name: "JLog", package: "JLog")
+                                       ]
+                        ),
+        .target(
+                        name: "sma2mqttLibrary",
+                        dependencies: [ .product(name: "BinaryCoder", package: "BinaryCoder"),
+                                        .product(name: "JLog", package: "JLog")
                                        ],
                         resources: [ .copy("Resources/obisdefinition.json")
                                     ]
-//                        ),
-//        .testTarget(    name: "sma2mqttTests",
-//                        dependencies: [ "sma2mqtt",
-//                                        .product(name: "BinaryCoder", package: "BinaryCoder"),
-//                                        .product(name: "JLog", package: "JLog")
-//                                    ]
+                        ),
+        .testTarget(    name: "sma2mqttTests",
+                        dependencies: [ "sma2mqttLibrary",
+                                        .product(name: "BinaryCoder", package: "BinaryCoder"),
+                                        .product(name: "JLog", package: "JLog")
+                                    ]
                     )
     ]
 )
