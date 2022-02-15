@@ -41,8 +41,9 @@ chmod ugo+x "buildandstart.sh"
 DOCKER_UID=$(id -u ${USER})
 DOCKER_GID=$(id -g ${USER})
 
-docker build -t swift:latest -<<EOF
-FROM swiftarm/swift:latest
+docker pull swiftlang/swift:nightly-5.6-focal
+docker build -t swiftlang/swift:nightly-5.6-focal  -<<EOF
+FROM swiftlang/swift:nightly-5.6-focal
 
 RUN groupadd -g $DOCKER_GID swift
 RUN useradd -m -u $DOCKER_UID -g swift swift
@@ -64,7 +65,7 @@ docker run \
         --log-opt max-size=1m --log-opt max-file=2 \
         -v "$packagedir":/home/swift \
         --name "$programname" \
-        swift:latest
+        swiftlang/swift:nightly-5.6-focal
 
 docker network connect mqtt-net "$programname"
 
