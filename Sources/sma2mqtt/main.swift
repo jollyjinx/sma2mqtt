@@ -4,6 +4,8 @@ import Foundation
 import NIO
 import MQTTNIO
 import ArgumentParser
+import BinaryCoder
+
 import JLog
 import sma2mqttLibrary
 
@@ -11,6 +13,16 @@ struct JNXServer
 {
     let hostname: String
     let port: UInt16
+    let username: String?
+    let password: String?
+
+    init(hostname:String,port:UInt16,username:String? = nil, password:String? = nil)
+    {
+        self.hostname = hostname
+        self.port = port
+        self.username = username
+        self.password = password
+    }
 }
 
 struct JNXMQTTServer
@@ -40,6 +52,12 @@ struct sma2mqtt: ParsableCommand
     @Option(name: .long, help: "MQTT Server port")
     var mqttPort: UInt16 = 1883;
 
+    @Option(name: .long, help: "MQTT Server username")
+    var mqttUsername: String = "mqtt"
+
+    @Option(name: .long, help: "MQTT Server password")
+    var mqttPassword: String = ""
+
     @Option(name: .shortAndLong, help: "Interval to send updates to mqtt Server.")
     var interval: Double = 1.0
 
@@ -60,7 +78,7 @@ struct sma2mqtt: ParsableCommand
 
     mutating func run() throws
     {
-        let mqttServer  = JNXMQTTServer(server: JNXServer(hostname: mqttServername, port: mqttPort), emitInterval: interval, topic: topic)
+        let mqttServer  = JNXMQTTServer(server: JNXServer(hostname: mqttServername, port: mqttPort,username:mqttUsername,password:mqttPassword), emitInterval: interval, topic: topic)
         let mcastServer = JNXMCASTGroup(server: JNXServer(hostname: mcastAddress, port: mcastPort), bind: JNXServer(hostname: bindAddress, port: bindPort) )
 
         if debug > 0
@@ -77,7 +95,22 @@ sma2mqtt.main()
 func startSma2mqtt(mcastServer:JNXMCASTGroup,mqttServer:JNXMQTTServer,jsonOutput:Bool)
 {
     let mqttEventLoopGroup  = MultiThreadedEventLoopGroup(numberOfThreads: 2)
-    let mqttClient          = MQTTClient(configuration: .init(target: .host(mqttServer.server.hostname, port: Int(mqttServer.server.port)) ), eventLoopGroup: mqttEventLoopGroup  )
+
+    let credentials:MQTTConfiguration.Credentials?
+
+    if let username = mqttServer.server.username,
+        let password = mqttServer.server.password
+    {
+        credentials = MQTTConfiguration.Credentials(username:username, password:password)
+    }
+    else
+    {
+        credentials = nil
+    }
+    let mqttClient          = MQTTClient(configuration: .init(target: .host(mqttServer.server.hostname, port: Int(mqttServer.server.port)),
+                                                              credentials: credentials
+                                                              ),
+                                         eventLoopGroup: mqttEventLoopGroup  )
         mqttClient.connect()
 
     // We allow users to specify the interface they want to use here.
