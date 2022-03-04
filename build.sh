@@ -16,8 +16,8 @@ programname=sma2mqtt
 releasepath=release
 if [[ ! -d "$packagedir" ]];
 then
-	echo "$packagedir does not exist."
-	exit 1
+        echo "$packagedir does not exist."
+        exit 1
 fi
 
 cd "$packagedir"
@@ -29,8 +29,8 @@ cat >"buildandstart.sh" <<EOF
 executable="$buildpath/$releasepath/$programname"
 if [[ ! -x "\$executable" ]];
 then
-	echo "Did not find executable \$executable - building"
-	swift build -c release --build-path="$buildpath"
+        echo "Did not find executable \$executable - building"
+        swift build -c release --build-path="$buildpath"
 fi
 echo "Executing \$executable"
 exec "\$executable" --interval 0
@@ -41,8 +41,9 @@ chmod ugo+x "buildandstart.sh"
 DOCKER_UID=$(id -u ${USER})
 DOCKER_GID=$(id -g ${USER})
 
-docker build -t swift:latest -<<EOF
-FROM swiftlang/swift:nightly-focal
+docker pull swiftlang/swift:nightly-5.6-focal
+docker build -t swiftlang/swift:nightly-5.6-focal  -<<EOF
+FROM swiftlang/swift:nightly-5.6-focal
 
 RUN groupadd -g $DOCKER_GID swift
 RUN useradd -m -u $DOCKER_UID -g swift swift
@@ -64,7 +65,6 @@ docker run \
         --log-opt max-size=1m --log-opt max-file=2 \
         -v "$packagedir":/home/swift \
         --name "$programname" \
-        swift:latest
+        swiftlang/swift:nightly-5.6-focal
 
 docker network connect mqtt-net "$programname"
-

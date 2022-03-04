@@ -17,8 +17,8 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser", from: "0.3.2"),
-        .package(url: "https://github.com/apple/swift-nio", from: "2.32.0"),
-        .package(url: "https://github.com/jollyjinx/mqtt-nio", from: "1.0.1"),
+        .package(url: "https://github.com/apple/swift-nio.git", from: "2.33.0"),
+        .package(url: "https://github.com/sroebert/mqtt-nio.git", from: "2.0.0"),
         .package(url: "https://github.com/jollyjinx/BinaryCoder", from: "2.2.3"),
 //        .package(url: "/Users/jolly/Documents/GitHub/BinaryCoder", .revision("f2e6dad") ),
         .package(url: "https://github.com/jollyjinx/JLog", from:"0.0.4"),

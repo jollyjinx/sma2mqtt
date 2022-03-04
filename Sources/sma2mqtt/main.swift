@@ -262,9 +262,9 @@ final class SMAMessageReceiver: ChannelInboundHandler
 
 
                         let topic = "\(mqttServer.topic)/\(obisvalue.topic)"
-                        mqttClient.publish( topic: topic,
+                        mqttClient.publish( MQTTMessage(topic: topic,
                                             payload: obisvalue.json,
-                                            retain: obisvalue.mqtt == .retained
+                                            retain: obisvalue.mqtt == .retained)
                                            )
                     }
                     if jsonOutput
