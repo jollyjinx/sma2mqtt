@@ -240,23 +240,12 @@ final class SMAMessageReceiver: ChannelInboundHandler
                             JLog.error("No longer connected to mqtt server - reconnecting")
 
 
-                            RunLoop.current.schedule
-                            {
                                 let reconnectionFuture = self.mqttClient.reconnect()
-                                do
-                                {
-                                    try reconnectionFuture.wait()
-                                }
-                                catch let error
-                                {
-                                    fatalError("Could not connect to mqtt server:\(error)")
-                                }
 
                                 guard self.mqttClient.isConnected else
                                 {
                                     fatalError("Could not connect to mqtt server")
                                 }
-                            }
                         }
 
 
