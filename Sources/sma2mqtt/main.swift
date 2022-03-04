@@ -111,7 +111,21 @@ func startSma2mqtt(mcastServer:JNXMCASTGroup,mqttServer:JNXMQTTServer,jsonOutput
                                                               credentials: credentials
                                                               ),
                                          eventLoopGroup: mqttEventLoopGroup  )
-        mqttClient.connect()
+    let mqttClientConnectionFuture = mqttClient.connect()
+
+    do
+    {
+        try mqttClientConnectionFuture.wait()
+    }
+    catch let error
+    {
+        fatalError("Could not connect to mqtt server:\(error)")
+    }
+
+    guard mqttClient.isConnected else
+    {
+        fatalError("Could not connect to mqtt server")
+    }
 
     // We allow users to specify the interface they want to use here.
     var targetDevice: NIONetworkDevice? = nil
@@ -221,6 +235,32 @@ final class SMAMessageReceiver: ChannelInboundHandler
                 {
                     if obisvalue.mqtt != .invisible
                     {
+                        if !mqttClient.isConnected
+                        {
+                            JLog.error("No longer connected to mqtt server - reconnecting")
+
+
+                            RunLoop.current.schedule
+                            {
+                                let reconnectionFuture = self.mqttClient.reconnect()
+                                do
+                                {
+                                    try reconnectionFuture.wait()
+                                }
+                                catch let error
+                                {
+                                    fatalError("Could not connect to mqtt server:\(error)")
+                                }
+
+                                guard self.mqttClient.isConnected else
+                                {
+                                    fatalError("Could not connect to mqtt server")
+                                }
+                            }
+                        }
+
+
+
                         let topic = "\(mqttServer.topic)/\(obisvalue.topic)"
                         mqttClient.publish( topic: topic,
                                             payload: obisvalue.json,
