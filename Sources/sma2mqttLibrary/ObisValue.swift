@@ -32,6 +32,7 @@ extension ObisValue:Encodable
     public var json:String
     {
         let jsonEncoder = JSONEncoder()
+            jsonEncoder.outputFormatting = .sortedKeys
         let jsonData = try! jsonEncoder.encode(self)
         return String(data: jsonData, encoding: .utf8)!
     }
