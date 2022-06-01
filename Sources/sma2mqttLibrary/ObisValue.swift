@@ -61,7 +61,7 @@ extension ObisValue:Encodable
         }
 
         let factor      = obisDefinition.factor
-        let hasFactor   = obisDefinition.factor != nil && obisDefinition.factor! != 0
+        let hasFactor   = obisDefinition.factor != nil && obisDefinition.factor! != 0 && obisDefinition.factor! != 1
 
         switch value
         {
