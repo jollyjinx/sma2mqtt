@@ -11,11 +11,13 @@ use IO::Socket::INET;
 use POSIX;
 use Data::Dumper;
 use Net::MQTT::Simple;
+use Time::HiRes qw ( time alarm sleep );
 
 use constant USER_TYPE_ADMIN        => 0xBB;
 use constant USER_TYPE_USER         => 0x88;
 use constant MAXIMUM_PACKET_SIZE    => scalar 90000;
 use constant TIMEOUT_RECEIVE        => scalar 2;
+
 
 if( @ARGV == 1 )
 {
@@ -45,27 +47,57 @@ my  $socket = new IO::Socket::INET (PeerHost => $hostname,
 
 my $sessionid   = sprintf '1234 %04x 4321',int(rand(0x10000));
 my $inverterid  = 'ffff ffff ffff';
+    my $commandconversion = 'CCCC VV';
+    $commandconversion =~ s/ //g;
 
 #    "0000 0052 0048 4600 ffff 4600 ",   # multivalues if first
 #    "0000 0051 0048 4600 ffff 4600 ",   # normal values
-
+# 0x52000200, 0x00237700, 0x002377FF inverter temp
 my @commandarguments = (
 
-[0x00, 0x00, 0x00, 0x51, 0x00410000, 0x0041ffff ],
-#[0x00, 0x00, 0x00, 0x51, 0x00420000, 0x0042ffff ],
-#[0x00, 0x00, 0x00, 0x51, 0x00430000, 0x0043ffff ],
-#[0x00, 0x00, 0x00, 0x51, 0x00440000, 0x0044ffff ],
-#[0x00, 0x00, 0x00, 0x51, 0x00450000, 0x0045ffff ],
-#[0x00, 0x00, 0x00, 0x51, 0x00460000, 0x0046ffff ],
-#[0x00, 0x00, 0x00, 0x51, 0x00470000, 0x0047ffff ],
-#[0x00, 0x00, 0x00, 0x51, 0x00480000, 0x0048ffff ],
+#[0x00, 0x00, 0x00, 0x51, 0x00263f00, 0x00263fff ],#    "0000 0051 003f 2600 ff3f 2600 ",   # SpotACTotalPower  // SPOT_PACTOT
+#[0x00, 0x00, 0x00, 0x52, 0x00263f00, 0x00263fff ],#    "0000 0051 003f 2600 ff3f 2600 ",   # SpotACTotalPower  // SPOT_PACTOT
+
+#[0x00, 0x00, 0x00, 0x51, 0x00295a00, 0x00295aff ],#    "0000 0051 005a 2900 ff5a 2900 ",   # BatteryChargeStatus:
+#[0x00, 0x00, 0x00, 0x51, 0x00495b00, 0x00495bff ],#    "0000 0051 005B 4900 ff5b 4900 ",   # temperature battery:
+#[0x00, 0x00, 0x00, 0x54, 0x00262200, 0x002622ff ],#    "0000 0054 0001 2600 FF22 2600 ",   # EnergyProduction // SPOT_ETODAY, SPOT_ETOTAL daily yield
+#[0x00, 0x00, 0x00, 0x51, 0x00263f00, 0x00263fff ],#    "0000 0051 003f 2600 ff3f 2600 ",   # SpotACTotalPower  // SPOT_PACTOT
+
+#[0x00, 0x00, 0x00, 0x51, 0x00464800, 0x0046ffff, ],
+
+#[0x00, 0x00, 0x00, 0x52, 0x00464800, 0x0046ffff, ],
+
+#[0x00, 0x00, 0x00, 0x50, 0x00263f00, 0x00263fff ],#    "0000 0051 003f 2600 ff3f 2600 ",   # SpotACTotalPower  // SPOT_PACTOT
+#[0x00, 0x00, 0x00, 0x53, 0x00263f00, 0x00263fff ],#    "0000 0051 003f 2600 ff3f 2600 ",   # SpotACTotalPower  // SPOT_PACTOT
+#[0x00, 0x00, 0x00, 0x54, 0x00263f00, 0x00263fff ],#    "0000 0051 003f 2600 ff3f 2600 ",   # SpotACTotalPower  // SPOT_PACTOT
+#[0x00, 0x00, 0x00, 0x55, 0x00263f00, 0x00263fff ],#    "0000 0051 003f 2600 ff3f 2600 ",   # SpotACTotalPower  // SPOT_PACTOT
+#[0x00, 0x00, 0x00, 0x56, 0x00263f00, 0x00263fff ],#    "0000 0051 003f 2600 ff3f 2600 ",   # SpotACTotalPower  // SPOT_PACTOT
+#[0x00, 0x00, 0x00, 0x57, 0x00263f00, 0x00263fff ],#    "0000 0051 003f 2600 ff3f 2600 ",   # SpotACTotalPower  // SPOT_PACTOT
+#[0x00, 0x00, 0x00, 0x58, 0x00263f00, 0x00263fff ],#    "0000 0051 003f 2600 ff3f 2600 ",   # SpotACTotalPower  // SPOT_PACTOT
+#[0x00, 0x00, 0x00, 0x59, 0x00263f00, 0x00263fff ],#    "0000 0051 003f 2600 ff3f 2600 ",   # SpotACTotalPower  // SPOT_PACTOT
+#[0x00, 0x00, 0x00, 0x5A, 0x00263f00, 0x00263fff ],#    "0000 0051 003f 2600 ff3f 2600 ",   # SpotACTotalPower  // SPOT_PACTOT
+
+#[0x00, 0x00, 0x00, 0x52, 0x00464800, 0x0046ffff, ],
+#[0x00, 0x00, 0x80, 0x51, 0x00451f00, 0x004521ff ],#    "0000 8053 001F 4500 FF21 4500 ",   # SpotDCVoltage   // SPOT_UDC1, SPOT_UDC2, SPOT_IDC1, SPOT_IDC2
+#[0x00, 0x00, 0x80, 0x52, 0x00451f00, 0x004521ff ],#    "0000 8053 001F 4500 FF21 4500 ",   # SpotDCVoltage   // SPOT_UDC1, SPOT_UDC2, SPOT_IDC1, SPOT_IDC2
+#[0x00, 0x00, 0x80, 0x53, 0x00451f00, 0x004521ff ],#    "0000 8053 001F 4500 FF21 4500 ",   # SpotDCVoltage   // SPOT_UDC1, SPOT_UDC2, SPOT_IDC1, SPOT_IDC2
+##[0x00, 0x00, 0x00, 0x51, 0x00464800, 0x0046ffff, ],
+#[0x00, 0x00, 0x80, 0x54, 0x00451f00, 0x004521ff ],#    "0000 8053 001F 4500 FF21 4500 ",   # SpotDCVoltage   // SPOT_UDC1, SPOT_UDC2, SPOT_IDC1, SPOT_IDC2
+#[0x00, 0x00, 0x80, 0x55, 0x00451f00, 0x004521ff ],#    "0000 8053 001F 4500 FF21 4500 ",   # SpotDCVoltage   // SPOT_UDC1, SPOT_UDC2, SPOT_IDC1, SPOT_IDC2
+#[0x00, 0x00, 0x80, 0x56, 0x00451f00, 0x004521ff ],#    "0000 8053 001F 4500 FF21 4500 ",   # SpotDCVoltage   // SPOT_UDC1, SPOT_UDC2, SPOT_IDC1, SPOT_IDC2
+#[0x00, 0x00, 0x80, 0x57, 0x00451f00, 0x004521ff ],#    "0000 8053 001F 4500 FF21 4500 ",   # SpotDCVoltage   // SPOT_UDC1, SPOT_UDC2, SPOT_IDC1, SPOT_IDC2
+#[0x00, 0x00, 0x80, 0x58, 0x00451f00, 0x004521ff ],#    "0000 8053 001F 4500 FF21 4500 ",   # SpotDCVoltage   // SPOT_UDC1, SPOT_UDC2, SPOT_IDC1, SPOT_IDC2
+#[0x00, 0x00, 0x80, 0x59, 0x00451f00, 0x004521ff ],#    "0000 8053 001F 4500 FF21 4500 ",   # SpotDCVoltage   // SPOT_UDC1, SPOT_UDC2, SPOT_IDC1, SPOT_IDC2
+
 );
 
 my @commandarguments2 = (
 
+[0x00, 0x00, 0x80, 0x51, 0x00214800, 0x002148ff ],#    "0000 8051 0048 2100 ff48 2100 ",   # DeviceStatus:   // INV_STATUS
 [0x00, 0x00, 0x00, 0x51, 0x00263f00, 0x00263fff ],#    "0000 0051 003f 2600 ff3f 2600 ",   # SpotACTotalPower  // SPOT_PACTOT
 [0x00, 0x00, 0x00, 0x51, 0x00295a00, 0x00295aff ],#    "0000 0051 005a 2900 ff5a 2900 ",   # BatteryChargeStatus:
 [0x00, 0x00, 0x00, 0x51, 0x00411e00, 0x004120ff ],#    "0000 0051 001e 4100 ff20 4100 ",   # MaxACPower:     // INV_PACMAX1, INV_PACMAX2, INV_PACMAX3
+[0x00, 0x00, 0x80, 0x51, 0x00416400, 0x004164ff ],#    "0000 8051 0064 4100 ff64 4100 ",   # GridRelayStatus:   // INV_GRIDRELAY
 [0x00, 0x00, 0x00, 0x51, 0x00463600, 0x004637ff ],#    "0000 0051 0036 4600 ff37 4600 ",   # MeteringGridMsTotW:
 [0x00, 0x00, 0x00, 0x51, 0x00464000, 0x004642ff ],#    "0000 0051 0040 4600 FF42 4600 ",   # SpotACPower:    // SPOT_PAC1, SPOT_PAC2, SPOT_PAC3
 [0x00, 0x00, 0x00, 0x51, 0x00464800, 0x004655ff ],#    "0000 0051 0048 4600 FF55 4600 ",   # SpotACVoltage: // SPOT_UAC1, SPOT_UAC2, SPOT_UAC3, SPOT_IAC1, SPOT_IAC2, SPOT_IAC3
@@ -74,21 +106,23 @@ my @commandarguments2 = (
 [0x00, 0x00, 0x00, 0x51, 0x00491e00, 0x00495dff ],#    "0000 0051 001e 4900 ff5d 4900 ",   # BatteryInfo:
 [0x00, 0x00, 0x00, 0x51, 0x00495b00, 0x00495bff ],#    "0000 0051 005B 4900 ff5b 4900 ",   # temperature battery:
 [0x00, 0x00, 0x00, 0x51, 0x00832a00, 0x00832aff ],#    "0000 0051 002a 8300 ff2a 8300 ",   # MaxACPower2:   // INV_PACMAX1_2
+
 [0x00, 0x00, 0x00, 0x52, 0x00237700, 0x00237702 ],
 [0x00, 0x00, 0x00, 0x52, 0x00237700, 0x002377ff ],#    "0000 0052 0077 2300 ff77 2300 ",   # external inverter temperature
 [0x00, 0x00, 0x00, 0x52, 0x00464800, 0x0046ffff ],
+
 [0x00, 0x00, 0x00, 0x53, 0x00251e00, 0x00251eff ],
-[0x00, 0x00, 0x00, 0x53, 0x00251e02, 0x00251eff ],
-[0x00, 0x00, 0x00, 0x54, 0x00260100, 0x002622ff ],#    "0000 0054 0001 2600 FF22 2600 ",   # EnergyProduction // SPOT_ETODAY, SPOT_ETOTAL daily yield
-[0x00, 0x00, 0x00, 0x54, 0x00462e00, 0x00462fff ],#    "0000 0054 002e 4600 ff2F 4600 ",   # OperationTime:    // SPOT_OPERTM, SPOT_FEEDTM
-[0x00, 0x00, 0x00, 0x58, 0x00821e00, 0x008220ff ],#    "0000 0058 001e 8200 ff20 8200 ",   # TypeLabel:    // INV_NAME, INV_TYPE, INV_CLASS
-[0x00, 0x00, 0x00, 0x58, 0x00823400, 0x008234ff ],#    "0000 0058 0034 8200 ff34 8200 ",   # SoftwareVersion:  // INV_SWVERSION
-[0x00, 0x00, 0x80, 0x51, 0x00214800, 0x002148ff ],#    "0000 8051 0048 2100 ff48 2100 ",   # DeviceStatus:   // INV_STATUS
-[0x00, 0x00, 0x80, 0x51, 0x00416400, 0x004164ff ],#    "0000 8051 0064 4100 ff64 4100 ",   # GridRelayStatus:   // INV_GRIDRELAY
 [0x00, 0x00, 0x80, 0x53, 0x00251e00, 0x00251eff ],#    "0000 8053 001E 2500 FF1E 2500 ",   # SpotDCPower      // SPOT_PDC1, SPOT_PDC2
 [0x00, 0x00, 0x80, 0x53, 0x00251e01, 0x00251e01 ],
 [0x00, 0x00, 0x80, 0x53, 0x00251e02, 0x00251e02 ],
+[0x00, 0x00, 0x00, 0x53, 0x00251e02, 0x00251eff ],
 [0x00, 0x00, 0x80, 0x53, 0x00451f00, 0x004521ff ],#    "0000 8053 001F 4500 FF21 4500 ",   # SpotDCVoltage   // SPOT_UDC1, SPOT_UDC2, SPOT_IDC1, SPOT_IDC2
+
+[0x00, 0x00, 0x00, 0x54, 0x00260100, 0x002622ff ],#    "0000 0054 0001 2600 FF22 2600 ",   # EnergyProduction // SPOT_ETODAY, SPOT_ETOTAL daily yield
+[0x00, 0x00, 0x00, 0x54, 0x00462e00, 0x00462fff ],#    "0000 0054 002e 4600 ff2F 4600 ",   # OperationTime:    // SPOT_OPERTM, SPOT_FEEDTM
+
+[0x00, 0x00, 0x00, 0x58, 0x00821e00, 0x008220ff ],#    "0000 0058 001e 8200 ff20 8200 ",   # TypeLabel:    // INV_NAME, INV_TYPE, INV_CLASS
+[0x00, 0x00, 0x00, 0x58, 0x00823400, 0x008234ff ],#    "0000 0058 0034 8200 ff34 8200 ",   # SoftwareVersion:  // INV_SWVERSION
 #[0x00, 0x00, 0x02, 0x64, 0x00618d00, 0x00618dff ],
 );
 
@@ -142,7 +176,7 @@ my @commands = (
 #print join("\n",@commands);
 #
 
-if(1)
+if(0)
 {
     my @work = @commands;
 
@@ -166,17 +200,88 @@ if(1)
     exit;
 }
 
+if( scalar @commandarguments )
+{
+    my $loop     = 1;
+    my $looptime = 5;
+
+    do
+    {
+        my @work = @commandarguments;
+        doWork(@work);
+
+        jnxsleep($looptime) if $loop;
+    }
+    while( $loop );
+
+    exit;
+}
+
+for my $type (0x40..0x60)
+{
+    for my $command (0x0..0xff)
+    {
+        my $start = $command << 24;
+        my $end = ($command << 24) | 0xffffff;
+
+        my @cmd = [0x00, 0x00, 0x00, $type, $start, $end ];
+
+        doWork( @cmd );
+        my @cmd = [0x00, 0x00, 0x80, $type, $start, $end ];
+
+        doWork( @cmd );
+    }
+}
+exit;
+
+
 sub string2command
 {
     my($string) = @_;
     $string =~ s/\s//g;
 
-    my $commandpacket = pack('H*',$string);
-    my @command = unpack('CCCCVV',$commandpacket);
+    my $data = pack('H*',$string);
 
+    print "string2command $string -> ";
+    return data2command($data,$commandconversion);
+}
+
+sub data2command
+{
+    my($data,$convertstring) = @_;
+
+    $convertstring =~ s/\s+//g;
+    $convertstring .= 'H*';
+    my @command = unpack($convertstring,$data);
+    push(@command, pack('H*',pop(@command)));
+
+    my @commandcopy = @command;
+
+    print "[";
+
+    while( $convertstring =~ /([HCvnVN]{1}(?:\d+|\*)?)/g )
+    {
+        my $type = $1;
+        my $value = shift @commandcopy;
+#         print "\n".'Type:'.$type." ";
+
+        if(    $type eq 'C' ) { printf "0x%02x, ",$value }
+        elsif( $type eq 'v' ) { printf "0x%04x, ",$value }
+        elsif( $type eq 'n' ) { printf "0x%04x, ",$value }
+        elsif( $type eq 'V' ) { printf "0x%08x, ",$value }
+        elsif( $type eq 'N' ) { printf "0x%08x, ",$value }
+        elsif( $type eq 'H*') { printf "<len=%4d:  %s>",length($value),prettyhexdata( $value ) }
+        else
+        {
+            print "type: $type unknown\n";
+            exit;
+        }
+    }
+
+    print "]\n";
     #printf "string2command $string -> %02x %02x %02x %02x %08x %08x\n",@command;
 
-    printf "[0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%08x, 0x%08x ],\n",@command;
+#    printf "[0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%08x, 0x%08x ],\n",@command;
     return @command;
 }
 
@@ -184,22 +289,20 @@ sub command2string
 {
     my @command = @_;
 
-    my $commandpacket = pack('CCCCVV',@command);
+    my $commandpacket = pack($commandconversion,@command);
     my $string = unpack('H*',$commandpacket);
 
-#    printf "command2string %02x %02x %02x %02x %08x %08x -> $string\n",@command;
+    printf "command2string %02x %02x %02x %02x %08x %08x -> $string\n",@command;
 
     return $string;
 }
 
 
-my $loggedin = 0;
-my $loop     = 1;
-my $commandwaittime = 0.1;
-my $looptime = 5;
-do
+sub doWork
 {
-    my @work = @commandarguments;
+    my @work = @_;
+    my $loggedin = 0;
+    my $commandwaittime = 0.1;
 
     while( scalar @work )
     {
@@ -236,12 +339,7 @@ do
 
         jnxsleep($commandwaittime);
     }
-
-    jnxsleep($looptime) if $loop;
 }
-while( $loop );
-
-exit;
 
 
 sub sendReceiveCommand
@@ -250,8 +348,11 @@ sub sendReceiveCommand
     my $data;
 
     sendCommand($socket,$command,$sessionid,$inverterid);
+    my $starttime = time();
 	$socket->recv($data, MAXIMUM_PACKET_SIZE);
+    my $endtime = time();
 
+    printf "Responsetime = %.3f ms\n",($endtime - $starttime) * 1000;
     if( 0 == length($data) )
     {
         print "no response.\n";
@@ -307,10 +408,11 @@ sub sendCommand
 
     my $data = pack "H*",$hexstring;
 
-    my $size = $socket->send($data);
-
     writeDataToFile($data);
-    printSMAPacket('sent',$data);
+
+    printSMAPacket('sending',$data);
+
+    my $size = $socket->send($data);
 }
 
 sub writeDataToFile
@@ -333,6 +435,7 @@ sub prettyhexdata
     my ($data) = @_;
     my $prettyreceived = unpack('H*',$data);
        $prettyreceived =~ s/(....)/$1 /g;
+       $prettyreceived =~ s/ $//;
     return $prettyreceived;
 }
 
@@ -347,45 +450,71 @@ sub printSMAPacket
     $data = substr($data,0,18 + 4 + $length);
 
 
-    if(     $smaheader != 0x534d4100
-        )
+    if( $smaheader != 0x534d4100 )
     {
         printf "%s: invalid packet: prefix:%0x header:%0x len:%d data:%s\n",$prefix,$smaheader,$proto,$length,prettyhexdata($data);
         return undef;
     }
 
-
-    if(     $proto     != 0x6065
-        )
+    if( $proto != 0x6065 )
     {
         printf "%s SMA packet: prefix:%0x header:%0x len:%d data:%s\n",$prefix,$smaheader,$proto,$length,prettyhexdata($data);
         return undef;
     }
 
-    my $footer      = unpack('N',substr($data,-4));
+    my $footer  = unpack('N',substr($data,-4));
 
-    if( $footer    != 0x0 )
+    if( $footer != 0x0 )
     {
         print "Invalid footer\n";
         return undef;
     }
-
-
     printf "%5s SMAPacket: %s\n",$prefix,prettyhexdata(substr($data,0,18));
 
     my $smanetdata  = substr($data,18,$length);
 
-    printSMANetPacket($smanetdata);
+    return printSMANetPacket($smanetdata);
 }
+
+
+#sub decodeSMANetHeader
+#{
+#    my($data) = @_;
+#
+#    my ($length,$pkttype, $dstid,$destination, $p8,$p9, $srcid,$source, $type,$response,$px,$p10 ,$packetid, $p12, $command, $remaining) = data2command($data ,'CC nN CC nN v CC v v v v');
+#
+#    my $packetflag  = $packetid & 0x8000 ? '1' : '0';
+#       $packetid    = $packetid & 0x7FFF;
+#
+#    printf "command:%04x response:%04x: source:%02x%04x destination:%02x%04x pktflg:%s pktid:0x%04x remaining length:%d\n",$command,$response,$srcid,$source,$dstid,$destination,$packetflag,$packetid,length($remaining);
+#
+#    if( $response != 0 || $command == 0xFFFD )
+#    {
+#        printf "raw:%s\n",prettyhexdata($data);
+#        return $response;
+#    }
+#
+#    sub decodeSMANetValuesStart
+#    {
+#        my ($a,$kind,$format,$time,$remaining) = data2command($remaining , 'C v C V');
+#        my $timestring = POSIX::strftime('%Y-%m-%dT%H:%M:%S',localtime($time));
+#
+#        print "time: $timestring\n";
+#    }
+#
+#
+#}
+
+
 
 sub printSMANetPacket
 {
     my($data) = @_;
 
-    print "      SMANet Packet:";
 
     {
         my $smanet_length = unpack('C',substr($data,0,1)) * 4;
+        printf "      SMANet Packet: length=%d %s\n",$smanet_length,prettyhexdata(substr($data,0,28));
 
         if(    length($data) < 2
             || length($data) != $smanet_length
@@ -397,15 +526,42 @@ sub printSMANetPacket
         }
     }
 
+
     {
-        my $response    = unpack('v',substr($data,18,2));
-        my $command     = unpack('v',substr($data,26,2));
+        {
+            my @header =  data2command($data ,'CC nN CC nN v CC v v v v');
+
+            my ($length,$pkttype, $dstid,$destination, $p8,$p9, $srcid,$source, $type,$response,$px,$p10 ,$packetid, $p12, $command, $remaining) = @header;
+
+            my $packetflag  = $packetid & 0x8000 ? '1' : '0';
+               $packetid    = $packetid & 0x7FFF;
+
+            printf "command:%04x response:%04x: source:%02x%04x destination:%02x%04x pktflg:%s pktid:0x%04x remaining length:%d\n",$command,$response,$srcid,$source,$dstid,$destination,$packetflag,$packetid,length($remaining);
+
+            if( $response != 0 || $command == 0xFFFD )
+            {
+                printf "raw:%s\n",prettyhexdata($data);
+                return $response;
+            }
+
+            {
+                my ($a,$kind,$format,$time,$remaining) = data2command($remaining , 'C v C V');
+                my $timestring = POSIX::strftime('%Y-%m-%dT%H:%M:%S',localtime($time));
+
+                print "time:$timestring" ;
+            }
+
+
+        }
+
         my $destination = unpack('H*',substr($data,2,6));
         my $source      = unpack('H*',substr($data,10,6));
+        my $response    = unpack('v',substr($data,18,2));
+        my $command     = unpack('v',substr($data,26,2));
         my $packetid    = unpack('v',substr($data,22,2)) & 0x7FFF;
         my $packetflag  = unpack('v',substr($data,22,2)) & 0x8000 ? '1' : '0';
 
-        printf "command:%04x response:%04x: source:%s destination:%s pktflg:%s pktid:0x%04x ",$command,$response,$source,$destination,$packetflag,$packetid;
+        printf "command:%04x response:%04x: source:%s destination:%s pktflg:%s pktid:0x%04x\n",$command,$response,$source,$destination,$packetflag,$packetid;
 
         if( $response != 0 || $command == 0xFFFD )
         {
@@ -447,10 +603,11 @@ sub printSMANetPacket
         }
 
         my  $typeinformation = code2Typeinformation($code);
-        my  $name = $$typeinformation{name};
+        my  $name = $$typeinformation{path};
 
         my  $unit = $$typeinformation{unit};
         my  $factor = $$typeinformation{factor}|| 1;
+        my  $title = $$typeinformation{title};
         my  $path = $name.'.'.$resultnumber;
         $resultnumber++;
 
@@ -522,7 +679,7 @@ sub printSMANetPacket
             }
             printf "%30s ",join(':',@results);
 
-            sendMQTT($path,$unit,$factor,@results);
+            sendMQTT($path,$unit,$factor,$title,@results);
 
         }
         elsif( $type == 0x10 )      # string
@@ -568,7 +725,7 @@ sub printSMANetPacket
 
 sub sendMQTT
 {
-    my($path,$unit,$factor,@values) = @_;
+    my($path,$unit,$factor,$title,@values) = @_;
 
     return if !$mqttsender;
     my $topic = join('/', ($mqttprefix,$mqttsender,split(/\./,$path)) );
@@ -583,11 +740,11 @@ sub sendMQTT
 
     if( @outvalues > 1 )
     {
-        $mqtt->publish($topic => '{"unit":"'.$unit.'","value":"'.join(':',@outvalues).'"}' );
+        $mqtt->publish($topic => '{"unit":"'.$unit.'","value":"'.join(':',@outvalues).'","title","'.$title.'"}' );
     }
     else
     {
-        $mqtt->publish($topic => '{"unit":"'.$unit.'","value":'.@outvalues[0].'}' );
+        $mqtt->publish($topic => '{"unit":"'.$unit.'","value":'.@outvalues[0].'","title","'.$title.'"}' );
     }
 
 }
@@ -633,74 +790,85 @@ sub code2Typeinformation
 {
     my($number) = @_;
 
- my $typeInformation = {
+ my $battery = {
+ 0x295A => { path => 'immediate.soc', unit => '%' , title => "Battery State of Charge"},
+ 0x2622 => { path => 'counter.dailydischarge', unit => 'kWh', factor => 0.001 , title => "Daily Discharge" },
+ 0x495B => { path => 'immediate.batterytemperature', unit => 'ºC' , factor => 0.1 , title => "Battery Temperature" },
+ 0x263F => { path => 'immediate.gridusage', unit => 'W' , title => "Grid Usage"},
 
- 0x2148 => { name => 'immediate.system.status'},
- 0x2377 => { name => 'immediate.system.externaltemperature'},
- 0x251E => { name => 'immediate.dc.power', unit => 'W'},
- 0x2601 => { name => 'counter.totaldischarge', unit => 'kWh', factor => 0.001 },
- 0x2622 => { name => 'counter.dailyyield', unit => 'kWh', factor => 0.001 },
- 0x263F => { name => 'immediate.gridusage', unit => 'W' },
- 0x295A => { name => 'immediate.soc', unit => '%' },
- 0x411E => { name => 'system.nominalpowerstatus'},
- 0x411F => { name => 'immediate.system.warning'},
- 0x4120 => { name => 'immediate.system.powerfault'},
- 0x4164 => { name => 'immediate.ac.contactstatus'},
- 0x4166 => { name => 'immediate.ac.feedinwaittime', unit => 's'},
- 0x451F => { name => 'immediate.dc.voltage', unit => 'V', factor => 0.01 },
- 0x4521 => { name => 'immediate.dc.amperage', unit => 'A', factor => 0.001 },
- 0x4623 => { name => 'unknown.maybe.counter.total.generation', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
- 0x4624 => { name => 'unknown.maybe.counter.total.feedin', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
- 0x4625 => { name => 'unknown.maybe.counter.total.usage', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
- 0x4626 => { name => 'unknown.maybe.counter.total.consumption', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
- 0x4627 => { name => 'unknown.maybe.counter.day,feedin', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
- 0x4628 => { name => 'unknown.maybe.counter.day.usage', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
- 0x462E => { name => 'immediate.operatingtime',unit => 's'},
- 0x462F => { name => 'counter.feedintime',unit => 's'},
- 0x4631 => { name => 'type.unknown.maybe.grid.failure'},
- 0x4635 => { name => 'type.unknown.maybe.grid.total.generation', unit => 'W'},
- 0x4636 => { name => 'counter.total.feedin', unit => 'W'},
- 0x4637 => { name => 'counter.total.usage', unit => 'W'},
- 0x4639 => { name => 'unknown.maybe.grid.total.consumption', unit => 'W'},
- 0x463A => { name => 'unknown.maybe.grid.power.feedin', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
- 0x463B => { name => 'unknown.maybe.grid.power.usage', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
- 0x4640 => { name => 'immediate.ac.power.phaseA', unit => 'W'},
- 0x4641 => { name => 'immediate.ac.power.phaseB', unit => 'W'},
- 0x4642 => { name => 'immediate.ac.power.phaseC', unit => 'W'},
- 0x4648 => { name => 'immediate.ac.voltage.phaseA', unit => 'V', factor => 0.01 },
- 0x4649 => { name => 'immediate.ac.voltage.phaseB', unit => 'V', factor => 0.01 },
- 0x464A => { name => 'immediate.ac.voltage.phaseC', unit => 'V', factor => 0.01 },
- 0x464B => { name => 'immediate.ac.powerfactor.phaseA', unit => '%'},
- 0x464C => { name => 'immediate.ac.powerfactor.phaseB', unit => '%'},
- 0x464D => { name => 'immediate.ac.powerfactor.phaseC', unit => '%'},
- 0x464E => { name => 'unknown.maybe.something', unit => '?'},
- 0x4650 => { name => 'unknown.maybe.grid.current.phaseA', unit => 'A', factor => 0.001 },
- 0x4651 => { name => 'unknown.maybe.grid.current.phaseB', unit => 'A', factor => 0.001 },
- 0x4652 => { name => 'unknown.maybe.grid.current.phaseC', unit => 'A', factor => 0.001 },
- 0x4653 => { name => 'immediate.ac.current.phaseA', unit => 'A', factor => 0.001 },
- 0x4654 => { name => 'immediate.ac.current.phaseB', unit => 'A', factor => 0.001 },
- 0x4655 => { name => 'immediate.ac.current.phaseC', unit => 'A', factor => 0.001 },
- 0x4657 => { name => 'immediate.ac.frequency', unit => 'Hz', factor => 0.01 },
- 0x46AA => { name => 'type.unknown.maybe.counter.ownconsumption', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
- 0x46AB => { name => 'type.unknown.maybe.power.ownconsumption'},
- 0x491E => { name => 'type.unknown.maybe.battery.counter.charges'},
- 0x4922 => { name => 'battery.cells.maxtemperature', unit => 'ºC', factor => 0.1 },
- 0x4923 => { name => 'battery.cells.mintemperature', unit => 'ºC', factor => 0.1 },
- 0x4924 => { name => 'type.unknown.maybe.battery.cells'},
- 0x4926 => { name => 'type.unknown.maybe.battery.total.charge', unit => 'Ah'},
- 0x4927 => { name => 'type.unknown.maybe.battery.total.discharge', unit => 'Ah'},
- 0x4933 => { name => 'battery.cells.setcharging.voltage', unit => 'V', factor => 0.01 },
- 0x495B => { name => 'immediate.batterytemperature', unit => 'ºC' , factor => 0.1 },
- 0x495C => { name => 'battery.system.voltage', unit => 'V', factor => 0.01 },
- 0x495D => { name => 'battery.system.current', unit => 'A', factor => 0.001 },
- 0x821E => { name => 'settings.system.name'},
- 0x821F => { name => 'static.mainmodel'},
- 0x8220 => { name => 'static.systemtype'},
- 0x8234 => { name => 'static.softwareversion'},
- 0x832A => { name => 'unknown.maybe.system.maximumpoweroutput'},
+ 0x251E => { path => 'immediate.dc.power', unit => 'W', title => "Power DC"},
 
  };
-    my $code = $$typeInformation{$number} || { name => 'type.unkown.'.sprintf("0x%04x",$number) };
+
+
+ my $typeInformation = {
+
+ 0x2148 => { path => 'immediate.system.status'},
+ 0x2377 => { path => 'immediate.system.externaltemperature'},
+ 0x251E => { path => 'immediate.dc.power', unit => 'W', title => "Power DC"},
+ 0x2601 => { path => 'counter.totaldischarge', unit => 'kWh', factor => 0.001 },
+ 0x2622 => { path => 'counter.dailydischarge', unit => 'kWh', factor => 0.001 , title => "Daily Discharge" },
+ 0x263F => { path => 'immediate.gridusage', unit => 'W' , title => "Grid Usage"},
+ 0x295A => { path => 'immediate.soc', unit => '%' , title => "Battery State of Charge"},
+ 0x411E => { path => 'system.nominalpowerstatus'},
+ 0x411F => { path => 'immediate.system.warning'},
+ 0x4120 => { path => 'immediate.system.powerfault'},
+ 0x4164 => { path => 'immediate.ac.contactstatus'},
+ 0x4166 => { path => 'immediate.ac.feedinwaittime', unit => 's'},
+ 0x451F => { path => 'immediate.dc.voltage', unit => 'V', factor => 0.01 },
+ 0x4521 => { path => 'immediate.dc.amperage', unit => 'A', factor => 0.001 },
+ 0x4623 => { path => 'unknown.maybe.counter.total.generation', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
+ 0x4624 => { path => 'unknown.maybe.counter.total.feedin', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
+ 0x4625 => { path => 'unknown.maybe.counter.total.usage', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
+ 0x4626 => { path => 'unknown.maybe.counter.total.consumption', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
+ 0x4627 => { path => 'unknown.maybe.counter.day,feedin', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
+ 0x4628 => { path => 'unknown.maybe.counter.day.usage', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
+ 0x462E => { path => 'immediate.operatingtime',unit => 's'},
+ 0x462F => { path => 'counter.feedintime',unit => 's'},
+ 0x4631 => { path => 'unknown.maybe.grid.failure'},
+ 0x4635 => { path => 'unknown.maybe.grid.total.generation', unit => 'W'},
+ 0x4636 => { path => 'counter.total.feedin', unit => 'W'},
+ 0x4637 => { path => 'counter.total.usage', unit => 'W'},
+ 0x4639 => { path => 'unknown.maybe.grid.total.consumption', unit => 'W'},
+ 0x463A => { path => 'unknown.maybe.grid.power.feedin', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
+ 0x463B => { path => 'unknown.maybe.grid.power.usage', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
+ 0x4640 => { path => 'immediate.ac.power.phaseA', unit => 'W'},
+ 0x4641 => { path => 'immediate.ac.power.phaseB', unit => 'W'},
+ 0x4642 => { path => 'immediate.ac.power.phaseC', unit => 'W'},
+ 0x4648 => { path => 'immediate.ac.voltage.phaseA', unit => 'V', factor => 0.01 },
+ 0x4649 => { path => 'immediate.ac.voltage.phaseB', unit => 'V', factor => 0.01 },
+ 0x464A => { path => 'immediate.ac.voltage.phaseC', unit => 'V', factor => 0.01 },
+ 0x464B => { path => 'immediate.ac.powerfactor.phaseA', unit => '%'},
+ 0x464C => { path => 'immediate.ac.powerfactor.phaseB', unit => '%'},
+ 0x464D => { path => 'immediate.ac.powerfactor.phaseC', unit => '%'},
+ 0x464E => { path => 'unknown.maybe.something', unit => '?'},
+ 0x4650 => { path => 'unknown.maybe.grid.current.phaseA', unit => 'A', factor => 0.001 },
+ 0x4651 => { path => 'unknown.maybe.grid.current.phaseB', unit => 'A', factor => 0.001 },
+ 0x4652 => { path => 'unknown.maybe.grid.current.phaseC', unit => 'A', factor => 0.001 },
+ 0x4653 => { path => 'immediate.ac.current.phaseA', unit => 'A', factor => 0.001 },
+ 0x4654 => { path => 'immediate.ac.current.phaseB', unit => 'A', factor => 0.001 },
+ 0x4655 => { path => 'immediate.ac.current.phaseC', unit => 'A', factor => 0.001 },
+ 0x4657 => { path => 'immediate.ac.frequency', unit => 'Hz', factor => 0.01 },
+ 0x46AA => { path => 'unknown.maybe.counter.ownconsumption', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
+ 0x46AB => { path => 'unknown.maybe.power.ownconsumption'},
+ 0x491E => { path => 'unknown.maybe.battery.counter.charges'},
+ 0x4922 => { path => 'battery.cells.maxtemperature', unit => 'ºC', factor => 0.1 },
+ 0x4923 => { path => 'battery.cells.mintemperature', unit => 'ºC', factor => 0.1 },
+ 0x4924 => { path => 'unknown.maybe.battery.cells'},
+ 0x4926 => { path => 'unknown.maybe.battery.total.charge', unit => 'Ah'},
+ 0x4927 => { path => 'unknown.maybe.battery.total.discharge', unit => 'Ah'},
+ 0x4933 => { path => 'battery.cells.setcharging.voltage', unit => 'V', factor => 0.01 },
+ 0x495B => { path => 'immediate.batterytemperature', unit => 'ºC' , factor => 0.1 , title => "Battery Temperature" },
+ 0x495C => { path => 'battery.system.voltage', unit => 'V', factor => 0.01 },
+ 0x495D => { path => 'battery.system.current', unit => 'A', factor => 0.001 },
+ 0x821E => { path => 'settings.system.name'},
+ 0x821F => { path => 'static.mainmodel'},
+ 0x8220 => { path => 'static.systemtype'},
+ 0x8234 => { path => 'static.softwareversion'},
+ 0x832A => { path => 'unknown.maybe.system.maximumpoweroutput'},
+
+ };
+    my $code = $$typeInformation{$number} || { path => 'type.unkown.'.sprintf("0x%04x",$number) };
 
     return $code;
 }

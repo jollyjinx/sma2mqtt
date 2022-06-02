@@ -227,7 +227,7 @@ final class SMAMessageReceiver: ChannelInboundHandler
             JLog.debug("\(timenow) Data: \(byteArray.count) from: \(envelope.remoteAddress) ")
 
 
-            if let sma = try? SMAMulticastPacket(byteArray:byteArray)
+            if let sma = try? SMAPacket(byteArray:byteArray)
             {
                 JLog.debug("Decoded: \(sma)")
 
