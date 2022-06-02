@@ -14,6 +14,57 @@ func hex(from string: String) -> Data
         .map{ UInt8($0, radix: 16)! }
     return Data(uInt8Array)
 }
+struct DataSplitter:Sequence, IteratorProtocol
+{
+    let data : Data
+    var index : Data.Index
+    let splitData:Data
+
+    init(data: Data,splitData:Data) {
+        self.data = data
+        self.splitData = splitData
+        self.index = data.startIndex
+        print("init")
+    }
+
+    mutating func next() -> Data?
+    {
+//        print("\(#line) index:\(index)")
+
+        guard self.index != self.data.endIndex else { return nil }
+
+//        print("\(#line) index:\(index)")
+
+        guard let range = data[index ..< data.endIndex].range(of: splitData)
+        else
+        {
+//        print("\(#line) index:\(index)")
+            if index == data.startIndex
+            {
+                index = data.endIndex
+                return nil
+            }
+
+            let returnData = data[ (index-splitData.count) ..< data.endIndex]
+            index = data.endIndex
+            return returnData
+        }
+//        print("\(#line) index:\(index) range:\(range) ")
+
+        if index == data.startIndex
+        {
+//        print("\(#line) index:\(index) range:\(range) ")
+            index = range.endIndex
+            return next()
+        }
+//        print("\(#line) index:\(index) range:\(range) ")
+
+        let returnData = data[ (index-splitData.count) ..< range.startIndex]
+        index = range.endIndex
+
+        return returnData
+    }
+}
 
 extension Data {
     func split(separator: Data) -> [Data]
@@ -74,9 +125,9 @@ final class sma2mqttTests: XCTestCase
         let data = try Data(contentsOf: URL(fileURLWithPath:"/Users/jolly/Documents/GitHub/sma2mqtt/Temp/Reverseengineering/sb4.out"),options:.mappedRead)
         let separator = Data(bytes: [0x53, 0x4d, 0x41, 0x00] )
 
-        let chunks = data.split(separator: separator)
         var counter = 0
-        for chunk in chunks
+        let splitter = DataSplitter(data: data, splitData: separator)
+        for chunk in splitter
         {
 //            counter += 1
             let binaryDecoder = BinaryDecoder(data: [UInt8](chunk) )
