@@ -2,7 +2,14 @@ import Foundation
 import BinaryCoder
 import JLog
 
-public struct ObisValue
+public enum ObisType:Encodable,Decodable
+{
+    case string(String)
+    case uint(UInt64)
+    case int(Int64)
+}
+
+public struct ObisValue:Decodable
 {
     let id:String
     let value:ObisType
@@ -17,26 +24,11 @@ public struct ObisValue
     public var mqtt:MQTTVisibilty  { ObisDefinition.obisDefinitions[id]?.mqtt ?? .invisible }
 }
 
-public enum ObisType
-{
-    case string(String)
-    case uint(UInt64)
-    case int(Int64)
-}
-extension ObisType:Decodable {}
 
 
 
 extension ObisValue:Encodable
 {
-    public var json:String
-    {
-        let jsonEncoder = JSONEncoder()
-            jsonEncoder.outputFormatting = .sortedKeys
-        let jsonData = try! jsonEncoder.encode(self)
-        return String(data: jsonData, encoding: .utf8)!
-    }
-
     public func encode(to encoder: Encoder) throws
     {
         let obisDefinition = ObisDefinition.obisDefinitions[id]!

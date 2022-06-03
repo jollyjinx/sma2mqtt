@@ -18,6 +18,7 @@ use constant USER_TYPE_USER         => 0x88;
 use constant MAXIMUM_PACKET_SIZE    => scalar 90000;
 use constant TIMEOUT_RECEIVE        => scalar 2;
 
+# perl smatester.perl Temp/Reverseengineering/sb4.out |perl -ne 'print "$2  $4$3  $5  $9$8$7$6 $10\n" if /(len:\d+ raw: (..)(..) (..)(..) (..)(..) (..)(..) (.*))/'  |perl -ne 'if( /^\S\S  (\S\S\S\S)  / ){ $v=$1;$l=length($_); print "Match: $l $v $_"; if( exists($p{$v}{l}) && $p{$v}{l} != $l){ print "$l != $p{$v}{l}\n\t$p{$v}{v}\t$_";} $p{$v}{l} = $l;$p{$v}{v} = $_;}' |grep -v Match |grep -v ' != ' |sort -u -k 2
 
 if( @ARGV == 1 )
 {
@@ -432,10 +433,16 @@ sub writeDataToFile
 
 sub prettyhexdata
 {
-    my ($data) = @_;
+    my ($data,$splitlength) = @_;
     my $prettyreceived = unpack('H*',$data);
-       $prettyreceived =~ s/(....)/$1 /g;
-       $prettyreceived =~ s/ $//;
+
+    if( $splitlength > 0)
+    {
+        $splitlength *= 2;
+        $prettyreceived =~ s/([\da-f]{$splitlength})/$1\n/g
+    }
+    $prettyreceived =~ s/([\da-f]{4})/$1 /gs;
+    $prettyreceived =~ s/ $//;
     return $prettyreceived;
 }
 
@@ -514,7 +521,14 @@ sub printSMANetPacket
 
     {
         my $smanet_length = unpack('C',substr($data,0,1)) * 4;
-        printf "      SMANet Packet: length=%d %s\n",$smanet_length,prettyhexdata(substr($data,0,28));
+        my $valuetype   = unpack('V',substr($data,28,4));
+        my $valuecount  = unpack('V',substr($data,32,4));
+
+        my $remaining = $smanet_length - 36;
+        my $divided = $remaining > 16 && $valuetype != 0 ? $remaining / $valuetype : 0;
+
+        $divided = 16 if $divided < 16;
+        printf "      SMANet Packet: length=%d  a=$valuetype b=$valuecount remaining: $remaining diveded:$divided  \n%s\n\%s\n",$smanet_length,prettyhexdata(substr($data,28,8)), prettyhexdata(substr($data,36),40);
 
         if(    length($data) < 2
             || length($data) != $smanet_length

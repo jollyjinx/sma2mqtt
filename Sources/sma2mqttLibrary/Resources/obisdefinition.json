@@ -2,9 +2,9 @@
     { "id" :  "1:0.0.0"  , "type"  : "ipv4address"                  , "unit" : "none", "topic"   : "deviceaddress1"                     , "mqtt" : "invisible" , "title" : "Device Address 1"},
 
     { "id" :  "1:1.4.0"  , "type"  : "uint32" , "factor" : 10	    , "unit" : "W"   , "topic"   : "immediate/usage"                    , "mqtt" : "visible"   , "title" : "Grid Usage"},
-    { "id" :  "1:1.8.0"  , "type"  : "uint64" , "factor" : 3600000  , "unit" : "kWh" , "topic"   : "counter/usage"                      , "mqtt" : "visible"   , "title" : "Grid Usage Counter"},
+    { "id" :  "1:1.8.0"  , "type"  : "uint64" , "factor" : 3600000  , "unit" : "kWh" , "topic"   : "counter/totalusage"                 , "mqtt" : "visible"   , "title" : "Grid Usage Counter"},
     { "id" :  "1:2.4.0"  , "type"  : "uint32" , "factor" : 10       , "unit" : "W"   , "topic"   : "immediate/feedin"                   , "mqtt" : "visible"   , "title" : "Grid Feedin"},
-    { "id" :  "1:2.8.0"  , "type"  : "uint64" , "factor" : 3600000  , "unit" : "kWh" , "topic"   : "counter/feedin"                     , "mqtt" : "visible"   , "title" : "Grid Feedin Counter"},
+    { "id" :  "1:2.8.0"  , "type"  : "uint64" , "factor" : 3600000  , "unit" : "kWh" , "topic"   : "counter/totalfeedin"                , "mqtt" : "visible"   , "title" : "Grid Feedin Counter"},
 
     { "id" :  "1:3.4.0"  , "type"  : "uint32" , "factor" : 10       , "unit" : "W"   , "topic"   : "immediate/reactiveusage"            , "mqtt" : "invisible" , "title" : "Reactive Usage"},
     { "id" :  "1:3.8.0"  , "type"  : "uint64" , "factor" : 3600000  , "unit" : "kWh" , "topic"   : "counter/reactiveusage"              , "mqtt" : "invisible" , "title" : "Reactive Usage Counter"},

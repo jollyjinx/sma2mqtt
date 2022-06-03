@@ -8,7 +8,7 @@ import Foundation
 import BinaryCoder
 import JLog
 
-struct ObisPacket
+struct ObisPacket:Encodable,Decodable
 {
     let systemid:UInt16
     let serialnumber:UInt32
