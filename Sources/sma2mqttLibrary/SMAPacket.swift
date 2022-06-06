@@ -4,28 +4,28 @@ import JLog
 
 
 
-public struct SMAPacket: BinaryDecodable
+public struct SMAPacket:Encodable,Decodable
 {
+    var smaprefix:UInt32
     var group:UInt32?
     var systemid:UInt16?
     var serialnumber:UInt32?
     var currenttimems:UInt32?
 
-    var obisPackets     = [ObisPacket]()
-    var smaNetPackets   = [SMANetPacket]()
+    var obisPackets:[ObisPacket]
+    var smaNetPackets:[SMANetPacket]
 
     public var obis:[ObisValue] { obisPackets.first!.obisvalues }
+}
 
+
+extension SMAPacket:BinaryDecodable
+{
     enum Error: Swift.Error {
-        /// The decoder hit the end of the data while the values it was decoding expected
-        /// more.
         case prematureEndOfData
-
-        /// Attempted to decode a type which is `Decodable`, but not `BinaryDecodable`. (We
-        /// require `BinaryDecodable` because `BinaryDecoder` doesn't support full keyed
-        /// coding functionality.)
-        case typeNotConformingToSMAPacket(Decodable.Type)
+        case typeNotConformingToSMAPacket(String)
     }
+
 
     public init(data:Data) throws
     {
@@ -44,15 +44,18 @@ public struct SMAPacket: BinaryDecodable
     {
         JLog.debug("")
 
-        let smaprefix = try decoder.decode(UInt32.self).bigEndian
+        obisPackets = [ObisPacket]()
+        smaNetPackets = [SMANetPacket]()
 
-        if smaprefix != 0x534d4100 // == 'SMA\0'
+        smaprefix = try decoder.decode(UInt32.self).bigEndian
+
+        guard smaprefix == 0x534d4100 // == 'SMA\0'
+        else
         {
-            JLog.error("packet does not start with SMA header (SMA\0)")
-            throw Error.typeNotConformingToSMAPacket(SMAPacket.self)
+            throw Error.typeNotConformingToSMAPacket("packet not sma packet - does not start with SMA\\0")
         }
 
-        JLog.debug("Valid SMA Header")
+        JLog.debug("Valid SMA Prefix")
 
         while !decoder.isAtEnd
         {
@@ -126,11 +129,6 @@ public struct SMAPacket: BinaryDecodable
                 }
             }
         }
-    }
-
-    var description : String
-    {
-        return "Decoded: \( obis.description ) \n"
     }
 }
 

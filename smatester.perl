@@ -249,12 +249,12 @@ sub string2command
 
 sub data2command
 {
-    my($data,$convertstring) = @_;
+    my($data,$convertstring,$oneline) = @_;
 
     $convertstring =~ s/\s+//g;
-    $convertstring .= 'H*';
+    $convertstring .= 'H*' if !$oneline;
     my @command = unpack($convertstring,$data);
-    push(@command, pack('H*',pop(@command)));
+    push(@command, pack('H*',pop(@command))) if !$oneline;
 
     my @commandcopy = @command;
 
@@ -279,7 +279,8 @@ sub data2command
         }
     }
 
-    print "]\n";
+    print "]";
+    print "\n" if !$oneline;
     #printf "string2command $string -> %02x %02x %02x %02x %08x %08x\n",@command;
 
 #    printf "[0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%08x, 0x%08x ],\n",@command;
@@ -434,16 +435,15 @@ sub writeDataToFile
 sub prettyhexdata
 {
     my ($data,$splitlength) = @_;
-    my $prettyreceived = unpack('H*',$data);
+    my $hexstring = unpack('H*',$data);
 
-    if( $splitlength > 0)
+    if( $splitlength )
     {
-        $splitlength *= 2;
-        $prettyreceived =~ s/([\da-f]{$splitlength})/$1\n/g
+        my $linesize = $splitlength * 2;
+        $hexstring =~ s/(\S{$linesize})/\1\n/g;
     }
-    $prettyreceived =~ s/([\da-f]{4})/$1 /gs;
-    $prettyreceived =~ s/ $//;
-    return $prettyreceived;
+    $hexstring =~ s/(\S{4})/\1 /g;
+    return $hexstring;
 }
 
 sub printSMAPacket
@@ -512,7 +512,44 @@ sub printSMAPacket
 #
 #}
 
+sub counttimeswrong
+{
+    my($valuesdata,$valuesize) = @_;
 
+
+my %validtypes = (
+        0 => 1,
+        0x40 => 1,
+        0x10 => 1,
+        0x08 => 1,
+        0x51 => 1,
+);
+
+    my $timesnotok = 0;
+    while( length($valuesdata) )
+    {
+        my $time    = unpack('V',substr($valuesdata,4 , 8));
+        my $type    = unpack('C',substr($valuesdata,3 , 1));
+
+        $valuesdata = substr($valuesdata,$valuesize);
+
+        $timesnotok += 1000 if 1 != $validtypes{$type};
+
+        next if $time == 0;
+
+        my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($time);
+
+        if( $year < 2010 ||  $year > 2022 )
+        {
+            $timesnotok += 10;
+        }
+        elsif( $year < 2021 )
+        {
+            $timesnotok += 1;
+        }
+    }
+    return $timesnotok;
+}
 
 sub printSMANetPacket
 {
@@ -521,14 +558,64 @@ sub printSMANetPacket
 
     {
         my $smanet_length = unpack('C',substr($data,0,1)) * 4;
-        my $valuetype   = unpack('V',substr($data,28,4));
-        my $valuecount  = unpack('V',substr($data,32,4));
-
         my $remaining = $smanet_length - 36;
-        my $divided = $remaining > 16 && $valuetype != 0 ? $remaining / $valuetype : 0;
 
-        $divided = 16 if $divided < 16;
-        printf "      SMANet Packet: length=%d  a=$valuetype b=$valuecount remaining: $remaining diveded:$divided  \n%s\n\%s\n",$smanet_length,prettyhexdata(substr($data,28,8)), prettyhexdata(substr($data,36),40);
+        my $valuesheader = substr($data,28,8);
+        my $valuesdata   = substr($data,36);
+
+        printf "SMANet Packet:";
+        printf " len=%4d",$remaining;
+        printf " head:".prettyhexdata($valuesheader);
+
+        my ($all,$already) = unpack('VV',$valuesheader);
+        my $valuecount = $already-$all + 1;
+
+        my $divided = $remaining / $valuecount;
+        printf " cnt:0x%02d partlen=%2d",$valuecount,$divided;
+        my @validsizes = grep(  $_ != undef  , map { $remaining % $_ == 0 ? $_ : undef } (16,20,28,40) ) ;
+        my $countisvalid = ( 1 == scalar grep($_ == $divided,@validsizes) );
+
+        printf " cntisvalid=%d",$countisvalid;
+
+        if( $remaining > 28 )
+        {
+            print " ";
+            my(@values) = data2command($valuesheader,'CCCCCCC',1);
+
+            if(     $countisvalid
+                &&  @values[0] == 0  &&  @values[1] == 0  &&  @values[2] == 0  &&  @values[3] == 0
+                                     &&  @values[5] == 0  &&  @values[6] == 0  &&  @values[7] == 0
+              )
+            {
+                print " no need to check\n";
+                printf prettyhexdata($valuesdata,$divided);
+            }
+            else
+            {
+                my %counttimeswrong = map { $_ => counttimeswrong($valuesdata,$_) } @validsizes;
+
+                my @mostprobably = sort{ $counttimeswrong{$a} <=> $counttimeswrong{$b} } @validsizes;
+                printf " (%s)",join(',',map { %counttimeswrong{$_} } @mostprobably);
+                my $mostprobably = @mostprobably[0];
+
+                my $countismostprobably = $valuecount == $mostprobably;
+
+                printf " cnt==probable:%d",$countismostprobably;
+                printf " cntnow:0x%02x", ($remaining / $mostprobably);
+
+                printf " %s",($valuecount == ($remaining / $mostprobably) ? "OK" : "FAIL");
+
+
+                printf "\n";
+                printf prettyhexdata($valuesdata,$divided);
+            }
+        }
+        else
+        {
+            printf "\n";
+            printf prettyhexdata($valuesdata);
+        }
+        print "\n" x 10;
 
         if(    length($data) < 2
             || length($data) != $smanet_length
@@ -536,6 +623,7 @@ sub printSMANetPacket
           )
         {
             printf "Invalid SMANet packet: %d != %d < 32 :%s\n",$smanet_length,length($data),prettyhexdata($data);
+            exit;
             return undef;
         }
     }
