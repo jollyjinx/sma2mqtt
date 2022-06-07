@@ -15,13 +15,28 @@ public extension UInt32
 
 public extension Data
 {
-    var dump:String
+    var fullDump:String
         {
-            var string:String = "\n"
+            var string:String = hexDump + "\n"
+
 
             for (offset,value) in self.enumerated()
             {
                 string += String(format:"%04d: 0x%02x %03d c:%c\n",offset,value,value,(value > 31 && value < 127 ? value : 32) )
+            }
+            return string
+        }
+}
+public extension Data
+{
+    var hexDump:String
+        {
+            var string:String = ""
+
+            for (offset,value) in self.enumerated()
+            {
+                string += String(format:"%02x",value)
+                if (offset+1) % 2 == 0 { string += " " }
             }
             return string
         }

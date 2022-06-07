@@ -7,6 +7,7 @@
 import Foundation
 import BinaryCoder
 import JLog
+import AppKit
 
 
 struct SMANetPacket:Encodable,Decodable
@@ -23,7 +24,7 @@ extension SMANetPacket:BinaryDecodable
     }
     init(fromBinary decoder: BinaryDecoder) throws
     {
-        JLog.debug("")
+        JLog.trace("")
 
         self.header = try decoder.decode(SMANetPacketHeader.self)
 
@@ -32,20 +33,15 @@ extension SMANetPacket:BinaryDecodable
             return
         }
 
-        while decoder.countToEnd >= SMANetPacketValue.size
-        {
-            let positionok = decoder.position
+        let valueSize = self.header.valueSize
 
-            do
-            {
-                let value = try decoder.decode(SMANetPacketValue.self)
-                JLog.debug("command:\( String(format:"%4x",header.command) )  length:\(decoder.countToEnd) time:\(value.time) \(value.description)")
-            }
-            catch
-            {
-                decoder.position = positionok
-                JLog.error("could not decode:\( Data(decoder.dataToEnd).dump )")
-            }
+        while !decoder.isAtEnd //  0...<self.header.valueCount
+        {
+            let valueData = try decoder.decode(Data.self,length: valueSize)
+            let valueDecoder = BinaryDecoder(data: [UInt8](valueData))
+
+            let value = try valueDecoder.decode(SMANetPacketValue.self)
+            values.append(value)
         }
         assert(decoder.isAtEnd)
     }
@@ -88,20 +84,19 @@ struct SMANetPacketHeader:BinaryDecodable,Encodable,Decodable
     var packetId: UInt16 { _packetId & 0x7FFF }
     var packetFlag: Bool { _packetId & 0x8000  != 0 }
 
-    let valuecountAll:UInt32
     let valuecountDone:UInt32
+    let valuecountAll:UInt32
 
     static var size:Int { 36 }
     private var followingdatasize:Int { ( Int(quaterlength) * 4 ) - Self.size }
 
     var valueCount:Int {
                             guard followingdatasize > 0 else { return 0 }
-
+                            guard followingdatasize > 28 else { return 1 }
                             return Int(self.valuecountAll) - Int(self.valuecountDone) + 1
                         }
     var valueSize:Int {
                         guard valueCount > 0 else { return 0 }
-
                         return followingdatasize / valueCount
                     }
 
@@ -142,13 +137,13 @@ struct SMANetPacketHeader:BinaryDecodable,Encodable,Decodable
 
         if decoder.isAtEnd
         {
-            self.valuecountAll   = 0
             self.valuecountDone  = 0
+            self.valuecountAll  = 0
         }
         else
         {
-            self.valuecountAll   = try decoder.decode(UInt32.self)
             self.valuecountDone  = try decoder.decode(UInt32.self)
+            self.valuecountAll   = try decoder.decode(UInt32.self)
         }
 
         assert(Self.size == decoder.position - startposition)

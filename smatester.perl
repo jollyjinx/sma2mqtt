@@ -514,7 +514,7 @@ sub printSMAPacket
 
 sub counttimeswrong
 {
-    my($valuesdata,$valuesize) = @_;
+    my($valuesdata,$valuesize,$warn) = @_;
 
 
 my %validtypes = (
@@ -526,6 +526,9 @@ my %validtypes = (
 );
 
     my $timesnotok = 0;
+
+    my $invalidtypes = 0;
+
     while( length($valuesdata) )
     {
         my $time    = unpack('V',substr($valuesdata,4 , 8));
@@ -534,6 +537,8 @@ my %validtypes = (
         $valuesdata = substr($valuesdata,$valuesize);
 
         $timesnotok += 1000 if 1 != $validtypes{$type};
+
+        $invalidtypes++ if 1 != $validtypes{$type};
 
         next if $time == 0;
 
@@ -548,6 +553,12 @@ my %validtypes = (
             $timesnotok += 1;
         }
     }
+
+    if($warn)
+    {
+        printf " typeok:%d",0 == $invalidtypes;
+    }
+
     return $timesnotok;
 }
 
@@ -567,8 +578,8 @@ sub printSMANetPacket
         printf " len=%4d",$remaining;
         printf " head:".prettyhexdata($valuesheader);
 
-        my ($all,$already) = unpack('VV',$valuesheader);
-        my $valuecount = $already-$all + 1;
+        my ($already,$all) = unpack('VV',$valuesheader);
+        my $valuecount = $all-$already + 1;
 
         my $divided = $remaining / $valuecount;
         printf " cnt:0x%02d partlen=%2d",$valuecount,$divided;
@@ -576,12 +587,11 @@ sub printSMANetPacket
         my $countisvalid = ( 1 == scalar grep($_ == $divided,@validsizes) );
 
         printf " cntisvalid=%d",$countisvalid;
-
-        if( $remaining > 28 )
-        {
             print " ";
             my(@values) = data2command($valuesheader,'CCCCCCC',1);
 
+        if( $remaining > 28 )
+        {
             if(     $countisvalid
                 &&  @values[0] == 0  &&  @values[1] == 0  &&  @values[2] == 0  &&  @values[3] == 0
                                      &&  @values[5] == 0  &&  @values[6] == 0  &&  @values[7] == 0
@@ -600,13 +610,17 @@ sub printSMANetPacket
 
                 my $countismostprobably = $valuecount == $mostprobably;
 
+
                 printf " cnt==probable:%d",$countismostprobably;
                 printf " cntnow:0x%02x", ($remaining / $mostprobably);
+
+                counttimeswrong($valuesdata,$divided,1);
 
                 printf " %s",($valuecount == ($remaining / $mostprobably) ? "OK" : "FAIL");
 
 
                 printf "\n";
+
                 printf prettyhexdata($valuesdata,$divided);
             }
         }

@@ -21,9 +21,9 @@ public struct SMAPacket:Encodable,Decodable
 
 extension SMAPacket:BinaryDecodable
 {
-    enum Error: Swift.Error {
-        case prematureEndOfData
-        case typeNotConformingToSMAPacket(String)
+    enum SMAPacketError: Swift.Error {
+        case notaSMAPacket(String)
+        case prematureEndOfSMAContentData(String)
     }
 
 
@@ -52,7 +52,7 @@ extension SMAPacket:BinaryDecodable
         guard smaprefix == 0x534d4100 // == 'SMA\0'
         else
         {
-            throw Error.typeNotConformingToSMAPacket("packet not sma packet - does not start with SMA\\0")
+            throw SMAPacketError.notaSMAPacket("packet not sma packet - does not start with SMA\\0")
         }
 
         JLog.debug("Valid SMA Prefix")
@@ -71,6 +71,12 @@ extension SMAPacket:BinaryDecodable
 
             if length > 0
             {
+                guard Int(length) <= decoder.countToEnd
+                else
+                {
+                    throw SMAPacketError.prematureEndOfSMAContentData("sma content too short expected length:\(length) has:\(decoder.countToEnd)")
+                }
+
                 let smaNetData    = try decoder.decode(Data.self,length:Int(length))
                 let smaNetDecoder = BinaryDecoder(data: [UInt8](smaNetData) )
 
@@ -83,7 +89,7 @@ extension SMAPacket:BinaryDecodable
                                     }
                                     else
                                     {
-                                        JLog.error(("Could not decode tag:\(tag) length:\(length) data:\(smaNetData.dump)"))
+                                        JLog.error(("Could not decode tag:\(tag) length:\(length) data:\(smaNetData.hexDump)"))
                                     }
 
                     case 0x0010:    if  let protocolid = try? smaNetDecoder.decode(UInt16.self).bigEndian
@@ -122,10 +128,10 @@ extension SMAPacket:BinaryDecodable
                                     }
                                     else
                                     {
-                                        JLog.error("Could not decode protocol:\(tag) length:\(length) data:\(smaNetData.dump)")
+                                        JLog.error("Could not decode protocol:\(tag) length:\(length) data:\(smaNetData.hexDump)")
                                     }
 
-                    default:        JLog.warning("Could not decode tag:\(tag) length:\(length) data:\(smaNetData.dump) trying detection")
+                    default:        JLog.warning("Could not decode tag:\(tag) length:\(length) data:\(smaNetData.hexDump) trying detection")
                 }
             }
         }

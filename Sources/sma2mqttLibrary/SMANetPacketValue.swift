@@ -20,11 +20,14 @@ struct SMANetPacketValue:Encodable,Decodable
 
     enum ValueType:UInt8
     {
-        case uint       = 0
+        case uint       = 0x00
         case int        = 0x40
         case string     = 0x10
         case version    = 0x08
         case password   = 0x51
+
+
+        case unknown    = 0x01
     }
 
     enum PacketValue:Encodable,Decodable
@@ -34,6 +37,7 @@ struct SMANetPacketValue:Encodable,Decodable
         case string(String)
         case version([UInt16])
         case password(Data)
+        case unknown(Data)
     }
     var value:PacketValue
 
@@ -55,76 +59,66 @@ extension SMANetPacketValue:BinaryDecodable
 
         assert(Self.size == decoder.position - startposition)
 
+        let valuetype = ValueType(rawValue: type) ?? .unknown
 
-        repeat
+        switch valuetype
         {
-            let valuetype = ValueType(rawValue: type)!
+            case .uint:     var values = [UInt32]()
+                            while !decoder.isAtEnd
+                            {
+                                let value = try decoder.decode(UInt32.self)
 
-            JLog.debug("pos:\(decoder.position - startposition) toEnd:\(decoder.countToEnd) Got Type: \(valuetype)")
+                                values.append(value)
+                            }
+                            value = .uint(values)
 
-            switch valuetype
-            {
-                case .uint:     fallthrough
-                case .int:      assert(decoder.countToEnd >= 16 )
+            case .int:      var values = [Int32]()
+                            while !decoder.isAtEnd
+                            {
+                                let value = try decoder.decode(Int32.self)
 
-                                let a = try decoder.decode(Int32.self)
-                                let b = try decoder.decode(Int32.self)
+                                values.append(value)
+                            }
+                            value = .int(values)
 
-                                if b == 0
+            case .string:   //assert(decoder.countToEnd >= 32 )
+                            let data = try decoder.decode(Data.self,length: decoder.countToEnd)
+                            let string = String(data: data, encoding: .ascii)!
+                            value = .string(string)
+
+            case .version:  var values = [UInt16]()
+
+                            while !decoder.isAtEnd
+                            {
+                                let a = try decoder.decode(UInt16.self).littleEndian
+                                let b = try decoder.decode(UInt16.self).littleEndian
+
+                                if a == 0xFFFE && b == 0x00FF
                                 {
-                                    value = .int([a])
                                     break
                                 }
+                                values.append( a )
+                            }
+                            value = .version(values)
 
-                                assert(decoder.countToEnd >= 16 )
-                                let c = try decoder.decode(Int32.self)
-                                let d = try decoder.decode(Int32.self)
+            case .password: if decoder.isAtEnd
+                            {
+                                value = .password(Data())
+                            }
+                            else
+                            {
+                                assert(decoder.countToEnd == 12 )
+                                let data = try decoder.decode(Data.self,length: 12)
+//                                let string = String(data: data, encoding: .utf8)!
+                                value = .password(data)
+                            }
 
+            case .unknown:  let data = try decoder.decode(Data.self, length:decoder.countToEnd)
+                            value = .unknown(data)
+                            JLog.error("unkown: \( String(format:"no:0x%02x code:0x%04x type:0x%02x",number,code,type) )  time:\(time) data:\(data.hexDump) ")
 
-                                try decoder.decode(Data.self,length: 32)
-
-                                value = .int([])
-
-                case .string:   assert(decoder.countToEnd >= 32 )
-                                let data = try decoder.decode(Data.self,length: 32)
-                                let string = String(data: data, encoding: .utf8)!
-                                value = .string(string)
-
-                case .version:  var values = [UInt16]()
-
-                                let endposition = decoder.position + 32
-
-                                repeat
-                                {
-                                    let a = try decoder.decode(UInt16.self).littleEndian
-                                    let b = try decoder.decode(UInt16.self).littleEndian
-
-                                    if a == 0xFFFE && b == 0x00FF
-                                    {
-                                        break
-                                    }
-                                    values.append( a )
-                                }
-                                while decoder.position < endposition
-                                value = .version(values)
-                                
-                case .password: if decoder.isAtEnd
-                                {
-                                    value = .password(Data())
-                                }
-                                else
-                                {
-                                    assert(decoder.countToEnd == 12 )
-                                    let data = try decoder.decode(Data.self,length: 12)
-    //                                let string = String(data: data, encoding: .utf8)!
-                                    value = .password(data)
-                                }
-            }
-            JLog.debug("Got Value: \(value)")
         }
-        while !decoder.isAtEnd
-
-
+        JLog.trace("Got Value: \(value)")
     }
 
 }

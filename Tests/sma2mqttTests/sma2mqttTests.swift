@@ -8,6 +8,8 @@ import class Foundation.Bundle
 func hex(from string: String) -> Data
 {
     let stringWithoutSpaces = string.replacingOccurrences(of:" ", with:"")
+                                .replacingOccurrences(of:"\n", with:"")
+                                .replacingOccurrences(of:"\t", with:"")
 
     let uInt8Array = stride(from: 0, to: stringWithoutSpaces.count, by: 2)
         .map{ stringWithoutSpaces[stringWithoutSpaces.index(stringWithoutSpaces.startIndex, offsetBy: $0) ... stringWithoutSpaces.index(stringWithoutSpaces.startIndex, offsetBy: $0 + 1)] }
@@ -113,7 +115,7 @@ final class sma2mqttTests: XCTestCase
 
     func testSMANetDecoding() throws
     {
-        JLog.loglevel = .debug
+        JLog.loglevel = .trace
 
         let data1  = hex(from:"534d 4100 0004 02a0 0000 0001 003a 0010 6065 0ea0 ffff ffff ffff 0001 1234 25f6 4321 0001 0000 0000 0180 0c04 fdff 0700 0000 8403 0000 4c20 cb51 0000 0000 dbb8 f4e9 fae7 ddfb edfa 8888 0000")
         let binaryDecoder1 = BinaryDecoder(data: [UInt8](data1) )
@@ -121,20 +123,36 @@ final class sma2mqttTests: XCTestCase
         let packet1 = try? SMAPacket(fromBinary:binaryDecoder1)
 
         assert(binaryDecoder1.isAtEnd)
+    }
 
-        let data = try Data(contentsOf: URL(fileURLWithPath:"/Users/jolly/Documents/GitHub/sma2mqtt/Temp/Reverseengineering/sb4.out"),options:.mappedRead)
+    func testSMAFile() throws
+    {
+        JLog.loglevel = .info
+        let data = try Data(contentsOf: URL(fileURLWithPath:"/Users/jolly/Documents/GitHub/sma2mqtt/Temp/Reverseengineering/testswift.sma"),options:.mappedRead)
         let separator = Data(bytes: [0x53, 0x4d, 0x41, 0x00] )
 
         var counter = 0
         let splitter = DataSplitter(data: data, splitData: separator)
         for chunk in splitter
         {
-//            counter += 1
+            counter += 1
             let binaryDecoder = BinaryDecoder(data: [UInt8](chunk) )
-//            print(counter)
-            let packet = try? SMAPacket(fromBinary:binaryDecoder)
+            if counter % 1000 == 0
+            {
+                print(counter)
+            }
 
-//            JLog.debug("Packet:\(packet)")
+
+            do
+            {
+                let packet = try SMAPacket(fromBinary:binaryDecoder)
+
+                JLog.debug("Packet \(counter):\(packet)")
+            }
+            catch
+            {
+                JLog.error("Packet \(counter): got error: \(error) data:\(chunk.hexDump)")
+            }
         }
 
         XCTAssert(true)
@@ -142,6 +160,7 @@ final class sma2mqttTests: XCTestCase
 
     func testSMANetPacketDecoding() throws
     {
+        JLog.loglevel = .debug
         let data1 = hex(from:"""
 1800 0000 2f00 0000
 01  2952  00 3fd5 9462  0000 0000 0000 0000 1027 0000 1027 0000 ffff ffff ffff ffff ffff ffff ffff ffff
@@ -172,11 +191,12 @@ final class sma2mqttTests: XCTestCase
 01  2852  40 3fd59462  0000 0000 0000 0000 321e 0000 321e 0000 0000 0080 0000 0080 0000 0080 0000 0080
 """)
         let binaryDecoder1 = BinaryDecoder(data: [UInt8](data1) )
-        let packet1 = try? SMANetPacket(fromBinary:binaryDecoder1)
+        let packet1 = try? SMANetPacketValue(fromBinary:binaryDecoder1)
     }
 
     func testSMANetPacketDecoding2a() throws
     {
+        JLog.loglevel = .debug
         let data1 = hex(from:"""
 0000 0000 2200 0000
 01  1f41  00  3fd59462  0000 0000 0000 0000 0000 0000 0000 0000 0000 0000
@@ -217,11 +237,12 @@ final class sma2mqttTests: XCTestCase
 01  5446  40  40d59462  f90f 0000 f90f 0000 f90f 0000 f90f 0000 0100 0000
 """)
         let binaryDecoder1 = BinaryDecoder(data: [UInt8](data1) )
-        let packet1 = try? SMANetPacket(fromBinary:binaryDecoder1)
+        let packet1 = try? SMANetPacketValue(fromBinary:binaryDecoder1)
     }
 
     func testSMANetPacketDecoding2() throws
     {
+        JLog.loglevel = .debug
         let data1 = hex(from:"""
 
 0000 0000 0900 0000
@@ -237,10 +258,11 @@ final class sma2mqttTests: XCTestCase
 018c 6100 af659162 3508 0000 0000 0000
 """)
         let binaryDecoder1 = BinaryDecoder(data: [UInt8](data1) )
-        let packet1 = try? SMANetPacket(fromBinary:binaryDecoder1)
+        let packet1 = try? SMANetPacketValue(fromBinary:binaryDecoder1)
     }
     func testSMANetPacketDecoding3() throws
     {
+        JLog.loglevel = .debug
         let data1 = hex(from:"""
 
 0000 0000 2200 0000
@@ -282,10 +304,11 @@ final class sma2mqttTests: XCTestCase
 01 5446 40  41d59462  f70f 0000 f70f 0000 f70f 0000 f70f 0000 0100 0000
 """)
         let binaryDecoder1 = BinaryDecoder(data: [UInt8](data1) )
-        let packet1 = try? SMANetPacket(fromBinary:binaryDecoder1)
+        let packet1 = try? SMANetPacketValue(fromBinary:binaryDecoder1)
     }
     func testSMANetPacketDecoding4() throws
     {
+        JLog.loglevel = .debug
         let data1 = hex(from:"""
 0000 0000 0500 0000
 01  1e25  40  56d59462  1d02 0000 1d02 0000 1d02 0000 1d02 0000 0100 0000
@@ -296,8 +319,81 @@ final class sma2mqttTests: XCTestCase
 02  2145  40  56d59462  a105 0000 a105 0000 a105 0000 a105 0000 0100 0000
 """)
         let binaryDecoder1 = BinaryDecoder(data: [UInt8](data1) )
-        let packet1 = try? SMANetPacket(fromBinary:binaryDecoder1)
+        let packet1 = try? SMANetPacketValue(fromBinary:binaryDecoder1)
     }
+
+
+    func testSMANetPacketDecoding5() throws
+    {
+        JLog.loglevel = .trace
+        let data1 = hex(from:"""
+534d 4100
+0004 02a0
+0000 0001
+03fa 0010
+6065
+fea0 1234 5a97 4321 00a1 9901 f6a2 2fb3 0001 0000
+eb00 54f6 0102 005d
+
+0000 0000 3000 0000
+00 0000 00 0000 0000 0000 0000 0000 0000 0000 0000
+01 0000 01 5370 7400 0000 0000 0000 0000 0000 0000
+02 0000 01 4163 746c 5661 6c00 0000 0000 0000 0000
+03 0000 01 4163 7450 7772 0000 0000 0000 0000 0000
+04 0000 00 5b64 426d 5d00 0000 0000 0000 0000 0000
+05 0000 00 5b64 6567 5d00 0000 0000 0000 0000 0000
+06 0000 00 5b68 5d00 0000 0000 0000 0000 0000 0000
+07 0000 00 5b48 7a5d 0000 0000 0000 0000 0000 0000
+08 0000 00 5b6b 5768 5d00 0000 0000 0000 0000 0000
+09 0000 00 5b6d 2f73 5d00 0000 0000 0000 0000 0000
+0a 0000 00 5b6d 735d 0000 0000 0000 0000 0000 0000
+0b 0000 00 5b4f 686d 5d00 0000 0000 0000 0000 0000
+0c 0000 00 5b50 615d 0000 0000 0000 0000 0000 0000
+0d 0000 00 5b73 5d00 0000 0000 0000 0000 0000 0000
+0e 0000 00 5b56 5d00 0000 0000 0000 0000 0000 0000
+0f 0000 00 5b56 415d 0000 0000 0000 0000 0000 0000
+10 0000 00 5b56 4172 5d00 0000 0000 0000 0000 0000
+11 0000 00 5b57 2f6d b25d 0000 0000 0000 0000 0000
+12 0000 00 5b57 5d00 0000 0000 0000 0000 0000 0000
+13 0000 00 5b57 685d 0000 0000 0000 0000 0000 0000
+14 0000 00 4100 0000 0000 0000 0000 0000 0000 0000
+15 0000 00 4162 7347 7269 5377 436e 7400 0000 0000
+16 0000 00 4162 734f 7054 6d73 0000 0000 0000 0000
+17 0000 00 4162 7346 6565 6454 6d73 0000 0000 0000
+18 0000 00 4162 7357 6849 6e00 0000 0000 0000 0000
+19 0000 00 4162 7357 684f 7574 0000 0000 0000 0000
+1a 0000 00 4163 6b6e 0000 0000 0000 0000 0000 0000
+1b 0000 00 4164 6a00 0000 0000 0000 0000 0000 0000
+1c 0000 00 4169 6400 0000 0000 0000 0000 0000 0000
+1d 0000 00 4163 7143 6e74 0000 0000 0000 0000 0000
+1e 0000 00 4163 7154 6d00 0000 0000 0000 0000 0000
+1f 0000 00 5b4b 5d00 0000 0000 0000 0000 0000 0000
+20 0000 00 5bb0 465d 0000 0000 0000 0000 0000 0000
+21 0000 00 5b57 2f73 5d00 0000 0000 0000 0000 0000
+22 0000 00 5b6d 696e 5d00 0000 0000 0000 0000 0000
+23 0000 00 416c 6d00 0000 0000 0000 0000 0000 0000
+24 0000 00 414d 6178 4f66 7300 0000 0000 0000 0000
+25 0000 00 414d 6178 4f66 7354 6d6d 7300 0000 0000
+26 0000 00 416d 7000 0000 0000 0000 0000 0000 0000
+27 0000 00 416d 704e 6f6d 0000 0000 0000 0000 0000
+28 0000 00 416e 6746 6163 7400 0000 0000 0000 0000
+29 0000 00 414e 6f6d 0000 0000 0000 0000 0000 0000
+2a 0000 00 4153 3437 3737 2e33 0000 0000 0000 0000
+2b 0000 00 4e6f 7441 646a 0000 0000 0000 0000 0000
+2c 0000 00 4175 7831 0000 0000 0000 0000 0000 0000
+2d 0000 00 4175 7832 0000 0000 0000 0000 0000 0000
+2e 0000 00 4261 7400 0000 0000 0000 0000 0000 0000
+2f 0000 00 4274 5077 7200 0000 0000 0000 0000 0000
+30 0000 00 4361 6200 0000 0000 0000 0000 0000 0000
+
+0000 0000
+""")
+        print(data1.hexDump)
+        let binaryDecoder1 = BinaryDecoder(data: [UInt8](data1) )
+        let packet1 = try? SMAPacket(fromBinary:binaryDecoder1)
+    }
+
+
 
 }
 
