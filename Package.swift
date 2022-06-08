@@ -39,7 +39,8 @@ let package = Package(
                         dependencies: [ .product(name: "BinaryCoder", package: "BinaryCoder"),
                                         .product(name: "JLog", package: "JLog")
                                        ],
-                        resources: [ .copy("Resources/obisdefinition.json")
+                        resources: [ .copy("Resources/obisdefinition.json"),
+                                     .copy("Resources/SMANetPacketDefinitions.json")
                                     ]
                         ),
         .testTarget(    name: "sma2mqttTests",

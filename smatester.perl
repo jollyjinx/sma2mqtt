@@ -469,6 +469,8 @@ sub printSMAPacket
         return undef;
     }
 
+    printf "Complete Packet:\n".prettyhexdata($data)."\n";
+
     my $footer  = unpack('N',substr($data,-4));
 
     if( $footer != 0x0 )
