@@ -42,7 +42,7 @@ my $mqttprefix = "test";
 my  $socket = new IO::Socket::INET (PeerHost => $hostname,
                                     PeerPort => $portnumber,
                                     Proto => 'udp',
-                                    Timeout => 2)                                   || die "Can't open socket due to:$!\n";
+                                    Timeout => 1)                                   || die "Can't open socket due to:$!\n";
     $socket->setsockopt(SOL_SOCKET, SO_RCVTIMEO, pack('l!l!', TIMEOUT_RECEIVE, 0))  || die "error setting SO_RCVTIMEO: $!";
 
 
@@ -56,8 +56,12 @@ my $inverterid  = 'ffff ffff ffff';
 # 0x52000200, 0x00237700, 0x002377FF inverter temp
 my @commandarguments = (
 
-#[0x00, 0x00, 0x00, 0x51, 0x00263f00, 0x00263fff ],#    "0000 0051 003f 2600 ff3f 2600 ",   # SpotACTotalPower  // SPOT_PACTOT
-#[0x00, 0x00, 0x00, 0x52, 0x00263f00, 0x00263fff ],#    "0000 0051 003f 2600 ff3f 2600 ",   # SpotACTotalPower  // SPOT_PACTOT
+#[0x00, 0x00, 0x00, 0x51, 0x00237700, 0x00237702 ],
+#[0x00, 0x00, 0x00, 0x52, 0x00237700, 0x00237702 ],
+#
+#[0x00, 0x00, 0x00, 0x51, 0x00237700, 0x002377ff ],#    "0000 0052 0077 2300 ff77 2300 ",   # external inverter temperature
+#[0x00, 0x00, 0x00, 0x52, 0x00237700, 0x002377ff ],#    "0000 0052 0077 2300 ff77 2300 ",   # external inverter temperature
+#
 
 #[0x00, 0x00, 0x00, 0x51, 0x00295a00, 0x00295aff ],#    "0000 0051 005a 2900 ff5a 2900 ",   # BatteryChargeStatus:
 #[0x00, 0x00, 0x00, 0x51, 0x00495b00, 0x00495bff ],#    "0000 0051 005B 4900 ff5b 4900 ",   # temperature battery:
@@ -218,7 +222,7 @@ if( scalar @commandarguments )
     exit;
 }
 
-for my $type (0x40..0x60)
+for my $type (0x51..0x60)
 {
     for my $command (0x0..0xff)
     {
@@ -350,25 +354,42 @@ sub sendReceiveCommand
     my $data;
 
     sendCommand($socket,$command,$sessionid,$inverterid);
-    my $starttime = time();
-	$socket->recv($data, MAXIMUM_PACKET_SIZE);
-    my $endtime = time();
 
-    printf "Responsetime = %.3f ms\n",($endtime - $starttime) * 1000;
-    if( 0 == length($data) )
-    {
-        print "no response.\n";
-        return undef;
-    }
+    my $response = receiveData($socket);
 
-    writeDataToFile($data);
-    my $response = printSMAPacket('recv',$data);
-
-    print "\n\n";
     return $response;
+
 }
 
+sub receiveData
+{
+    my($socket) = @_;
 
+    my $data;
+    my $response = undef;
+    my $responsecounter = 0;
+    while(1)
+    {
+        my $starttime = time();
+        $socket->recv($data, MAXIMUM_PACKET_SIZE);
+        my $endtime = time();
+
+        printf "Responsetime = %.3f ms\n",($endtime - $starttime) * 1000;
+        if( 0 == length($data) )
+        {
+            print "no response.\n" if undef == $response;
+            return $response;
+        }
+        writeDataToFile($data);
+
+        $responsecounter++;
+
+        print "RESPONSECOUNTER:$responsecounter\n";
+
+        $response = printSMAPacket('recv',$data);
+        print "\n\n";
+    }
+}
 
 
 {

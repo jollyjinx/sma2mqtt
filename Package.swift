@@ -47,7 +47,11 @@ let package = Package(
                         dependencies: [ "sma2mqttLibrary",
                                         .product(name: "BinaryCoder", package: "BinaryCoder"),
                                         .product(name: "JLog", package: "JLog")
+                                    ],
+                        resources: [ .copy("Resources/obisdefinition.json"),
+                                     .copy("Resources/SMANetPacketDefinitions.json")
                                     ]
+                    
                     )
     ]
 )

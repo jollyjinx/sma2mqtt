@@ -56,16 +56,22 @@ extension SMANetPacketValue:Encodable
                 topic,
                 unit,
                 title,
+                        
 
-                number,
+                anumber,
                 value,
+                time,
                 date
 
         }
         var container = encoder.container(keyedBy:CodingKeys.self)
 
-        try container.encode("0x" + String(self.address,radix: 16) ,forKey:.address)
+        try container.encode(String(format:"0x%04x",self.address),forKey:.address)
+        try container.encode(number   ,forKey:.anumber)
+        try container.encode(time   ,forKey:.time)
+        try container.encode(date.description  ,forKey:.date)
         try container.encode(packetDefinition.unit    ,forKey:.unit)
+        try container.encode(packetDefinition.topic   ,forKey:.topic)
         try container.encode(packetDefinition.title   ,forKey:.title)
 
 
@@ -124,8 +130,9 @@ extension SMANetPacketValue:BinaryDecodable
                             value = .int( values )
 
             case .string:   //assert(decoder.countToEnd >= 32 )
-                            let data = try decoder.decode(Data.self,length: decoder.countToEnd)
-                            let string = String(data: data, encoding: .ascii)!
+                            var ok = true
+                            let data = try decoder.decode(Data.self,length: decoder.countToEnd).filter{ ok = ok && ($0 != 0) ; return ok }
+                            let string = String(data:data ,encoding: .isoLatin1)!
                             value = .string(string)
 
             case .version:  var values = [UInt16]()

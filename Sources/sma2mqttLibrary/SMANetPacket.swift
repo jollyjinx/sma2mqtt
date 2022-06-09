@@ -68,12 +68,9 @@ struct SMANetPacketHeader:BinaryDecodable,Encodable,Decodable
     let destinationSerial:UInt32
 
     let unknown3:UInt16
-
     let response:UInt16
 
-    let unknown4:UInt8
-    let unknown5:UInt8
-
+    let remainingpackets:UInt16
     private let _packetId:UInt16
 
     let unknown6:UInt16
@@ -82,7 +79,7 @@ struct SMANetPacketHeader:BinaryDecodable,Encodable,Decodable
 
     // calculated
     var packetId: UInt16 { _packetId & 0x7FFF }
-    var packetFlag: Bool { _packetId & 0x8000  != 0 }
+    var firstpacket: Bool { _packetId & 0x8000  != 0 }
 
     let valuecountDone:UInt32
     let valuecountAll:UInt32
@@ -126,8 +123,7 @@ struct SMANetPacketHeader:BinaryDecodable,Encodable,Decodable
 
         self.response       = try decoder.decode(UInt16.self).littleEndian
 
-        self.unknown4       = try decoder.decode(UInt8.self).littleEndian
-        self.unknown5       = try decoder.decode(UInt8.self).littleEndian
+        self.remainingpackets   = try decoder.decode(UInt16.self).littleEndian
 
         self._packetId      = try decoder.decode(UInt16.self).littleEndian
 
