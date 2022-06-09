@@ -42,7 +42,7 @@ my $mqttprefix = "test";
 my  $socket = new IO::Socket::INET (PeerHost => $hostname,
                                     PeerPort => $portnumber,
                                     Proto => 'udp',
-                                    Timeout => 1)                                   || die "Can't open socket due to:$!\n";
+                                    Timeout => 3)                                   || die "Can't open socket due to:$!\n";
     $socket->setsockopt(SOL_SOCKET, SO_RCVTIMEO, pack('l!l!', TIMEOUT_RECEIVE, 0))  || die "error setting SO_RCVTIMEO: $!";
 
 
@@ -367,6 +367,7 @@ sub receiveData
 
     my $data;
     my $response = undef;
+    my $moretocome = undef;
     my $responsecounter = 0;
     while(1)
     {
@@ -386,8 +387,10 @@ sub receiveData
 
         print "RESPONSECOUNTER:$responsecounter\n";
 
-        $response = printSMAPacket('recv',$data);
+        ($response,$moretocome) = printSMAPacket('recv',$data);
         print "\n\n";
+
+        return $response if 0==$moretocome;
     }
 }
 
@@ -481,13 +484,13 @@ sub printSMAPacket
     if( $smaheader != 0x534d4100 )
     {
         printf "%s: invalid packet: prefix:%0x header:%0x len:%d data:%s\n",$prefix,$smaheader,$proto,$length,prettyhexdata($data);
-        return undef;
+        return (undef,0);
     }
 
     if( $proto != 0x6065 )
     {
         printf "%s SMA packet: prefix:%0x header:%0x len:%d data:%s\n",$prefix,$smaheader,$proto,$length,prettyhexdata($data);
-        return undef;
+        return (undef,0);
     }
 
     printf "Complete Packet:\n".prettyhexdata($data)."\n";
@@ -497,7 +500,7 @@ sub printSMAPacket
     if( $footer != 0x0 )
     {
         print "Invalid footer\n";
-        return undef;
+        return (undef,0);
     }
     printf "%5s SMAPacket: %s\n",$prefix,prettyhexdata(substr($data,0,18));
 
@@ -513,10 +516,10 @@ sub printSMAPacket
 #
 #    my ($length,$pkttype, $dstid,$destination, $p8,$p9, $srcid,$source, $type,$response,$px,$p10 ,$packetid, $p12, $command, $remaining) = data2command($data ,'CC nN CC nN v CC v v v v');
 #
-#    my $packetflag  = $packetid & 0x8000 ? '1' : '0';
+#    my $firstpacket  = $packetid & 0x8000 ? '1' : '0';
 #       $packetid    = $packetid & 0x7FFF;
 #
-#    printf "command:%04x response:%04x: source:%02x%04x destination:%02x%04x pktflg:%s pktid:0x%04x remaining length:%d\n",$command,$response,$srcid,$source,$dstid,$destination,$packetflag,$packetid,length($remaining);
+#    printf "command:%04x response:%04x: source:%02x%04x destination:%02x%04x pktflg:%s pktid:0x%04x remaining length:%d\n",$command,$response,$srcid,$source,$dstid,$destination,$firstpacket,$packetid,length($remaining);
 #
 #    if( $response != 0 || $command == 0xFFFD )
 #    {
@@ -589,7 +592,7 @@ sub printSMANetPacket
 {
     my($data) = @_;
 
-
+    my $valueslength = 0;
     {
         my $smanet_length = unpack('C',substr($data,0,1)) * 4;
         my $remaining = $smanet_length - 36;
@@ -612,6 +615,8 @@ sub printSMANetPacket
         printf " cntisvalid=%d",$countisvalid;
             print " ";
             my(@values) = data2command($valuesheader,'CCCCCCC',1);
+
+        $valueslength = $remaining;
 
         if( $remaining > 28 )
         {
@@ -646,6 +651,7 @@ sub printSMANetPacket
 
                 printf prettyhexdata($valuesdata,$divided);
             }
+            $valueslength = $divided;
         }
         else
         {
@@ -670,17 +676,17 @@ sub printSMANetPacket
         {
             my @header =  data2command($data ,'CC nN CC nN v CC v v v v');
 
-            my ($length,$pkttype, $dstid,$destination, $p8,$p9, $srcid,$source, $type,$response,$px,$p10 ,$packetid, $p12, $command, $remaining) = @header;
+            my ($length,$pkttype, $dstid,$destination, $p8,$p9, $srcid,$source, $type,$response,$px,$packetstocome ,$packetid, $p12, $command, $remaining) = @header;
 
-            my $packetflag  = $packetid & 0x8000 ? '1' : '0';
+            my $firstpacket  = $packetid & 0x8000 ? '1' : '0';
                $packetid    = $packetid & 0x7FFF;
 
-            printf "command:%04x response:%04x: source:%02x%04x destination:%02x%04x pktflg:%s pktid:0x%04x remaining length:%d\n",$command,$response,$srcid,$source,$dstid,$destination,$packetflag,$packetid,length($remaining);
+            printf "command:%04x response:%04x: source:%02x%04x destination:%02x%04x pktflg:%s pktid:0x%04x remaining length:%d\n",$command,$response,$srcid,$source,$dstid,$destination,$firstpacket,$packetid,length($remaining);
 
             if( $response != 0 || $command == 0xFFFD )
             {
                 printf "raw:%s\n",prettyhexdata($data);
-                return $response;
+                return ($response,$packetstocome);
             }
 
             {
@@ -697,15 +703,17 @@ sub printSMANetPacket
         my $source      = unpack('H*',substr($data,10,6));
         my $response    = unpack('v',substr($data,18,2));
         my $command     = unpack('v',substr($data,26,2));
+        my $packetstocome    = unpack('v',substr($data,20,2));
         my $packetid    = unpack('v',substr($data,22,2)) & 0x7FFF;
-        my $packetflag  = unpack('v',substr($data,22,2)) & 0x8000 ? '1' : '0';
+        my $firstpacket  = unpack('v',substr($data,22,2)) & 0x8000 ? '1' : '0';
 
-        printf "command:%04x response:%04x: source:%s destination:%s pktflg:%s pktid:0x%04x\n",$command,$response,$source,$destination,$packetflag,$packetid;
+        printf "command:%04x response:%04x: source:%s destination:%s packetstocome:%d firstpkt:%s pktid:0x%04x valueslength:%d\n",$command,$response,$source,$destination,$packetstocome,$firstpacket,$packetid,$valueslength;
+
 
         if( $response != 0 || $command == 0xFFFD )
         {
             printf "raw:%s\n",prettyhexdata($data);
-            return $response;
+            return ($response,$packetstocome);
         }
     }
 
@@ -722,145 +730,135 @@ sub printSMANetPacket
     my $source  = unpack('H*',substr($data,10,6));
     my $command = unpack('v',substr($data,26,2));
 
-    my $resultnumber = 0;
-    FOOTERPARSING: while( length($footer) > 7 )
+    while( length($footer) )
     {
-        print "\n";
-        my $number = unpack('C',substr($footer,0,1));
-        my $code = unpack('v',substr($footer,1,2));
-        my $type = unpack('C',substr($footer,3,1));
-        my $time  = unpack('V',substr($footer,4,4));
-        my $timestring = POSIX::strftime('%Y-%m-%dT%H:%M:%S',localtime($time));
-        my $typelength = 40;
+        my $data = substr($footer,0,$valueslength);
 
-        my $year = substr($timestring,0,4);
-        if( $time ne 0 && $year !~ m/^(?:1970|2021|2022)$/o )
+        SMANetPacketValueParsing($source,$command,$data);
+        $footer = substr($footer,$valueslength);
+    }
+    print "\n\n";
+
+    return undef;
+}
+
+
+sub SMANetPacketValueParsing
+{
+    my($source,$command,$footer) = @_;
+
+    my $number = unpack('C',substr($footer,0,1));
+    my $code = unpack('v',substr($footer,1,2));
+    my $type = unpack('C',substr($footer,3,1));
+    my $time  = unpack('V',substr($footer,4,4));
+    my $timestring = POSIX::strftime('%Y-%m-%dT%H:%M:%S',localtime($time));
+
+    my  $typeinformation = code2Typeinformation($code);
+    my  $name = $$typeinformation{path};
+
+    my  $unit = $$typeinformation{unit};
+    my  $factor = $$typeinformation{factor}|| 1;
+    my  $title = $$typeinformation{title};
+    my  $path = $name.'.'.$number;
+
+    $name .= '.'.$number if $number > 0 && $number <7;
+    $name .= ' ('.$$typeinformation{unit}.')' if $$typeinformation{unit};
+
+
+    printf "%s%s Code:0x%04x-0x%04x No:0x%02x Type:0x%02x %s %27s ",' ' x 7,$source,$command,$code,$number,$type,$timestring,$name;
+
+    ##### TYPE decoding
+
+    if( $type == 0x00 || $type == 0x40 )    # integer
+    {
+        my  @values = map { unpack('V',substr($footer,8+(4*$_),4)) } (0..8);
+        my $shortmarker = @values[1];
+        my $longmarker = @values[4];
+
+        if(         @values[0] == 0x0       # version number scheme
+                &&  @values[1] == 0x0
+                &&  @values[2] == 0xFFFFFFFE
+                &&  @values[3] == 0xFFFFFFFE
+                &&  @values[4] == @values[5]
+                &&  @values[6] == 0x0
+                &&  @values[7] == 0x0
+            )
         {
-            printf "Weird time %s raw: %s\n",$timestring,prettyhexdata( substr($footer,0,60) ).'...';
-#            $footer = substr($footer,1);
-#            next FOOTERPARSING;
+            @values = unpack('C*',pack('N',@values[4]));
         }
-
-        my  $typeinformation = code2Typeinformation($code);
-        my  $name = $$typeinformation{path};
-
-        my  $unit = $$typeinformation{unit};
-        my  $factor = $$typeinformation{factor}|| 1;
-        my  $title = $$typeinformation{title};
-        my  $path = $name.'.'.$resultnumber;
-        $resultnumber++;
-
-            $name .= '.'.$number if $number > 0 && $number <7;
-            $name .= ' ('.$$typeinformation{unit}.')' if $$typeinformation{unit};
-
-
-#        print "\nFooter DATA:".prettyhexdata(substr($footer,0,40))."\n";
-
-        printf "%s%s Code:0x%04x-0x%04x No:0x%02x Type:0x%02x %s %27s ",' ' x 7,$source,$command,$code,$number,$type,$timestring,$name;
-
-        ##### TYPE decoding
-
-        if( $type == 0x00 || $type == 0x40 )    # integer
+        elsif(      $longmarker == 1
+                ||  ($longmarker == 0 && @values[2] == 0 && @values[3] == 0)
+            )
         {
-            my  @values = map { unpack('V',substr($footer,8+(4*$_),4)) } (0..8);
-            my $shortmarker = @values[1];
-            my $longmarker = @values[4];
-
-            if(         @values[0] == 0x0       # version number scheme
-                    &&  @values[1] == 0x0
-                    &&  @values[2] == 0xFFFFFFFE
-                    &&  @values[3] == 0xFFFFFFFE
-                    &&  @values[4] == @values[5]
-                    &&  @values[6] == 0x0
-                    &&  @values[7] == 0x0
-                )
-            {
-                $typelength = 40;
-                @values = unpack('C*',pack('N',@values[4]));
-            }
-            elsif(      $longmarker == 1
-                    ||  ($longmarker == 0 && @values[2] == 0 && @values[3] == 0)
-                )
-            {
-                $typelength = 28;
-                splice(@values,4);
-                splice(@values,1)  if '' eq join('',map { @values[$_-1] == @values[0] ? '' : 'somevalue' } (1..@values) );  # print one value if all are same
-            }
-            elsif(      $shortmarker == 0
-#                    &&  @values[0] == @values[1]
-#                    &&  @values[0] == @values[2]
-#                    &&  @values[0] == @values[3]
-                )
-            {
-                splice(@values,1);
-                $typelength = 16;
-            }
-            else
-            {
-               print "\nFooter DATA:".prettyhexdata(substr($footer,0,40))."\n";
-               print "Weird";
-                $footer = substr($footer,1);
-            }
-
-            my @results;
-
-            for my $value (@values)
-            {
-                if( $type == 0x00 )
-                {
-                    push(@results, $value != 4294967295 ? sprintf("%d",$value) : 'NaN');
-                }
-                else
-                {
-                    my $signed = unpack('l',pack('L',$value));
-                    push(@results, $signed != -2147483648 ? sprintf("%d",$signed) : 'NaN');
-                }
-            }
-            printf "%30s ",join(':',@results);
-
-            sendMQTT($path,$unit,$factor,$title,@results);
-
+            splice(@values,4);
+            splice(@values,1)  if '' eq join('',map { @values[$_-1] == @values[0] ? '' : 'somevalue' } (1..@values) );  # print one value if all are same
         }
-        elsif( $type == 0x10 )      # string
+        elsif(      $shortmarker == 0
+    #                    &&  @values[0] == @values[1]
+    #                    &&  @values[0] == @values[2]
+    #                    &&  @values[0] == @values[3]
+            )
         {
-            my $value = unpack('Z*',substr($footer,8,32));
-
-            printf "%30s ",$value;
-        }
-        elsif( $type == 0x08)      # dotted version
-        {
-            my $position = 8;
-            my @values = ();
-
-            while( $position < 36)
-            {
-                my $valueA   = unpack('v',substr($footer,$position,2));
-                my $valueB   = unpack('v',substr($footer,$position+2,2));
-
-                last if $valueB == 0xFFFE && $valueA == 0x00FF;
-
-                push(@values, sprintf("%04d",$valueA) ) if $valueB & 0x100  ;
-
-                $position += 4;
-            }
-
-            printf "%30s ",join('.',@values);
+            splice(@values,1);
         }
         else
         {
-            printf "TYPE %02x UNKOWN ",$type;
-            $typelength = 2;
+           print "\nFooter DATA:".prettyhexdata(substr($footer,0,40))."\n";
+           print "Weird";
         }
-        printf "realtype:0x%02x len:%d raw: %s\n",$type,$typelength,prettyhexdata(substr($footer,0,$typelength));
-        $footer = substr($footer,$typelength);
-    }
 
-    if ( length( $footer ) > 0 )
-    {
-            printf "\tFOOTER raw:%s\n",prettyhexdata( $footer );
+        my @results;
+
+        for my $value (@values)
+        {
+            if( $type == 0x00 )
+            {
+                push(@results, $value != 4294967295 ? sprintf("%d",$value) : 'NaN');
+            }
+            else
+            {
+                my $signed = unpack('l',pack('L',$value));
+                push(@results, $signed != -2147483648 ? sprintf("%d",$signed) : 'NaN');
+            }
+        }
+        printf "%30s ",join(':',@results);
+
+        sendMQTT($path,$unit,$factor,$title,@results);
+
     }
-    return undef;
+    elsif( $type == 0x10 )      # string
+    {
+        my $value = unpack('Z*',substr($footer,8,32));
+
+        printf "%30s ",$value;
+    }
+    elsif( $type == 0x08)      # dotted version
+    {
+        my $position = 8;
+        my @values = ();
+
+        while( $position < 36)
+        {
+            my $valueA   = unpack('v',substr($footer,$position,2));
+            my $valueB   = unpack('v',substr($footer,$position+2,2));
+
+            last if $valueB == 0xFFFE && $valueA == 0x00FF;
+
+            push(@values, sprintf("%04d",$valueA) ) if $valueB & 0x100  ;
+
+            $position += 4;
+        }
+
+        printf "%30s ",join('.',@values);
+    }
+    else
+    {
+        printf "TYPE %02x UNKOWN ",$type;
+    }
+    printf "realtype:0x%02x raw: %s\n",$type,prettyhexdata($footer);
 }
+
+
 
 sub sendMQTT
 {
