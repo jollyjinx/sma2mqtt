@@ -19,6 +19,7 @@ use constant MAXIMUM_PACKET_SIZE    => scalar 90000;
 use constant TIMEOUT_RECEIVE        => scalar 2;
 
 # perl smatester.perl Temp/Reverseengineering/sb4.out |perl -ne 'print "$2  $4$3  $5  $9$8$7$6 $10\n" if /(len:\d+ raw: (..)(..) (..)(..) (..)(..) (..)(..) (.*))/'  |perl -ne 'if( /^\S\S  (\S\S\S\S)  / ){ $v=$1;$l=length($_); print "Match: $l $v $_"; if( exists($p{$v}{l}) && $p{$v}{l} != $l){ print "$l != $p{$v}{l}\n\t$p{$v}{v}\t$_";} $p{$v}{l} = $l;$p{$v}{v} = $_;}' |grep -v Match |grep -v ' != ' |sort -u -k 2
+my $mqttsender = undef;
 
 if( @ARGV == 1 )
 {
@@ -32,7 +33,9 @@ my $portnumber = 9522;
 my $usertype   = USER_TYPE_USER;
 
 print "hostname:$hostname\n";
-my $mqttsender = lc((split(/\./,$hostname))[0]);
+# $mqttsender = lc((split(/\./,$hostname))[0]);
+
+
 
 my $mqtt = Net::MQTT::Simple->new("10.112.10.3") || die "Can't create mqtt client";
 my $mqttprefix = "test";
@@ -55,6 +58,15 @@ my $inverterid  = 'ffff ffff ffff';
 #    "0000 0051 0048 4600 ffff 4600 ",   # normal values
 # 0x52000200, 0x00237700, 0x002377FF inverter temp
 my @commandarguments = (
+#[0x00, 0x02, 0x00, 0x52, 0x00237700, 0x002377ff ],#    "0000 0052 0077 2300 ff77 2300 ",   # external inverter temperature
+
+# [0x00,0x02,0x00,0x46, 0x00237700, 0x002377FF],
+#[0x00, 0x00, 0x00, 0x61, 0x0046ea00, 0x0046eaFF ],#    "0000 0051 005B 4900 ff5b 4900 ",   # temperature battery:
+
+
+# [0x00, 0x02, 0x00, 0x46, 0x00237700, 0x002377FF ],#    "0000 0051 005B 4900 ff5b 4900 ",   # temperature battery:
+#		     elsif ($i eq "sup_InverterTemperature") {
+#		         ($sup_InverterTemperature,$inv_TEMP,$inv_susyid,$inv_serial) = SMAInverter_SMAcommand($hash, $hash->{HOST}, 0x52000200, 0x00237700, 0x002377FF);
 
 #[0x00, 0x00, 0x00, 0x51, 0x00237700, 0x00237702 ],
 #[0x00, 0x00, 0x00, 0x52, 0x00237700, 0x00237702 ],
@@ -69,7 +81,7 @@ my @commandarguments = (
 #[0x00, 0x00, 0x00, 0x51, 0x00263f00, 0x00263fff ],#    "0000 0051 003f 2600 ff3f 2600 ",   # SpotACTotalPower  // SPOT_PACTOT
 
 #[0x00, 0x00, 0x00, 0x51, 0x00464800, 0x0046ffff, ],
-
+#
 #[0x00, 0x00, 0x00, 0x52, 0x00464800, 0x0046ffff, ],
 
 #[0x00, 0x00, 0x00, 0x50, 0x00263f00, 0x00263fff ],#    "0000 0051 003f 2600 ff3f 2600 ",   # SpotACTotalPower  // SPOT_PACTOT
@@ -222,19 +234,21 @@ if( scalar @commandarguments )
     exit;
 }
 
-for my $type (0x51..0x60)
+for my $command (0x00..0x40) # (0x00..0xff)
 {
-    for my $command (0x0..0xff)
+    for my $type (0x00,0x80) # (0x00..0xff)  # 0x02 logout
     {
-        my $start = $command << 24;
-        my $end = ($command << 24) | 0xffffff;
+        for my $address (0x20..0x5F)
+        {
+            my $start   = ($address << 16) | 0x0000;
+            my $end     = ($address << 16) | 0xffff;
 
-        my @cmd = [0x00, 0x00, 0x00, $type, $start, $end ];
+# [0x00, 0x00, 0x00, 0x51, 0x00491e00, 0x00495dff ],#    "0000 0051 001e 4900 ff5d 4900 ",   # BatteryInfo:
 
-        doWork( @cmd );
-        my @cmd = [0x00, 0x00, 0x80, $type, $start, $end ];
+            my @cmd = [0x00, 0x00, $type, $command, $start, $end ];
 
-        doWork( @cmd );
+            doWork( @cmd );
+        }
     }
 }
 exit;
@@ -369,6 +383,7 @@ sub receiveData
     my $response = undef;
     my $moretocome = undef;
     my $responsecounter = 0;
+
     while(1)
     {
         my $starttime = time();
@@ -592,10 +607,17 @@ sub printSMANetPacket
 {
     my($data) = @_;
 
-    my $valueslength = 0;
+    my $valueslength;
+    my $valuescount;
     {
         my $smanet_length = unpack('C',substr($data,0,1)) * 4;
         my $remaining = $smanet_length - 36;
+
+        if( $smanet_length != length($data) )
+        {
+            printf "invalid SMANetPacket length $smanet_length != ".length($data)." data:".prettyhexdata($data)."\n";
+            return undef;
+        }
 
         my $valuesheader = substr($data,28,8);
         my $valuesdata   = substr($data,36);
@@ -604,75 +626,87 @@ sub printSMANetPacket
         printf " len=%4d",$remaining;
         printf " head:".prettyhexdata($valuesheader);
 
-        my ($already,$all) = unpack('VV',$valuesheader);
-        my $valuecount = $all-$already + 1;
 
-        my $divided = $remaining / $valuecount;
-        printf " cnt:0x%02d partlen=%2d",$valuecount,$divided;
-        my @validsizes = grep(  $_ != undef  , map { $remaining % $_ == 0 ? $_ : undef } (16,20,28,40) ) ;
-        my $countisvalid = ( 1 == scalar grep($_ == $divided,@validsizes) );
-
-        printf " cntisvalid=%d",$countisvalid;
-            print " ";
-            my(@values) = data2command($valuesheader,'CCCCCCC',1);
-
-        $valueslength = $remaining;
-
-        if( $remaining > 28 )
         {
-            if(     $countisvalid
-                &&  @values[0] == 0  &&  @values[1] == 0  &&  @values[2] == 0  &&  @values[3] == 0
-                                     &&  @values[5] == 0  &&  @values[6] == 0  &&  @values[7] == 0
-              )
+            if( $remaining < 32 )
             {
-                print " no need to check\n";
-                printf prettyhexdata($valuesdata,$divided);
+                $valueslength = $remaining;
+                $valuescount  = $remaining > 0 ? 1 : 0;
             }
             else
             {
-                my %counttimeswrong = map { $_ => counttimeswrong($valuesdata,$_) } @validsizes;
-
-                my @mostprobably = sort{ $counttimeswrong{$a} <=> $counttimeswrong{$b} } @validsizes;
-                printf " (%s)",join(',',map { %counttimeswrong{$_} } @mostprobably);
-                my $mostprobably = @mostprobably[0];
-
-                my $countismostprobably = $valuecount == $mostprobably;
-
-
-                printf " cnt==probable:%d",$countismostprobably;
-                printf " cntnow:0x%02x", ($remaining / $mostprobably);
-
-                counttimeswrong($valuesdata,$divided,1);
-
-                printf " %s",($valuecount == ($remaining / $mostprobably) ? "OK" : "FAIL");
-
-
-                printf "\n";
-
-                printf prettyhexdata($valuesdata,$divided);
+                my ($from,$to) = unpack('VV',$valuesheader);
+                $valuescount    = $to - $from + 1;
+                $valueslength   = $remaining / $valuescount;
             }
-            $valueslength = $divided;
-        }
-        else
-        {
-            printf "\n";
-            printf prettyhexdata($valuesdata);
-        }
-        print "\n" x 10;
+            printf " valcnt:0x%02d vallen=%2d",$valuescount,$valueslength;
 
-        if(    length($data) < 2
-            || length($data) != $smanet_length
-            || $smanet_length < 32
-          )
-        {
-            printf "Invalid SMANet packet: %d != %d < 32 :%s\n",$smanet_length,length($data),prettyhexdata($data);
-            exit;
-            return undef;
+
+            my @validsizes = grep(  $_ != undef  , map { $remaining % $_ == 0 ? $_ : undef } (16,20,28,40) ) ;
+            my $countisvalid = ( 1 == scalar grep($_ == $valueslength,@validsizes) );
+
+            printf " cntisvalid=%d",$countisvalid;
+                print " ";
+                my(@values) = data2command($valuesheader,'CCCCCCC',1);
         }
+
+#        $valueslength = $remaining;
+#
+#        if( $remaining > 28 )
+#        {
+#            if(     $countisvalid
+#                &&  @values[0] == 0  &&  @values[1] == 0  &&  @values[2] == 0  &&  @values[3] == 0
+#                                     &&  @values[5] == 0  &&  @values[6] == 0  &&  @values[7] == 0
+#              )
+#            {
+#                print " no need to check\n";
+#                printf prettyhexdata($valuesdata,$divided);
+#            }
+#            else
+#            {
+#                my %counttimeswrong = map { $_ => counttimeswrong($valuesdata,$_) } @validsizes;
+#
+#                my @mostprobably = sort{ $counttimeswrong{$a} <=> $counttimeswrong{$b} } @validsizes;
+#                printf " (%s)",join(',',map { %counttimeswrong{$_} } @mostprobably);
+#                my $mostprobably = @mostprobably[0];
+#
+#                my $countismostprobably = $valuecount == $mostprobably;
+#
+#
+#                printf " cnt==probable:%d",$countismostprobably;
+#                printf " cntnow:0x%02x", ($remaining / $mostprobably);
+#
+#                counttimeswrong($valuesdata,$divided,1);
+#
+#                printf " %s",($valuecount == ($remaining / $mostprobably) ? "OK" : "FAIL");
+#
+#
+#                printf "\n";
+#
+#                printf prettyhexdata($valuesdata,$divided);
+#            }
+#            $valueslength = $divided;
+#        }
+#        else
+#        {
+#            printf "\n";
+#            printf prettyhexdata($valuesdata);
+#        }
+#        print "\n" x 10;
+#
+#        if(    length($data) < 2
+#            || length($data) != $smanet_length
+#            || $smanet_length < 32
+#          )
+#        {
+#            printf "Invalid SMANet packet: %d != %d < 32 :%s\n",$smanet_length,length($data),prettyhexdata($data);
+#            exit;
+#            return undef;
+#        }
     }
 
 
-    {
+#    {
         {
             my @header =  data2command($data ,'CC nN CC nN v CC v v v v');
 
@@ -710,26 +744,26 @@ sub printSMANetPacket
         printf "command:%04x response:%04x: source:%s destination:%s packetstocome:%d firstpkt:%s pktid:0x%04x valueslength:%d\n",$command,$response,$source,$destination,$packetstocome,$firstpacket,$packetid,$valueslength;
 
 
-        if( $response != 0 || $command == 0xFFFD )
-        {
-            printf "raw:%s\n",prettyhexdata($data);
-            return ($response,$packetstocome);
-        }
-    }
+#        if( $response != 0 || $command == 0xFFFD )
+#        {
+#            printf "raw:%s\n",prettyhexdata($data);
+#            return ($response,$packetstocome);
+#        }
+#    }
 
-    {
-        my $valuetype   = unpack('V',substr($data,28,4));
-        my $valuecount  = unpack('V',substr($data,32,4));
+#    {
+#        my $valuetype   = unpack('V',substr($data,28,4));
+#        my $valuecount  = unpack('V',substr($data,32,4));
+#
+#        my $header = substr($data,0,36);
+#
+#        printf "type:0x%08x count:0x%08x raw:%s\n",$valuetype,$valuecount,prettyhexdata($header);
+#    }
 
-        my $header = substr($data,0,36);
-
-        printf "type:0x%08x count:0x%08x raw:%s\n",$valuetype,$valuecount,prettyhexdata($header);
-    }
-
-    my $footer  = substr($data,36);
     my $source  = unpack('H*',substr($data,10,6));
     my $command = unpack('v',substr($data,26,2));
 
+    my $footer  = substr($data,36);
     while( length($footer) )
     {
         my $data = substr($footer,0,$valueslength);
@@ -739,7 +773,7 @@ sub printSMANetPacket
     }
     print "\n\n";
 
-    return undef;
+    return ($response,$packetstocome);
 }
 
 
@@ -761,20 +795,28 @@ sub SMANetPacketValueParsing
     my  $title = $$typeinformation{title};
     my  $path = $name.'.'.$number;
 
-    $name .= '.'.$number if $number > 0 && $number <7;
+    $name .= '.'.$number ;# if $number > 0 && $number <7;
     $name .= ' ('.$$typeinformation{unit}.')' if $$typeinformation{unit};
 
+    my %knownsources = (    '69016d3326b3' => 'sbs',
+                            '56012b7fbc76' => 'sb3',
+                            '9901f6a22fb3' => 'sb4',
+                            '7a01d39c05b3' => 'sbt',
+                        );
+    $source = $knownsources{$source} || $source;
 
-    printf "%s%s Code:0x%04x-0x%04x No:0x%02x Type:0x%02x %s %27s ",' ' x 7,$source,$command,$code,$number,$type,$timestring,$name;
+    printf "%s|Code:0x%04x|0x%04x|No:0x%02x|Type:0x%02x|len:%2d|%s|%37s|",$source,$command,$code,$number,$type,length($footer),$timestring,$name;
 
     ##### TYPE decoding
 
     if( $type == 0x00 || $type == 0x40 )    # integer
     {
         my  @values = map { unpack('V',substr($footer,8+(4*$_),4)) } (0..8);
-        my $shortmarker = @values[1];
-        my $longmarker = @values[4];
 
+
+#        my $shortmarker = @values[1];
+#        my $longmarker = @values[4];
+#
         if(         @values[0] == 0x0       # version number scheme
                 &&  @values[1] == 0x0
                 &&  @values[2] == 0xFFFFFFFE
@@ -786,27 +828,26 @@ sub SMANetPacketValueParsing
         {
             @values = unpack('C*',pack('N',@values[4]));
         }
-        elsif(      $longmarker == 1
-                ||  ($longmarker == 0 && @values[2] == 0 && @values[3] == 0)
-            )
-        {
-            splice(@values,4);
-            splice(@values,1)  if '' eq join('',map { @values[$_-1] == @values[0] ? '' : 'somevalue' } (1..@values) );  # print one value if all are same
-        }
-        elsif(      $shortmarker == 0
-    #                    &&  @values[0] == @values[1]
-    #                    &&  @values[0] == @values[2]
-    #                    &&  @values[0] == @values[3]
-            )
-        {
-            splice(@values,1);
-        }
-        else
-        {
-           print "\nFooter DATA:".prettyhexdata(substr($footer,0,40))."\n";
-           print "Weird";
-        }
-
+#        elsif(      $longmarker == 1
+#                ||  ($longmarker == 0 && @values[2] == 0 && @values[3] == 0)
+#            )
+#        {
+#            splice(@values,4);
+#            splice(@values,1)  if '' eq join('',map { @values[$_-1] == @values[0] ? '' : 'somevalue' } (1..@values) );  # print one value if all are same
+#        }
+#        elsif(      $shortmarker == 0
+#    #                    &&  @values[0] == @values[1]
+#    #                    &&  @values[0] == @values[2]
+#    #                    &&  @values[0] == @values[3]
+#            )
+#        {
+#            splice(@values,1);
+#        }
+#        else
+#        {
+#           printf "Weird";
+#        }
+#
         my @results;
 
         for my $value (@values)
@@ -821,7 +862,7 @@ sub SMANetPacketValueParsing
                 push(@results, $signed != -2147483648 ? sprintf("%d",$signed) : 'NaN');
             }
         }
-        printf "%30s ",join(':',@results);
+        printf "%34s ",join(':',@results);
 
         sendMQTT($path,$unit,$factor,$title,@results);
 
@@ -830,7 +871,7 @@ sub SMANetPacketValueParsing
     {
         my $value = unpack('Z*',substr($footer,8,32));
 
-        printf "%30s ",$value;
+        printf "%34s ",$value;
     }
     elsif( $type == 0x08)      # dotted version
     {
@@ -849,13 +890,22 @@ sub SMANetPacketValueParsing
             $position += 4;
         }
 
-        printf "%30s ",join('.',@values);
+        printf "%34s ",join('.',@values);
     }
     else
     {
-        printf "TYPE %02x UNKOWN ",$type;
+        printf "type unknown ";
     }
-    printf "realtype:0x%02x raw: %s\n",$type,prettyhexdata($footer);
+
+    my %types = ( 0x00 => 'uint',
+                  0x40 => ' int',
+                  0x10 => ' str',
+                  0x08 => ' dot',
+                );
+    my $realtype = defined $types{$type} ? $types{$type} : sprintf('0x%02d',$type);
+
+
+    printf "|typ:%s|raw: %s\n",$realtype,prettyhexdata($footer);
 }
 
 
@@ -954,21 +1004,21 @@ sub code2Typeinformation
  0x4166 => { path => 'immediate.ac.feedinwaittime', unit => 's'},
  0x451F => { path => 'immediate.dc.voltage', unit => 'V', factor => 0.01 },
  0x4521 => { path => 'immediate.dc.amperage', unit => 'A', factor => 0.001 },
- 0x4623 => { path => 'unknown.maybe.counter.total.generation', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
- 0x4624 => { path => 'unknown.maybe.counter.total.feedin', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
- 0x4625 => { path => 'unknown.maybe.counter.total.usage', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
- 0x4626 => { path => 'unknown.maybe.counter.total.consumption', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
- 0x4627 => { path => 'unknown.maybe.counter.day,feedin', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
- 0x4628 => { path => 'unknown.maybe.counter.day.usage', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
+ 0x4623 => { path => 'unknown.counter.total.generation', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
+ 0x4624 => { path => 'unknown.counter.total.feedin', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
+ 0x4625 => { path => 'unknown.counter.total.usage', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
+ 0x4626 => { path => 'unknown.counter.total.consumption', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
+ 0x4627 => { path => 'unknown.counter.day,feedin', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
+ 0x4628 => { path => 'unknown.counter.day.usage', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
  0x462E => { path => 'immediate.operatingtime',unit => 's'},
  0x462F => { path => 'counter.feedintime',unit => 's'},
- 0x4631 => { path => 'unknown.maybe.grid.failure'},
- 0x4635 => { path => 'unknown.maybe.grid.total.generation', unit => 'W'},
+ 0x4631 => { path => 'unknown.grid.failure'},
+ 0x4635 => { path => 'unknown.grid.total.generation', unit => 'W'},
  0x4636 => { path => 'counter.total.feedin', unit => 'W'},
  0x4637 => { path => 'counter.total.usage', unit => 'W'},
- 0x4639 => { path => 'unknown.maybe.grid.total.consumption', unit => 'W'},
- 0x463A => { path => 'unknown.maybe.grid.power.feedin', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
- 0x463B => { path => 'unknown.maybe.grid.power.usage', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
+ 0x4639 => { path => 'unknown.grid.total.consumption', unit => 'W'},
+ 0x463A => { path => 'unknown.grid.power.feedin', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
+ 0x463B => { path => 'unknown.grid.power.usage', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
  0x4640 => { path => 'immediate.ac.power.phaseA', unit => 'W'},
  0x4641 => { path => 'immediate.ac.power.phaseB', unit => 'W'},
  0x4642 => { path => 'immediate.ac.power.phaseC', unit => 'W'},
@@ -978,22 +1028,22 @@ sub code2Typeinformation
  0x464B => { path => 'immediate.ac.powerfactor.phaseA', unit => '%'},
  0x464C => { path => 'immediate.ac.powerfactor.phaseB', unit => '%'},
  0x464D => { path => 'immediate.ac.powerfactor.phaseC', unit => '%'},
- 0x464E => { path => 'unknown.maybe.something', unit => '?'},
- 0x4650 => { path => 'unknown.maybe.grid.current.phaseA', unit => 'A', factor => 0.001 },
- 0x4651 => { path => 'unknown.maybe.grid.current.phaseB', unit => 'A', factor => 0.001 },
- 0x4652 => { path => 'unknown.maybe.grid.current.phaseC', unit => 'A', factor => 0.001 },
+ 0x464E => { path => 'unknown.something', unit => '?'},
+ 0x4650 => { path => 'unknown.grid.current.phaseA', unit => 'A', factor => 0.001 },
+ 0x4651 => { path => 'unknown.grid.current.phaseB', unit => 'A', factor => 0.001 },
+ 0x4652 => { path => 'unknown.grid.current.phaseC', unit => 'A', factor => 0.001 },
  0x4653 => { path => 'immediate.ac.current.phaseA', unit => 'A', factor => 0.001 },
  0x4654 => { path => 'immediate.ac.current.phaseB', unit => 'A', factor => 0.001 },
  0x4655 => { path => 'immediate.ac.current.phaseC', unit => 'A', factor => 0.001 },
  0x4657 => { path => 'immediate.ac.frequency', unit => 'Hz', factor => 0.01 },
- 0x46AA => { path => 'unknown.maybe.counter.ownconsumption', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
- 0x46AB => { path => 'unknown.maybe.power.ownconsumption'},
- 0x491E => { path => 'unknown.maybe.battery.counter.charges'},
+ 0x46AA => { path => 'unknown.counter.ownconsumption', unit => 'kWh', factor => ( 1.0 / 3600000 ) },
+ 0x46AB => { path => 'unknown.power.ownconsumption'},
+ 0x491E => { path => 'unknown.battery.counter.charges'},
  0x4922 => { path => 'battery.cells.maxtemperature', unit => 'ºC', factor => 0.1 },
  0x4923 => { path => 'battery.cells.mintemperature', unit => 'ºC', factor => 0.1 },
- 0x4924 => { path => 'unknown.maybe.battery.cells'},
- 0x4926 => { path => 'unknown.maybe.battery.total.charge', unit => 'Ah'},
- 0x4927 => { path => 'unknown.maybe.battery.total.discharge', unit => 'Ah'},
+ 0x4924 => { path => 'unknown.battery.cells'},
+ 0x4926 => { path => 'unknown.battery.total.charge', unit => 'Ah'},
+ 0x4927 => { path => 'unknown.battery.total.discharge', unit => 'Ah'},
  0x4933 => { path => 'battery.cells.setcharging.voltage', unit => 'V', factor => 0.01 },
  0x495B => { path => 'immediate.batterytemperature', unit => 'ºC' , factor => 0.1 , title => "Battery Temperature" },
  0x495C => { path => 'battery.system.voltage', unit => 'V', factor => 0.01 },
@@ -1002,10 +1052,10 @@ sub code2Typeinformation
  0x821F => { path => 'static.mainmodel'},
  0x8220 => { path => 'static.systemtype'},
  0x8234 => { path => 'static.softwareversion'},
- 0x832A => { path => 'unknown.maybe.system.maximumpoweroutput'},
+ 0x832A => { path => 'unknown.system.maximumpoweroutput'},
 
  };
-    my $code = $$typeInformation{$number} || { path => 'type.unkown.'.sprintf("0x%04x",$number) };
+    my $code = $$typeInformation{$number} || { path => 'type.unknown.'.sprintf("0x%04x",$number) };
 
     return $code;
 }

@@ -55,22 +55,22 @@ struct SMANetPacketHeader:BinaryDecodable,Encodable,Decodable
         case decoding(String)
     }
 
-    let quaterlength:UInt8
-    let type:UInt8
+    let quaterlength:UInt8          // 0
+    let type:UInt8                  // 1
 
-    let sourceSystemId:UInt16
-    let sourceSerial:UInt32
+    let sourceSystemId:UInt16       // 2-3
+    let sourceSerial:UInt32         // 4-7
 
-    let unknown1:UInt8
-    let unknown2:UInt8
+    let unknown1:UInt8              // 8    always 0x00
+    let unknown2:UInt8              // 9    0x01 0xa1 0xe1
 
-    let destinationSystemId:UInt16
-    let destinationSerial:UInt32
+    let destinationSystemId:UInt16  // 10, 11
+    let destinationSerial:UInt32    // 12-15
 
-    let unknown3:UInt16
-    let response:UInt16
+    let unknown3:UInt16             // 16-17    0x100
+    let response:UInt16             // 18-19    0x00 , 0x14, 0x15 
 
-    let remainingpackets:UInt16
+    let remainingpackets:UInt16     // 20
     private let _packetId:UInt16
 
     let unknown6:UInt16

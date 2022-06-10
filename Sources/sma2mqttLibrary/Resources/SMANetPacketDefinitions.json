@@ -14,6 +14,7 @@
      { "address" : "0x4166", "topic" : "immediate/ac/feedinwaittime"                 , "unit" : "s"     , "factor" : 1          , "title" : ""                            },
      { "address" : "0x451F", "topic" : "immediate/dc/voltage"                        , "unit" : "V"     , "factor" : 100        , "title" : ""                            },
      { "address" : "0x4521", "topic" : "immediate/dc/amperage"                       , "unit" : "A"     , "factor" : 1000       , "title" : ""                            },
+     { "address" : "0x461f", "topic" : "unknown/maybe/counter/something"             , "unit" : ""      , "factor" : 1          , "title" : ""                            },
      { "address" : "0x4623", "topic" : "unknown/maybe/counter/total/generation"      , "unit" : "kWh"   , "factor" : 3600000    , "title" : ""                            },
      { "address" : "0x4624", "topic" : "unknown/maybe/counter/total/feedin"          , "unit" : "kWh"   , "factor" : 3600000    , "title" : ""                            },
      { "address" : "0x4625", "topic" : "unknown/maybe/counter/total/usage"           , "unit" : "kWh"   , "factor" : 3600000    , "title" : ""                            },
