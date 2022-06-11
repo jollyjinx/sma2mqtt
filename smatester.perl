@@ -51,60 +51,44 @@ my  $socket = new IO::Socket::INET (PeerHost => $hostname,
 
 my $sessionid   = sprintf '1234 %04x 4321',int(rand(0x10000));
 my $inverterid  = 'ffff ffff ffff';
-    my $commandconversion = 'CCCC VV';
+    my $commandconversion = 'VVV';
     $commandconversion =~ s/ //g;
 
 #    "0000 0052 0048 4600 ffff 4600 ",   # multivalues if first
 #    "0000 0051 0048 4600 ffff 4600 ",   # normal values
 # 0x52000200, 0x00237700, 0x002377FF inverter temp
 my @commandarguments = (
-#[0x00, 0x02, 0x00, 0x52, 0x00237700, 0x002377ff ],#    "0000 0052 0077 2300 ff77 2300 ",   # external inverter temperature
-
-# [0x00,0x02,0x00,0x46, 0x00237700, 0x002377FF],
-#[0x00, 0x00, 0x00, 0x61, 0x0046ea00, 0x0046eaFF ],#    "0000 0051 005B 4900 ff5b 4900 ",   # temperature battery:
-
-
-# [0x00, 0x02, 0x00, 0x46, 0x00237700, 0x002377FF ],#    "0000 0051 005B 4900 ff5b 4900 ",   # temperature battery:
-#		     elsif ($i eq "sup_InverterTemperature") {
-#		         ($sup_InverterTemperature,$inv_TEMP,$inv_susyid,$inv_serial) = SMAInverter_SMAcommand($hash, $hash->{HOST}, 0x52000200, 0x00237700, 0x002377FF);
-
-#[0x00, 0x00, 0x00, 0x51, 0x00237700, 0x00237702 ],
-#[0x00, 0x00, 0x00, 0x52, 0x00237700, 0x00237702 ],
+#[0x51008000,  0x00214800, 0x002148ff ],#    "0000 8051 0048 2100 ff48 2100 ",   # DeviceStatus:   // INV_STATUS
+#[0x51000000,  0x00263f00, 0x00263fff ],#    "0000 0051 003f 2600 ff3f 2600 ",   # SpotACTotalPower  // SPOT_PACTOT
+#[0x51000000,  0x00295a00, 0x00295aff ],#    "0000 0051 005a 2900 ff5a 2900 ",   # BatteryChargeStatus:
+#[0x51000000,  0x00411e00, 0x004120ff ],#    "0000 0051 001e 4100 ff20 4100 ",   # MaxACPower:     // INV_PACMAX1, INV_PACMAX2, INV_PACMAX3
+#[0x51008000,  0x00416400, 0x004164ff ],#    "0000 8051 0064 4100 ff64 4100 ",   # GridRelayStatus:   // INV_GRIDRELAY
+#[0x51000000,  0x00463600, 0x004637ff ],#    "0000 0051 0036 4600 ff37 4600 ",   # MeteringGridMsTotW:
+#[0x51000000,  0x00464000, 0x004642ff ],#    "0000 0051 0040 4600 FF42 4600 ",   # SpotACPower:    // SPOT_PAC1, SPOT_PAC2, SPOT_PAC3
+#[0x51000000,  0x00464800, 0x004655ff ],#    "0000 0051 0048 4600 FF55 4600 ",   # SpotACVoltage: // SPOT_UAC1, SPOT_UAC2, SPOT_UAC3, SPOT_IAC1, SPOT_IAC2, SPOT_IAC3
+#[0x51000000,  0x00464800, 0x0046ffff ],
+#[0x51000000,  0x00465700, 0x004657ff ],#    "0000 0051 0057 4600 FF57 4600 ",   # SpotGridFrequency // SPOT_FREQ
+#[0x51000000,  0x00491e00, 0x00495dff ],#    "0000 0051 001e 4900 ff5d 4900 ",   # BatteryInfo:
+#[0x51000000,  0x00495b00, 0x00495bff ],#    "0000 0051 005B 4900 ff5b 4900 ",   # temperature battery:
+#[0x51000000,  0x00832a00, 0x00832aff ],#    "0000 0051 002a 8300 ff2a 8300 ",   # MaxACPower2:   // INV_PACMAX1_2
 #
-#[0x00, 0x00, 0x00, 0x51, 0x00237700, 0x002377ff ],#    "0000 0052 0077 2300 ff77 2300 ",   # external inverter temperature
-#[0x00, 0x00, 0x00, 0x52, 0x00237700, 0x002377ff ],#    "0000 0052 0077 2300 ff77 2300 ",   # external inverter temperature
+#[0x52000000,  0x00237700, 0x00237702 ],
+#[0x52000000,  0x00237700, 0x002377ff ],#    "0000 0052 0077 2300 ff77 2300 ",   # external inverter temperature
+#[0x52000000,  0x00464800, 0x0046ffff ],
 #
-
-#[0x00, 0x00, 0x00, 0x51, 0x00295a00, 0x00295aff ],#    "0000 0051 005a 2900 ff5a 2900 ",   # BatteryChargeStatus:
-#[0x00, 0x00, 0x00, 0x51, 0x00495b00, 0x00495bff ],#    "0000 0051 005B 4900 ff5b 4900 ",   # temperature battery:
-#[0x00, 0x00, 0x00, 0x54, 0x00262200, 0x002622ff ],#    "0000 0054 0001 2600 FF22 2600 ",   # EnergyProduction // SPOT_ETODAY, SPOT_ETOTAL daily yield
-#[0x00, 0x00, 0x00, 0x51, 0x00263f00, 0x00263fff ],#    "0000 0051 003f 2600 ff3f 2600 ",   # SpotACTotalPower  // SPOT_PACTOT
-
-#[0x00, 0x00, 0x00, 0x51, 0x00464800, 0x0046ffff, ],
+#[0x53000000,  0x00251e00, 0x00251eff ],
+#[0x53008000,  0x00251e00, 0x00251eff ],#    "0000 8053 001E 2500 FF1E 2500 ",   # SpotDCPower      // SPOT_PDC1, SPOT_PDC2
+#[0x53008000,  0x00251e01, 0x00251e01 ],
+#[0x53008000,  0x00251e02, 0x00251e02 ],
+#[0x53000000,  0x00251e02, 0x00251eff ],
+#[0x53008000,  0x00451f00, 0x004521ff ],#    "0000 8053 001F 4500 FF21 4500 ",   # SpotDCVoltage   // SPOT_UDC1, SPOT_UDC2, SPOT_IDC1, SPOT_IDC2
 #
-#[0x00, 0x00, 0x00, 0x52, 0x00464800, 0x0046ffff, ],
-
-#[0x00, 0x00, 0x00, 0x50, 0x00263f00, 0x00263fff ],#    "0000 0051 003f 2600 ff3f 2600 ",   # SpotACTotalPower  // SPOT_PACTOT
-#[0x00, 0x00, 0x00, 0x53, 0x00263f00, 0x00263fff ],#    "0000 0051 003f 2600 ff3f 2600 ",   # SpotACTotalPower  // SPOT_PACTOT
-#[0x00, 0x00, 0x00, 0x54, 0x00263f00, 0x00263fff ],#    "0000 0051 003f 2600 ff3f 2600 ",   # SpotACTotalPower  // SPOT_PACTOT
-#[0x00, 0x00, 0x00, 0x55, 0x00263f00, 0x00263fff ],#    "0000 0051 003f 2600 ff3f 2600 ",   # SpotACTotalPower  // SPOT_PACTOT
-#[0x00, 0x00, 0x00, 0x56, 0x00263f00, 0x00263fff ],#    "0000 0051 003f 2600 ff3f 2600 ",   # SpotACTotalPower  // SPOT_PACTOT
-#[0x00, 0x00, 0x00, 0x57, 0x00263f00, 0x00263fff ],#    "0000 0051 003f 2600 ff3f 2600 ",   # SpotACTotalPower  // SPOT_PACTOT
-#[0x00, 0x00, 0x00, 0x58, 0x00263f00, 0x00263fff ],#    "0000 0051 003f 2600 ff3f 2600 ",   # SpotACTotalPower  // SPOT_PACTOT
-#[0x00, 0x00, 0x00, 0x59, 0x00263f00, 0x00263fff ],#    "0000 0051 003f 2600 ff3f 2600 ",   # SpotACTotalPower  // SPOT_PACTOT
-#[0x00, 0x00, 0x00, 0x5A, 0x00263f00, 0x00263fff ],#    "0000 0051 003f 2600 ff3f 2600 ",   # SpotACTotalPower  // SPOT_PACTOT
-
-#[0x00, 0x00, 0x00, 0x52, 0x00464800, 0x0046ffff, ],
-#[0x00, 0x00, 0x80, 0x51, 0x00451f00, 0x004521ff ],#    "0000 8053 001F 4500 FF21 4500 ",   # SpotDCVoltage   // SPOT_UDC1, SPOT_UDC2, SPOT_IDC1, SPOT_IDC2
-#[0x00, 0x00, 0x80, 0x52, 0x00451f00, 0x004521ff ],#    "0000 8053 001F 4500 FF21 4500 ",   # SpotDCVoltage   // SPOT_UDC1, SPOT_UDC2, SPOT_IDC1, SPOT_IDC2
-#[0x00, 0x00, 0x80, 0x53, 0x00451f00, 0x004521ff ],#    "0000 8053 001F 4500 FF21 4500 ",   # SpotDCVoltage   // SPOT_UDC1, SPOT_UDC2, SPOT_IDC1, SPOT_IDC2
-##[0x00, 0x00, 0x00, 0x51, 0x00464800, 0x0046ffff, ],
-#[0x00, 0x00, 0x80, 0x54, 0x00451f00, 0x004521ff ],#    "0000 8053 001F 4500 FF21 4500 ",   # SpotDCVoltage   // SPOT_UDC1, SPOT_UDC2, SPOT_IDC1, SPOT_IDC2
-#[0x00, 0x00, 0x80, 0x55, 0x00451f00, 0x004521ff ],#    "0000 8053 001F 4500 FF21 4500 ",   # SpotDCVoltage   // SPOT_UDC1, SPOT_UDC2, SPOT_IDC1, SPOT_IDC2
-#[0x00, 0x00, 0x80, 0x56, 0x00451f00, 0x004521ff ],#    "0000 8053 001F 4500 FF21 4500 ",   # SpotDCVoltage   // SPOT_UDC1, SPOT_UDC2, SPOT_IDC1, SPOT_IDC2
-#[0x00, 0x00, 0x80, 0x57, 0x00451f00, 0x004521ff ],#    "0000 8053 001F 4500 FF21 4500 ",   # SpotDCVoltage   // SPOT_UDC1, SPOT_UDC2, SPOT_IDC1, SPOT_IDC2
-#[0x00, 0x00, 0x80, 0x58, 0x00451f00, 0x004521ff ],#    "0000 8053 001F 4500 FF21 4500 ",   # SpotDCVoltage   // SPOT_UDC1, SPOT_UDC2, SPOT_IDC1, SPOT_IDC2
-#[0x00, 0x00, 0x80, 0x59, 0x00451f00, 0x004521ff ],#    "0000 8053 001F 4500 FF21 4500 ",   # SpotDCVoltage   // SPOT_UDC1, SPOT_UDC2, SPOT_IDC1, SPOT_IDC2
+#[0x54000000,  0x00260100, 0x002622ff ],#    "0000 0054 0001 2600 FF22 2600 ",   # EnergyProduction // SPOT_ETODAY, SPOT_ETOTAL daily yield
+#[0x54000000,  0x00462e00, 0x00462fff ],#    "0000 0054 002e 4600 ff2F 4600 ",   # OperationTime:    // SPOT_OPERTM, SPOT_FEEDTM
+#
+#[0x58000000,  0x00821e00, 0x008220ff ],#    "0000 0058 001e 8200 ff20 8200 ",   # TypeLabel:    // INV_NAME, INV_TYPE, INV_CLASS
+#[0x58000000,  0x00823400, 0x008234ff ],#    "0000 0058 0034 8200 ff34 8200 ",   # SoftwareVersion:  // INV_SWVERSION
+#[0x64000200,  0x00618d00, 0x00618dff ],
 
 );
 
@@ -118,7 +102,7 @@ my @commandarguments2 = (
 [0x00, 0x00, 0x00, 0x51, 0x00463600, 0x004637ff ],#    "0000 0051 0036 4600 ff37 4600 ",   # MeteringGridMsTotW:
 [0x00, 0x00, 0x00, 0x51, 0x00464000, 0x004642ff ],#    "0000 0051 0040 4600 FF42 4600 ",   # SpotACPower:    // SPOT_PAC1, SPOT_PAC2, SPOT_PAC3
 [0x00, 0x00, 0x00, 0x51, 0x00464800, 0x004655ff ],#    "0000 0051 0048 4600 FF55 4600 ",   # SpotACVoltage: // SPOT_UAC1, SPOT_UAC2, SPOT_UAC3, SPOT_IAC1, SPOT_IAC2, SPOT_IAC3
-#[0x00, 0x00, 0x00, 0x51, 0x00464800, 0x0046ffff ],
+[0x00, 0x00, 0x00, 0x51, 0x00464800, 0x0046ffff ],
 [0x00, 0x00, 0x00, 0x51, 0x00465700, 0x004657ff ],#    "0000 0051 0057 4600 FF57 4600 ",   # SpotGridFrequency // SPOT_FREQ
 [0x00, 0x00, 0x00, 0x51, 0x00491e00, 0x00495dff ],#    "0000 0051 001e 4900 ff5d 4900 ",   # BatteryInfo:
 [0x00, 0x00, 0x00, 0x51, 0x00495b00, 0x00495bff ],#    "0000 0051 005B 4900 ff5b 4900 ",   # temperature battery:
@@ -140,7 +124,7 @@ my @commandarguments2 = (
 
 [0x00, 0x00, 0x00, 0x58, 0x00821e00, 0x008220ff ],#    "0000 0058 001e 8200 ff20 8200 ",   # TypeLabel:    // INV_NAME, INV_TYPE, INV_CLASS
 [0x00, 0x00, 0x00, 0x58, 0x00823400, 0x008234ff ],#    "0000 0058 0034 8200 ff34 8200 ",   # SoftwareVersion:  // INV_SWVERSION
-#[0x00, 0x00, 0x02, 0x64, 0x00618d00, 0x00618dff ],
+[0x00, 0x00, 0x02, 0x64, 0x00618d00, 0x00618dff ],
 );
 
 my @commands = (
@@ -234,22 +218,28 @@ if( scalar @commandarguments )
     exit;
 }
 
-for my $command (0x00..0x40) # (0x00..0xff)
+for my $a ( 0x52 )
 {
-    for my $type (0x00,0x80) # (0x00..0xff)  # 0x02 logout
+for my $b ( 0x00, 0x80 )
+{
+for my $c ( 0x01..0xff )
+{
+for my $d ( 0x00 )
+{
+    my $command = ($a << 24) | ($b << 16) | ($c << 8) | $d;
+
+    for my $address (0x20..0x5F)
     {
-        for my $address (0x20..0x5F)
-        {
-            my $start   = ($address << 16) | 0x0000;
-            my $end     = ($address << 16) | 0xffff;
+        my $start   = ($address << 16) | 0x0000;
+        my $end     = ($address << 16) | 0xffff;
 
-# [0x00, 0x00, 0x00, 0x51, 0x00491e00, 0x00495dff ],#    "0000 0051 001e 4900 ff5d 4900 ",   # BatteryInfo:
+        my @cmd = [$command, $start, $end ];
 
-            my @cmd = [0x00, 0x00, $type, $command, $start, $end ];
-
-            doWork( @cmd );
-        }
+        doWork( @cmd );
     }
+}
+}
+}
 }
 exit;
 

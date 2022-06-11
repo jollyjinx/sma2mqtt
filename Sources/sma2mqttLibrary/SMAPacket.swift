@@ -26,7 +26,6 @@ extension SMAPacket:BinaryDecodable
         case prematureEndOfSMAContentData(String)
     }
 
-
     public init(data:Data) throws
     {
         let byteArray = [UInt8](data)
@@ -47,7 +46,14 @@ extension SMAPacket:BinaryDecodable
         obisPackets = [ObisPacket]()
         smaNetPackets = [SMANetPacket]()
 
-        smaprefix = try decoder.decode(UInt32.self).bigEndian
+        do
+        {
+            smaprefix = try decoder.decode(UInt32.self).bigEndian
+        }
+        catch
+        {
+            throw SMAPacketError.prematureEndOfSMAContentData("not long enough for SMA\\0 header")
+        }
 
         guard smaprefix == 0x534d4100 // == 'SMA\0'
         else
@@ -57,84 +63,84 @@ extension SMAPacket:BinaryDecodable
 
         JLog.debug("Valid SMA Prefix")
 
-        while !decoder.isAtEnd
+        var endPacketRead = false
+
+        repeat
         {
             let length  = try decoder.decode(UInt16.self).bigEndian
-
-            if length == 0
-            {
-                break;
-            }
             let tag     = try decoder.decode(UInt16.self).bigEndian
 
             JLog.debug("Decoding tag: \( String(format:"0x%x == %d",tag,tag) ) length:\(length) )")
-
-            if length > 0
+            guard Int(length) <= decoder.countToEnd
+            else
             {
-                guard Int(length) <= decoder.countToEnd
-                else
-                {
-                    throw SMAPacketError.prematureEndOfSMAContentData("sma content too short expected length:\(length) has:\(decoder.countToEnd)")
-                }
+                throw SMAPacketError.prematureEndOfSMAContentData("sma content too short expected length:\(length) has:\(decoder.countToEnd)")
+            }
 
-                let smaNetData    = try decoder.decode(Data.self,length:Int(length))
-                let smaNetDecoder = BinaryDecoder(data: [UInt8](smaNetData) )
+            let smaNetData    = try decoder.decode(Data.self,length:Int(length))
+            let smaNetDecoder = BinaryDecoder(data: [UInt8](smaNetData) )
 
-                switch tag
-                {
-                    case 0x02A0:    if let group = try? smaNetDecoder.decode(UInt32.self).bigEndian
+            switch tag
+            {
+                case 0x0000:    endPacketRead = true
+                                if length != 0
+                                {
+                                    JLog.error("Weird SMAPacket End Tag with length:\(length) - ignoring")
+                                }
+
+                case 0x02A0:    if let group = try? smaNetDecoder.decode(UInt32.self).bigEndian
+                                {
+                                    JLog.trace("\(String(format:"group: 0x%08x d:%d",group,group))")
+                                    self.group = group
+                                }
+                                else
+                                {
+                                    JLog.error(("Could not decode tag:\(tag) length:\(length) data:\(smaNetData.hexDump)"))
+                                }
+
+                case 0x0010:    if  let protocolid = try? smaNetDecoder.decode(UInt16.self).bigEndian
+                                {
+                                    JLog.debug("got protocol id:\(String(format:"0x%x",protocolid))")
+
+                                    switch protocolid
                                     {
-                                        JLog.trace("\(String(format:"group: 0x%08x d:%d",group,group))")
-                                        self.group = group
+                                        case 0x6069:    JLog.debug("recognizing ObisPacket")
+
+                                                        do
+                                                        {
+                                                            let obisPacket = try ObisPacket.init(fromBinary: smaNetDecoder)
+                                                            self.obisPackets.append(obisPacket)
+                                                        }
+                                                        catch
+                                                        {
+                                                            JLog.error("ObisPacket decoding error:\(error)")
+                                                        }
+
+
+                                        case 0x6065:    JLog.debug("recognizing SMANetPacket")
+
+                                                        do
+                                                        {
+                                                            let smanetPacket = try SMANetPacket.init(fromBinary: smaNetDecoder)
+                                                            self.smaNetPackets.append(smanetPacket)
+                                                        }
+                                                        catch
+                                                        {
+                                                            JLog.error("SMANetPacket decoding error:\(error)")
+                                                        }
+
+                                        default:        JLog.error("protocol unknown.")
                                     }
-                                    else
-                                    {
-                                        JLog.error(("Could not decode tag:\(tag) length:\(length) data:\(smaNetData.hexDump)"))
-                                    }
+                                }
+                                else
+                                {
+                                    JLog.error("Could not decode protocol:\(tag) length:\(length) data:\(smaNetData.hexDump)")
+                                }
 
-                    case 0x0010:    if  let protocolid = try? smaNetDecoder.decode(UInt16.self).bigEndian
-                                    {
-                                        JLog.debug("got protocol id:\(String(format:"0x%x",protocolid))")
-
-                                        switch protocolid
-                                        {
-                                            case 0x6069:    JLog.debug("recognizing ObisPacket")
-
-                                                            do
-                                                            {
-                                                                let obisPacket = try ObisPacket.init(fromBinary: smaNetDecoder)
-                                                                self.obisPackets.append(obisPacket)
-                                                            }
-                                                            catch
-                                                            {
-                                                                JLog.error("ObisPacket decoding error:\(error)")
-                                                            }
-
-
-                                            case 0x6065:    JLog.debug("recognizing SMANetPacket")
-
-                                                            do
-                                                            {
-                                                                let smanetPacket = try SMANetPacket.init(fromBinary: smaNetDecoder)
-                                                                self.smaNetPackets.append(smanetPacket)
-                                                            }
-                                                            catch
-                                                            {
-                                                                JLog.error("SMANetPacket decoding error:\(error)")
-                                                            }
-
-                                            default:        JLog.error("protocol unknown.")
-                                        }
-                                    }
-                                    else
-                                    {
-                                        JLog.error("Could not decode protocol:\(tag) length:\(length) data:\(smaNetData.hexDump)")
-                                    }
-
-                    default:        JLog.warning("Could not decode tag:\(tag) length:\(length) data:\(smaNetData.hexDump) trying detection")
-                }
+                default:        JLog.warning("Could not decode tag:\(tag) length:\(length) data:\(smaNetData.hexDump) trying detection")
             }
         }
+        while !decoder.isAtEnd && !endPacketRead
     }
 }
 
