@@ -778,7 +778,8 @@ sub hostid2name
                             '9901f6a22fb3' => 'sb4',
                             '7a01d39c05b3' => 'sbt',
                             '740110e7f0b2' => 'shm',
-                            'ffffffffffff' => 'jnx',
+                            'ffffffffffff' => 'any',
+                            '1234b2c14321' => 'jnx',
                         );
     $source = $knownsources{$source} || $source;
     return $source;
@@ -811,12 +812,8 @@ sub SMANetPacketValueParsing
 
     if( $type == 0x00 || $type == 0x40 )    # integer
     {
-        my  @values = map { unpack('V',substr($footer,8+(4*$_),4)) } (0..8);
+        my  @values = unpack('V*',substr($footer,8));
 
-
-#        my $shortmarker = @values[1];
-#        my $longmarker = @values[4];
-#
         if(         @values[0] == 0x0       # version number scheme
                 &&  @values[1] == 0x0
                 &&  @values[2] == 0xFFFFFFFE
@@ -828,36 +825,19 @@ sub SMANetPacketValueParsing
         {
             @values = unpack('C*',pack('N',@values[4]));
         }
-#        elsif(      $longmarker == 1
-#                ||  ($longmarker == 0 && @values[2] == 0 && @values[3] == 0)
-#            )
-#        {
-#            splice(@values,4);
-#            splice(@values,1)  if '' eq join('',map { @values[$_-1] == @values[0] ? '' : 'somevalue' } (1..@values) );  # print one value if all are same
-#        }
-#        elsif(      $shortmarker == 0
-#    #                    &&  @values[0] == @values[1]
-#    #                    &&  @values[0] == @values[2]
-#    #                    &&  @values[0] == @values[3]
-#            )
-#        {
-#            splice(@values,1);
-#        }
-#        else
-#        {
-#           printf "Weird";
-#        }
-#
+
         my @results;
 
-        for my $value (@values)
+        VALUE_LOOP: for my $value (@values)
         {
             if( $type == 0x00 )
             {
+#                last VALUE_LOOP if $value == 0xFFFFFFFF
                 push(@results, $value != 4294967295 ? sprintf("%d",$value) : 'NaN');
             }
             else
             {
+#                last VALUE_LOOP if $value == 0x80000000
                 my $signed = unpack('l',pack('L',$value));
                 push(@results, $signed != -2147483648 ? sprintf("%d",$signed) : 'NaN');
             }
