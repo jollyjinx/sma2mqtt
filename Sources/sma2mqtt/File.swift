@@ -1,22 +1,29 @@
-import Dispatch
+//
+//  File.swift
+//  
+//
+//  Created by Patrick Stein on 12.06.22.
+//
+
 import Foundation
+
+import JLog
 
 import NIO
 import MQTTNIO
-import ArgumentParser
+
 import BinaryCoder
 
-import JLog
 import sma2mqttLibrary
 
 struct JNXServer
 {
     let hostname: String
-    let port: UInt16
+    let port: Int
     let username: String?
     let password: String?
 
-    init(hostname:String,port:UInt16,username:String? = nil, password:String? = nil)
+    init(hostname:String,port:Int,username:String? = nil, password:String? = nil)
     {
         self.hostname = hostname
         self.port = port
@@ -38,96 +45,26 @@ struct JNXMCASTGroup
     let bind: JNXServer
 }
 
-struct sma2mqtt: ParsableCommand
+
+func startSma2mqtt(mcastServer:JNXMCASTGroup,mqttServer:JNXMQTTServer,jsonOutput:Bool) async throws
 {
-    @Flag(name: .shortAndLong, help: "optional debug output")
-    var debug: Int
+    let mqttClient = MQTTClient(
+        host: mqttServer.server.hostname,
+        port: mqttServer.server.port,
+        identifier: ProcessInfo().processName,
+        eventLoopGroupProvider: .createNew,
+        configuration: .init(userName: mqttServer.server.username, password: mqttServer.server.password)
+    )
 
-    @Flag(name: .long, help: "send json output to stdout")
-    var json:Bool = false
+    let _ = try mqttClient.connect().wait()
 
-    @Option(name: .long, help: "MQTT Server hostname")
-    var mqttServername: String = "mqtt"
-
-    @Option(name: .long, help: "MQTT Server port")
-    var mqttPort: UInt16 = 1883;
-
-    @Option(name: .long, help: "MQTT Server username")
-    var mqttUsername: String = "mqtt"
-
-    @Option(name: .long, help: "MQTT Server password")
-    var mqttPassword: String = ""
-
-    @Option(name: .shortAndLong, help: "Interval to send updates to mqtt Server.")
-    var interval: Double = 1.0
-
-    @Option(name: .shortAndLong, help: "MQTT Server topic.")
-    var topic: String = "sma/sunnymanager"
-
-    @Option(name: .long, help: "Multicast Binding Listening Interface Address.")
-    var bindAddress: String = "0.0.0.0"
-
-    @Option(name: .long, help: "Multicast Binding Listening Port number.")
-    var bindPort: UInt16 = 0;
-
-    @Option(name: .long, help: "Multicast Group Address.")
-    var mcastAddress: String = "239.12.255.254"
-
-    @Option(name: .long, help: "Multicast Group Port number.")
-    var mcastPort: UInt16 = 9522;
-
-    mutating func run() throws
-    {
-        let mqttServer  = JNXMQTTServer(server: JNXServer(hostname: mqttServername, port: mqttPort,username:mqttUsername,password:mqttPassword), emitInterval: interval, topic: topic)
-        let mcastServer = JNXMCASTGroup(server: JNXServer(hostname: mcastAddress, port: mcastPort), bind: JNXServer(hostname: bindAddress, port: bindPort) )
-
-        if debug > 0
-        {
-            JLog.loglevel =  debug > 1 ? .trace : .debug
-        }
-        startSma2mqtt(mcastServer:mcastServer,mqttServer:mqttServer,jsonOutput:json)
-    }
-}
-sma2mqtt.main()
-
-
-
-func startSma2mqtt(mcastServer:JNXMCASTGroup,mqttServer:JNXMQTTServer,jsonOutput:Bool)
-{
-    let mqttEventLoopGroup  = MultiThreadedEventLoopGroup(numberOfThreads: 2)
-
-    let credentials:MQTTConfiguration.Credentials?
-
-    if let username = mqttServer.server.username,
-        let password = mqttServer.server.password
-    {
-        credentials = MQTTConfiguration.Credentials(username:username, password:password)
-    }
-    else
-    {
-        credentials = nil
-    }
-    let mqttClient          = MQTTClient(configuration: .init(target: .host(mqttServer.server.hostname, port: Int(mqttServer.server.port)),
-                                                              credentials: credentials
-                                                              ),
-                                         eventLoopGroup: mqttEventLoopGroup  )
-    let mqttClientConnectionFuture = mqttClient.connect()
-
-    do
-    {
-        try mqttClientConnectionFuture.wait()
-    }
-    catch let error
-    {
-        fatalError("Could not connect to mqtt server:\(error)")
-    }
-
-    guard mqttClient.isConnected else
+    guard mqttClient.isActive() else
     {
         fatalError("Could not connect to mqtt server")
     }
 
-    // We allow users to specify the interface they want to use here.
+
+
     var targetDevice: NIONetworkDevice? = nil
     if      mcastServer.bind.hostname != "0.0.0.0",
         let targetAddress = try? SocketAddress(ipAddress: mcastServer.bind.hostname, port: Int(mcastServer.bind.port))
@@ -154,7 +91,7 @@ func startSma2mqtt(mcastServer:JNXMCASTGroup,mqttServer:JNXMQTTServer,jsonOutput
     let datagramBootstrap = DatagramBootstrap(group: group)
         .channelOption(ChannelOptions.socketOption(.so_reuseaddr), value: 1)
         .channelInitializer { channel in
-            return channel.pipeline.addHandler(ChatMessageEncoder()).flatMap {
+            return channel.pipeline.addHandler(SMAMessageEncoder()).flatMap {
                 channel.pipeline.addHandler( SMAMessageReceiver(mqttClient:mqttClient,mqttServer:mqttServer,jsonOutput:jsonOutput) )
             }
         }
@@ -235,26 +172,24 @@ final class SMAMessageReceiver: ChannelInboundHandler
                 {
                     if obisvalue.mqtt != .invisible
                     {
-                        if !mqttClient.isConnected
+                        if !mqttClient.isActive()
                         {
                             JLog.error("No longer connected to mqtt server - reconnecting")
 
+                            let _ = try? mqttClient.connect().wait()
 
-                                let reconnectionFuture = self.mqttClient.reconnect()
-
-                                guard self.mqttClient.isConnected else
-                                {
-                                    fatalError("Could not connect to mqtt server")
-                                }
+                            guard self.mqttClient.isActive() else
+                            {
+                                fatalError("Could not connect to mqtt server")
+                            }
                         }
 
 
 
                         let topic = "\(mqttServer.topic)/\(obisvalue.topic)"
-                        mqttClient.publish( MQTTMessage(topic: topic,
-                                            payload: obisvalue.json,
-                                            retain: obisvalue.mqtt == .retained)
-                                           )
+                        let byteBuffer = ByteBuffer(string: obisvalue.json)
+                        let _ = mqttClient.publish(to: topic, payload: byteBuffer, qos:.atLeastOnce , retain:obisvalue.mqtt == .retained)
+
                     }
                     if jsonOutput
                     {
@@ -273,7 +208,7 @@ final class SMAMessageReceiver: ChannelInboundHandler
 }
 
 
-private final class ChatMessageEncoder: ChannelOutboundHandler {
+private final class SMAMessageEncoder: ChannelOutboundHandler {
     public typealias OutboundIn = AddressedEnvelope<String>
     public typealias OutboundOut = AddressedEnvelope<ByteBuffer>
 

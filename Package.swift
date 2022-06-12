@@ -16,9 +16,13 @@ let package = Package(
         .library(name: "sma2mqttLibrary", targets: ["sma2mqttLibrary"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/apple/swift-argument-parser", from: "0.3.2"),
+        .package(url: "https://github.com/apple/swift-argument-parser", from: "1.1.2"),
         .package(url: "https://github.com/apple/swift-nio.git", from: "2.33.0"),
-        .package(url: "https://github.com/sroebert/mqtt-nio.git", from: "2.0.0"),
+//        .package(url: "https://github.com/sroebert/mqtt-nio.git", from: "2.6.0"),
+//        .package(url: "https://github.com/sroebert/mqtt-nio.git", .revision("6d75778") ),
+//        .package(url: "https://github.com/swift-server-community/mqtt-nio", from: "2.6.0"),
+        .package(url: "https://github.com/swift-server-community/mqtt-nio", .revision("bc68c7c")),
+
         .package(url: "https://github.com/jollyjinx/BinaryCoder", from: "2.3.1"),
 //        .package(url: "/Users/jolly/Documents/GitHub/BinaryCoder", .revision("58feed3") ),
         .package(url: "https://github.com/jollyjinx/JLog", from:"0.0.4"),
