@@ -210,12 +210,16 @@ I've not seen any response from a logout.
 
     addr | type| explanation
     -----------------------------------
-    0x16 | U8  | ?? flags maybe usually 0x01
+    0x16 | U8  | ?? flags maybe usually 0x01, 0x0C , 0x0D,
          |     |    flags   0000 0000b
          |     |            ---- ---Xb  0 = request
          |     |                        1 = answer
          |     |            ---- X--0b  8 -> response 9 as if adding one to the request
-    0x17 | U8  | ?? usually 02
+    0x17 | U8  | values seen: 00 , 01 , 02, 04
+         |     | 00 packet data directly following address 0x1A
+         |     | 01 address 0x1A contains packet count
+         |     | 02 address 0x1A contains start , 0x20 contains end
+         |     | 04 ?
     0x18 | U16 | Command used in request 
          |     |    0x0000 keep alive ? contains no data option 1 & 2 : 0x0000 0000 & 0x0000 00ff
          |     |                        can contain 56 static bytes as well 

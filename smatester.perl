@@ -58,6 +58,18 @@ my $inverterid  = 'ffff ffff ffff';
 #    "0000 0051 0048 4600 ffff 4600 ",   # normal values
 # 0x52000200, 0x00237700, 0x002377FF inverter temp
 my @commandarguments = (
+
+
+#       sbs|Code:0x5100|0x46f0|No:0x07|Type:0x40|len:28|2022-06-10T17:00:07|                type.unknown.0x46f0.7|                     90:90:90:90:1 |typ: int|raw: 07f0 4640 775c a362 5a00 0000 5a00 0000 5a00 0000 5a00 0000 0100 0000
+#       sbs|Code:0x5100|0x46f0|No:0x07|Type:0x40|len:28|2022-06-12T06:54:17|                type.unknown.0x46f0.7|                     92:92:92:92:1 |typ: int|raw: 07f0 4640 7971 a562 5c00 0000 5c00 0000 5c00 0000 5c00 0000 0100 0000
+#       sbs|Code:0x5200|0x46f0|No:0x07|Type:0x40|len:28|2021-08-14T07:30:00|                type.unknown.0x46f0.7|                     69:83:76:76:1 |typ: int|raw: 07f0 4640 d854 1761 4500 0000 5300 0000 4c00 0000 4c00 0000 0100 0000
+
+#[0x51000000, 0x00460000, 0x0046ffff],
+#[0x51800000, 0x00460000, 0x0046ffff],
+#[0x52000000, 0x00460000, 0x0046ffff],
+
+#[0x53800000, 0x00251E00, 0x00251EFF],
+#[0x51800000, 0x00251E00, 0x00251EFF],
 #[0x51008000,  0x00214800, 0x002148ff ],#    "0000 8051 0048 2100 ff48 2100 ",   # DeviceStatus:   // INV_STATUS
 #[0x51000000,  0x00263f00, 0x00263fff ],#    "0000 0051 003f 2600 ff3f 2600 ",   # SpotACTotalPower  // SPOT_PACTOT
 #[0x51000000,  0x00295a00, 0x00295aff ],#    "0000 0051 005a 2900 ff5a 2900 ",   # BatteryChargeStatus:
@@ -89,7 +101,43 @@ my @commandarguments = (
 #[0x58000000,  0x00821e00, 0x008220ff ],#    "0000 0058 001e 8200 ff20 8200 ",   # TypeLabel:    // INV_NAME, INV_TYPE, INV_CLASS
 #[0x58000000,  0x00823400, 0x008234ff ],#    "0000 0058 0034 8200 ff34 8200 ",   # SoftwareVersion:  // INV_SWVERSION
 #[0x64000200,  0x00618d00, 0x00618dff ],
-
+#	{0x5100, 0x00263F00, 0x00263FFF, 0x00, 0x263F, ActivePowerPlus, 0},
+#	{0x5100, 0x00295A00, 0x00295AFF, 0x00, 0x295A, BatteryCharge, 0},
+#	{0x5100, 0x00411E00, 0x004120FF, 0x00, 0x411E, ActivePowerMax, 0},
+#	{0x5100, 0x00464000, 0x004642FF, 0x00, 0x4640, ActivePowerPlusL1, 0},
+#	{0x5100, 0x00464000, 0x004642FF, 0x00, 0x4641, ActivePowerPlusL2, 0},
+#	{0x5100, 0x00464000, 0x004642FF, 0x00, 0x4642, ActivePowerPlusL3, 0},
+#	{0x5100, 0x00464800, 0x004655FF, 0x00, 0x4648, VoltageL1, 0.01},
+#	{0x5100, 0x00464800, 0x004655FF, 0x00, 0x4649, VoltageL2, 0.01},
+#	{0x5100, 0x00464800, 0x004655FF, 0x00, 0x464a, VoltageL3, 0.01},
+#	{0x5100, 0x00464800, 0x004655FF, 0x00, 0x4653, CurrentL1, 0.001},
+#	{0x5100, 0x00464800, 0x004655FF, 0x00, 0x4654, CurrentL2, 0.001},
+#	{0x5100, 0x00464800, 0x004655FF, 0x00, 0x4655, CurrentL3, 0.001},
+#	{0x5100, 0x00465700, 0x004657FF, 0x00, 0x4657, UtilityFrequency, 0.01},
+#	{0x5100, 0x00491E00, 0x00495DFF, 0x00, 0x495B, BatteryTemperature, 0.1},
+#
+#	// TODO more decoding for device_status & device_grid_relay
+#	{0x5180, 0x00214800, 0x002148FF, 0x00, 0x2148, DeviceStatus, 0},
+#	{0x5180, 0x00416400, 0x004164FF, 0x00, 0x4164, DeviceGridRelay, 0},
+#
+#	{0x5200, 0x00237700, 0x002377FF, 0x00, 0x2377, DeviceTemperature, 0.01},
+#
+#	{0x5380, 0x00251E00, 0x00251EFF, 0x01, 0x251E, PowerS1, 0},
+#	{0x5380, 0x00251E00, 0x00251EFF, 0x02, 0x251E, PowerS2, 0},
+#	{0x5380, 0x00451F00, 0x004521FF, 0x01, 0x451F, VoltageS1, 0.01},
+#	{0x5380, 0x00451F00, 0x004521FF, 0x02, 0x451F, VoltageS2, 0.01},
+#	{0x5380, 0x00451F00, 0x004521FF, 0x01, 0x4521, CurrentS1, 0.001},
+#	{0x5380, 0x00451F00, 0x004521FF, 0x02, 0x4521, CurrentS2, 0.001},
+#
+#	{0x5400, 0x00260100, 0x002622FF, 0x00, 0x2601, ActiveEnergyPlus, 3600},
+#	{0x5400, 0x00260100, 0x002622FF, 0x00, 0x2622, ActiveEnergyPlusToday, 3600},
+#	{0x5400, 0x00462E00, 0x00462FFF, 0x00, 0x462E, TimeOperating, 0},
+#	{0x5400, 0x00462E00, 0x00462FFF, 0x00, 0x462F, TimeFeed, 0},
+#
+#	{0x5800, 0x00821E00, 0x008220FF, 0x00, 0x821E, DeviceName, 0},
+#	{0x5800, 0x00821E00, 0x008220FF, 0x00, 0x821F, DeviceClass, 0},
+#	{0x5800, 0x00821E00, 0x008220FF, 0x00, 0x8220, DeviceType, 0},
+#
 );
 
 my @commandarguments2 = (
@@ -218,17 +266,17 @@ if( scalar @commandarguments )
     exit;
 }
 
-for my $a ( 0x52 )
+for my $a ( 0x51..0x54,0x58,0x5d,0x61..0x64,0x68,0xf0,0xff )
 {
-for my $b ( 0x00, 0x80 )
+for my $b ( 0x00,0x02,0x22,0x80,0x82,0xfd )
 {
-for my $c ( 0x01..0xff )
+for my $c ( 0x00 )
 {
 for my $d ( 0x00 )
 {
     my $command = ($a << 24) | ($b << 16) | ($c << 8) | $d;
 
-    for my $address (0x20..0x5F)
+    for my $address (0x24..0x99 )
     {
         my $start   = ($address << 16) | 0x0000;
         my $end     = ($address << 16) | 0xffff;
@@ -548,13 +596,13 @@ sub counttimeswrong
     my($valuesdata,$valuesize,$warn) = @_;
 
 
-my %validtypes = (
-        0 => 1,
-        0x40 => 1,
-        0x10 => 1,
-        0x08 => 1,
-        0x51 => 1,
-);
+    my %validtypes = (
+            0 => 1,
+            0x40 => 1,
+            0x10 => 1,
+            0x08 => 1,
+            0x51 => 1,
+    );
 
     my $timesnotok = 0;
 
@@ -593,179 +641,148 @@ my %validtypes = (
     return $timesnotok;
 }
 
-sub printSMANetPacket
+sub checkSMANetPacketCompleteness
 {
     my($data) = @_;
 
-    my $valueslength;
-    my $valuescount;
+    my $smanet_length = unpack('C',substr($data,0,1)) * 4;
+    my $remaining = $smanet_length - 36;
+
+    if( $smanet_length != length($data) )
     {
-        my $smanet_length = unpack('C',substr($data,0,1)) * 4;
-        my $remaining = $smanet_length - 36;
-
-        if( $smanet_length != length($data) )
-        {
-            printf "invalid SMANetPacket length $smanet_length != ".length($data)." data:".prettyhexdata($data)."\n";
-            return undef;
-        }
-
-        my $valuesheader = substr($data,28,8);
-        my $valuesdata   = substr($data,36);
-
-        printf "SMANet Packet:";
-        printf " len=%4d",$remaining;
-        printf " head:".prettyhexdata($valuesheader);
-
-
-        {
-            if( $remaining < 32 )
-            {
-                $valueslength = $remaining;
-                $valuescount  = $remaining > 0 ? 1 : 0;
-            }
-            else
-            {
-                my ($from,$to) = unpack('VV',$valuesheader);
-                $valuescount    = $to - $from + 1;
-                $valueslength   = $remaining / $valuescount;
-            }
-            printf " valcnt:0x%02d vallen=%2d",$valuescount,$valueslength;
-
-
-            my @validsizes = grep(  $_ != undef  , map { $remaining % $_ == 0 ? $_ : undef } (16,20,28,40) ) ;
-            my $countisvalid = ( 1 == scalar grep($_ == $valueslength,@validsizes) );
-
-            printf " cntisvalid=%d",$countisvalid;
-                print " ";
-                my(@values) = data2command($valuesheader,'CCCCCCC',1);
-        }
-
-#        $valueslength = $remaining;
-#
-#        if( $remaining > 28 )
-#        {
-#            if(     $countisvalid
-#                &&  @values[0] == 0  &&  @values[1] == 0  &&  @values[2] == 0  &&  @values[3] == 0
-#                                     &&  @values[5] == 0  &&  @values[6] == 0  &&  @values[7] == 0
-#              )
-#            {
-#                print " no need to check\n";
-#                printf prettyhexdata($valuesdata,$divided);
-#            }
-#            else
-#            {
-#                my %counttimeswrong = map { $_ => counttimeswrong($valuesdata,$_) } @validsizes;
-#
-#                my @mostprobably = sort{ $counttimeswrong{$a} <=> $counttimeswrong{$b} } @validsizes;
-#                printf " (%s)",join(',',map { %counttimeswrong{$_} } @mostprobably);
-#                my $mostprobably = @mostprobably[0];
-#
-#                my $countismostprobably = $valuecount == $mostprobably;
-#
-#
-#                printf " cnt==probable:%d",$countismostprobably;
-#                printf " cntnow:0x%02x", ($remaining / $mostprobably);
-#
-#                counttimeswrong($valuesdata,$divided,1);
-#
-#                printf " %s",($valuecount == ($remaining / $mostprobably) ? "OK" : "FAIL");
-#
-#
-#                printf "\n";
-#
-#                printf prettyhexdata($valuesdata,$divided);
-#            }
-#            $valueslength = $divided;
-#        }
-#        else
-#        {
-#            printf "\n";
-#            printf prettyhexdata($valuesdata);
-#        }
-#        print "\n" x 10;
-#
-#        if(    length($data) < 2
-#            || length($data) != $smanet_length
-#            || $smanet_length < 32
-#          )
-#        {
-#            printf "Invalid SMANet packet: %d != %d < 32 :%s\n",$smanet_length,length($data),prettyhexdata($data);
-#            exit;
-#            return undef;
-#        }
+        printf "invalid SMANetPacket length $smanet_length != ".length($data)." data:".prettyhexdata($data)."\n";
+        return undef;
     }
+    return 1;
+}
 
 
-#    {
-        {
-            my @header =  data2command($data ,'CC nN CC nN v CC v v v v');
+sub printSMANetPacket       # return ( $result, $moretocome )
+{
+    my($data) = @_;
 
-            my ($length,$pkttype, $dstid,$destination, $p8,$p9, $srcid,$source, $type,$response,$px,$packetstocome ,$packetid, $p12, $command, $remaining) = @header;
-
-            my $firstpacket  = $packetid & 0x8000 ? '1' : '0';
-               $packetid    = $packetid & 0x7FFF;
-
-            printf "command:%04x response:%04x: source:%02x%04x destination:%02x%04x pktflg:%s pktid:0x%04x remaining length:%d\n",$command,$response,$srcid,$source,$dstid,$destination,$firstpacket,$packetid,length($remaining);
-
-            if( $response != 0 || $command == 0xFFFD )
-            {
-                printf "raw:%s\n",prettyhexdata($data);
-                return ($response,$packetstocome);
-            }
-
-            {
-                my ($a,$kind,$format,$time,$remaining) = data2command($remaining , 'C v C V');
-                my $timestring = POSIX::strftime('%Y-%m-%dT%H:%M:%S',localtime($time));
-
-                print "time:$timestring" ;
-            }
+    return (undef,undef) if !checkSMANetPacketCompleteness($data);
 
 
-        }
+    my @header =  data2command($data ,
+       'C             C            n      N           C   C    n      N           v     C       C   v               v          c     c           v');
+       #0             1            2      4           8   9    10     12          16    18      19  20              22         24    25          26
+    my ($quaterlength,$packettype, $dstid,$dstserial, $p8,$p9, $srcid,$srcserial, $type,$result,$px,$packetstocome ,$pktidflg, $p24, $valuetype, $command, $remaining) = @header;
 
-        my $destination = unpack('H*',substr($data,2,6));
-        my $source      = unpack('H*',substr($data,10,6));
-        my $response    = unpack('v',substr($data,18,2));
-        my $command     = unpack('v',substr($data,26,2));
-        my $packetstocome    = unpack('v',substr($data,20,2));
-        my $packetid    = unpack('v',substr($data,22,2)) & 0x7FFF;
-        my $firstpacket  = unpack('v',substr($data,22,2)) & 0x8000 ? '1' : '0';
+    printf "SMANet Packet:";
 
-        printf "command:%04x response:%04x: source:%s destination:%s packetstocome:%d firstpkt:%s pktid:0x%04x valueslength:%d\n",$command,$response,$source,$destination,$packetstocome,$firstpacket,$packetid,$valueslength;
+    my $packetid    = $pktidflg & 0x7FFF;
+    my $direction   = $pktidflg & 0x8000 ? 1 : 0;
+
+    print $direction ? "request " : "response";
+
+    printf " 0x%02x",$result;
+#    print $result != 0 ? ' ok ': 'fail';
+
+    my $srchostid = sprintf("%02x%04x",$srcid,$srcserial);
+    my $dsthostid = sprintf("%02x%04x",$dstid,$dstserial);
+
+    printf " ".hostid2name($srchostid);
+    printf "->".hostid2name($dsthostid);
+    printf " pktid:0x%04x pktremain:%2d",$packetid,$packetstocome;
+
+    printf " command:%04x",$command;
+    printf " p24:0x%02x",$p24;
+    printf " valtype:0x%02x",$valuetype;
 
 
-#        if( $response != 0 || $command == 0xFFFD )
-#        {
-#            printf "raw:%s\n",prettyhexdata($data);
-#            return ($response,$packetstocome);
-#        }
-#    }
+    my $remainingsize = length($remaining);
+    printf " remainsize:%3d",$remainingsize;
 
-#    {
-#        my $valuetype   = unpack('V',substr($data,28,4));
-#        my $valuecount  = unpack('V',substr($data,32,4));
-#
-#        my $header = substr($data,0,36);
-#
-#        printf "type:0x%08x count:0x%08x raw:%s\n",$valuetype,$valuecount,prettyhexdata($header);
-#    }
-
-    my $source  = unpack('H*',substr($data,10,6));
-    my $command = unpack('v',substr($data,26,2));
-
-    my $footer  = substr($data,36);
-    while( length($footer) )
+    if( $remainingsize > 0)
     {
-        my $data = substr($footer,0,$valueslength);
+        if( 0x02 == $valuetype )
+        {
+            print "WEIRD:".prettyhexdata($data) if length($remaining) < 8;
 
-        SMANetPacketValueParsing($source,$command,$data);
-        $footer = substr($footer,$valueslength);
+            my $valuesheader = substr($remaining,0,8);
+            my $valuesdata   = substr($remaining,8);
+
+            my ($from,$to)  = unpack('VV',$valuesheader);
+            my $valuescount = $to - $from + 1;
+
+            printf " start:0x%08x end:0x%08x valcnt:%2d",$from,$to,$valuescount;
+
+            if( $valuescount > 0)
+            {
+                my $valuelength = length($valuesdata) / $valuescount;
+
+                printValues($srchostid,$command,$valuelength,$valuesdata);
+            }
+        }
+        elsif( 0x01 == $valuetype || 0x04 == $valuetype )
+        {
+            print "WEIRD:".prettyhexdata($data) if length($remaining) < 4;
+
+            my $valuesheader = substr($remaining,0,4);
+            my $valuesdata   = substr($remaining,4);
+
+            my ($unknown)  = unpack('V',$valuesheader);
+
+            my $valueslength = length($valuesdata);
+            my $valuelength  = 0x01 == $valuetype ? 16 : $valueslength;
+
+            printf " valhead:0%08x vallen=%2d",$unknown,$valuelength;
+
+            printValues($srchostid,$command,$valuelength,$valuesdata);
+        }
+        elsif( 0x00 == $valuetype )
+        {
+            print " keepalivepacket";
+        }
+        else
+        {
+            print " typeunknown: ",prettyhexdata($remaining);
+        }
     }
     print "\n\n";
 
-    return ($response,$packetstocome);
+    return ($result,$packetstocome);
 }
 
+
+sub printValues
+{
+    my($srchostid,$command,$valuelength,$valuesdata) = @_;
+
+    my $valueslength = length($valuesdata);
+
+    if( $valueslength > 0)
+    {
+        printf " lenisvalid=%d\n",length($valueslength % $valuelength == 0);
+
+        while( length($valuesdata) >= $valuelength )
+        {
+            my $data = substr($valuesdata,0,$valuelength);
+
+            SMANetPacketValueParsing($srchostid,$command,$data);
+            $valuesdata = substr($valuesdata,$valuelength);
+        }
+   }
+   return undef;
+}
+
+
+
+sub hostid2name
+{
+    my($source) = @_;
+
+    my %knownsources = (    '69016d3326b3' => 'sbs',
+                            '56012b7fbc76' => 'sb3',
+                            '9901f6a22fb3' => 'sb4',
+                            '7a01d39c05b3' => 'sbt',
+                            '740110e7f0b2' => 'shm',
+                            'ffffffffffff' => 'jnx',
+                        );
+    $source = $knownsources{$source} || $source;
+    return $source;
+}
 
 sub SMANetPacketValueParsing
 {
@@ -788,14 +805,7 @@ sub SMANetPacketValueParsing
     $name .= '.'.$number ;# if $number > 0 && $number <7;
     $name .= ' ('.$$typeinformation{unit}.')' if $$typeinformation{unit};
 
-    my %knownsources = (    '69016d3326b3' => 'sbs',
-                            '56012b7fbc76' => 'sb3',
-                            '9901f6a22fb3' => 'sb4',
-                            '7a01d39c05b3' => 'sbt',
-                        );
-    $source = $knownsources{$source} || $source;
-
-    printf "%s|Code:0x%04x|0x%04x|No:0x%02x|Type:0x%02x|len:%2d|%s|%37s|",$source,$command,$code,$number,$type,length($footer),$timestring,$name;
+    printf "%10s|Code:0x%04x|0x%04x|No:0x%02x|Type:0x%02x|len:%2d|%s|%37s|",hostid2name($source),$command,$code,$number,$type,length($footer),$timestring,$name;
 
     ##### TYPE decoding
 

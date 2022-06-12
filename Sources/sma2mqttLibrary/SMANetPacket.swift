@@ -106,7 +106,7 @@ struct SMANetPacketHeader:BinaryDecodable,Encodable,Decodable
 
         self.quaterlength   = try decoder.decode(UInt8.self).littleEndian
 
-        guard Int(self.quaterlength) * 4 == (decoder.countToEnd + 1) else { throw SMANetPacketHeaderDecodingError.decoding("internal data error") }
+        guard Int(self.quaterlength) * 4 == (decoder.countToEnd + 1) else { throw SMANetPacketHeaderDecodingError.decoding("quaterlength \(self.quaterlength) != countToEnd \(decoder.countToEnd)") }
 
         self.type           = try decoder.decode(UInt8.self).littleEndian
 
