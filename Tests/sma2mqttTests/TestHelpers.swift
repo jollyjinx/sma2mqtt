@@ -24,7 +24,7 @@ extension String
             .map{ stringWithoutSpaces[stringWithoutSpaces.index(stringWithoutSpaces.startIndex, offsetBy: $0) ... stringWithoutSpaces.index(stringWithoutSpaces.startIndex, offsetBy: $0 + 1)] }
             .map{ UInt8($0, radix: 16)! }
         return Data(uInt8Array)
-}
+    }
 }
 
 struct DataSplitter:Sequence, IteratorProtocol

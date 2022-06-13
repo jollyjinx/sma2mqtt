@@ -13,7 +13,8 @@ import AppKit
 struct SMANetPacket:Encodable,Decodable
 {
     let header:SMANetPacketHeader
-    var values = [SMANetPacketValue]()
+    let valuesheader:[Int]
+    let values:[SMANetPacketValue]
 }
 
 extension SMANetPacket:BinaryDecodable
@@ -22,39 +23,65 @@ extension SMANetPacket:BinaryDecodable
     {
         case decoding(String)
     }
+
     init(fromBinary decoder: BinaryDecoder) throws
     {
         JLog.trace("")
 
-        self.header = try decoder.decode(SMANetPacketHeader.self)
+        self.header         = try decoder.decode(SMANetPacketHeader.self)
+        var valuesheader    = [Int]()
+        var values          = [SMANetPacketValue]()
 
         if decoder.isAtEnd
         {
+            self.valuesheader = valuesheader
+            self.values = values
             return
         }
 
-        let valueSize = self.header.valueSize
+        let valuesize:Int
 
-        while !decoder.isAtEnd //  0...<self.header.valueCount
+        switch header.valuestype
         {
-            let valueData = try decoder.decode(Data.self,length: valueSize)
-            let valueDecoder = BinaryDecoder(data: [UInt8](valueData))
+            case 0x01:  fallthrough
+            case 0x04:  guard decoder.countToEnd >= 4 else { throw SMANetPacketDecodingError.decoding("Valueheader too short header:\(header) toEnd:\(decoder.countToEnd)") }
+                        let startvalue = try Int(decoder.decode(UInt32.self).littleEndian)
+                        valuesheader.append(startvalue)
+                        valuesize = header.valuestype == 0x01 ? 16 : decoder.countToEnd
 
-            let value = try valueDecoder.decode(SMANetPacketValue.self)
-            values.append(value)
+            case 0x02:  guard decoder.countToEnd >= 8 else { throw SMANetPacketDecodingError.decoding("Valueheader too short header:\(header) toEnd:\(decoder.countToEnd)") }
+                        let startvalue = try Int(decoder.decode(UInt32.self).littleEndian)
+                        let endvalue   = try Int(decoder.decode(UInt32.self).littleEndian)
+
+                        valuesheader.append(contentsOf:[startvalue,endvalue])
+                        let valuecount = endvalue - startvalue + 1
+                        valuesize = valuecount > 0 ? decoder.countToEnd / valuecount : 0
+                        guard decoder.countToEnd == valuecount * valuesize else { throw SMANetPacketDecodingError.decoding("valuecount wrong: header:\(header) valuecount:\(valuecount) toEnd:\(decoder.countToEnd)") }
+
+            case 0x00:  valuesize = decoder.countToEnd // keepalive packet
+            default:    throw SMANetPacketDecodingError.decoding("unknown valuestype:\(header.valuestype) header:\(header) toEnd:\(decoder.countToEnd)") 
+        }
+
+        if valuesize > 0
+        {
+            while !decoder.isAtEnd //  0...<self.header.valueCount
+            {
+                let valueData = try decoder.decode(Data.self,length: valuesize)
+                let valueDecoder = BinaryDecoder(data: [UInt8](valueData))
+
+                let value = try valueDecoder.decode(SMANetPacketValue.self)
+                values.append(value)
+            }
         }
         assert(decoder.isAtEnd)
+        self.valuesheader = valuesheader
+        self.values = values
     }
 }
 
 
-struct SMANetPacketHeader:BinaryDecodable,Encodable,Decodable
+struct SMANetPacketHeader:Encodable,Decodable
 {
-    enum SMANetPacketHeaderDecodingError: Error
-    {
-        case decoding(String)
-    }
-
     let quaterlength:UInt8          // 0
     let type:UInt8                  // 1
 
@@ -70,35 +97,31 @@ struct SMANetPacketHeader:BinaryDecodable,Encodable,Decodable
     let unknown3:UInt16             // 16-17    0x100
     let response:UInt16             // 18-19    0x00 , 0x14, 0x15 
 
-    let remainingpackets:UInt16     // 20
-    private let _packetId:UInt16
+    let remainingpackets:UInt16     // 20-21
 
-    let unknown6:UInt8
-    let valuetypes:UInt8
-    let command:UInt16
+    private let _packetId:UInt16    // 22-23
 
+    let unknown6:UInt8              // 24
+    let valuestype:UInt8            // 25
+    let command:UInt16              // 26-27
+}
 
-    // calculated
-    var packetId: UInt16 { _packetId & 0x7FFF }
-    var direction: Bool { _packetId & 0x8000  != 0 }
-
-    let valuecountDone:UInt32
-    let valuecountAll:UInt32
-
-    static  var size:Int { 36 }
+extension SMANetPacketHeader     // calculated
+{
+    var packetId: UInt16    { _packetId & 0x7FFF }
+    var direction: Bool     { _packetId & 0x8000  != 0 }
+    static  var size:Int    { 28 }
     private var followingdatasize:Int { ( Int(quaterlength) * 4 ) - Self.size }
+}
 
-    var valueCount:Int {
-                            guard followingdatasize > 0 else { return 0 }
-                            guard followingdatasize > 28 else { return 1 }
-                            return Int(self.valuecountAll) - Int(self.valuecountDone) + 1
-                        }
-    var valueSize:Int {
-                        guard valueCount > 0 else { return 0 }
-                        return followingdatasize / valueCount
-                    }
 
-    var description:String { self.json }
+extension SMANetPacketHeader:BinaryDecodable
+{
+    enum SMANetPacketHeaderDecodingError: Error
+    {
+        case decoding(String)
+    }
+//    var description:String { self.json }
 
 
     init(fromBinary decoder: BinaryDecoder) throws
@@ -129,20 +152,9 @@ struct SMANetPacketHeader:BinaryDecodable,Encodable,Decodable
         self._packetId      = try decoder.decode(UInt16.self).littleEndian
 
         self.unknown6       = try decoder.decode(UInt8.self).littleEndian
-        self.valuetypes     = try decoder.decode(UInt8.self).littleEndian
+        self.valuestype     = try decoder.decode(UInt8.self).littleEndian
 
         self.command        = try decoder.decode(UInt16.self).littleEndian
-
-        if decoder.isAtEnd
-        {
-            self.valuecountDone  = 0
-            self.valuecountAll  = 0
-        }
-        else
-        {
-            self.valuecountDone  = try decoder.decode(UInt32.self)
-            self.valuecountAll   = try decoder.decode(UInt32.self)
-        }
 
         assert(Self.size == decoder.position - startposition)
     }

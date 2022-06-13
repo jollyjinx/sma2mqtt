@@ -50,7 +50,7 @@ final class sma2mqttTests: XCTestCase
 
         JLog.debug("splitter instanciated")
 
-        JLog.loglevel = .critical  // too much output otherwise
+        JLog.loglevel = .error  // too much output otherwise
         var goodcounter = 0
         var badcounter = 0
 
