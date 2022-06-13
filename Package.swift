@@ -6,7 +6,7 @@ import PackageDescription
 let package = Package(
     name: "sma2mqtt",
     platforms: [
-        .macOS(.v10_15),
+        .macOS(.v11),
 //        .iOS(.v13),
 //        .tvOS(.v13),
 //        .watchOS(.v6)
@@ -18,9 +18,6 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.1.2"),
         .package(url: "https://github.com/apple/swift-nio.git", from: "2.33.0"),
-//        .package(url: "https://github.com/sroebert/mqtt-nio.git", from: "2.6.0"),
-//        .package(url: "https://github.com/sroebert/mqtt-nio.git", .revision("6d75778") ),
-//        .package(url: "https://github.com/swift-server-community/mqtt-nio", from: "2.6.0"),
         .package(url: "https://github.com/swift-server-community/mqtt-nio", .revision("bc68c7c")),
 
         .package(url: "https://github.com/jollyjinx/BinaryCoder", from: "2.3.1"),

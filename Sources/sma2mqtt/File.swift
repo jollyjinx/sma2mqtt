@@ -6,7 +6,6 @@
 //
 
 import Foundation
-
 import JLog
 
 import NIO
@@ -121,7 +120,7 @@ func startSma2mqtt(mcastServer:JNXMCASTGroup,mqttServer:JNXMQTTServer,jsonOutput
         }.wait()
 
     JLog.info("Receiving SMA Data\nPress ^C to exit.")
-    RunLoop.current.run()
+    Thread.sleep(until: Date.distantFuture)
 //
 //    while let line = readLine(strippingNewline: false) {
 //        datagramChannel.writeAndFlush(AddressedEnvelope(remoteAddress: chatMulticastGroup, data: line), promise: nil)

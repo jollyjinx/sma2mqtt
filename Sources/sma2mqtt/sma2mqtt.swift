@@ -12,9 +12,13 @@ struct sma2mqtt: AsyncParsableCommand
     var json:Bool = false
 
 
-
+    #if DEBUG
+    @Option(name: .long, help: "MQTT Server hostname")
+    var mqttServername: String = "pltmqtt.jinx.eu."
+    #else
     @Option(name: .long, help: "MQTT Server hostname")
     var mqttServername: String = "mqtt"
+    #endif
 
     @Option(name: .long, help: "MQTT Server port")
     var mqttPort: UInt16 = 1883;
@@ -36,9 +40,14 @@ struct sma2mqtt: AsyncParsableCommand
     var topic: String = "sma/sunnymanager"
     #endif
 
-
+    #if DEBUG
+    @Option(name: .long, help: "Multicast Binding Listening Interface Address.")
+    var bindAddress: String = "10.112.16.115"
+    #else
     @Option(name: .long, help: "Multicast Binding Listening Interface Address.")
     var bindAddress: String = "0.0.0.0"
+    #endif
+
 
     @Option(name: .long, help: "Multicast Binding Listening Port number.")
     var bindPort: UInt16 = 0;
@@ -63,6 +72,7 @@ extension sma2mqtt
             JLog.loglevel =  debug > 1 ? .trace : .debug
         }
         try await startSma2mqtt(mcastServer:mcastServer,mqttServer:mqttServer,jsonOutput:json)
+
     }
 }
 //sma2mqtt.main()
