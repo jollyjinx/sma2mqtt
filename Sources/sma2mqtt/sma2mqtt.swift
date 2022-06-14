@@ -1,12 +1,18 @@
 import Foundation
 import ArgumentParser
 import JLog
+import Logging
 
 @main
 struct sma2mqtt: AsyncParsableCommand
 {
-    @Flag(name: .shortAndLong, help: "optional debug output")
-    var debug: Int
+    #if DEBUG
+    @Option(name: .shortAndLong, help: "optional debug output")
+    var debug: String = "trace"
+    #else
+    @Option(name: .shortAndLong, help: "optional debug output")
+    var debug: String = "notice"
+    #endif
 
     @Flag(name: .long, help: "send json output to stdout")
     var json:Bool = false
@@ -21,7 +27,7 @@ struct sma2mqtt: AsyncParsableCommand
     #endif
 
     @Option(name: .long, help: "MQTT Server port")
-    var mqttPort: UInt16 = 1883;
+    var mqttPort: UInt16 = 1883
 
     @Option(name: .long, help: "MQTT Server username")
     var mqttUsername: String = "mqtt"
@@ -34,10 +40,10 @@ struct sma2mqtt: AsyncParsableCommand
 
     #if DEBUG
     @Option(name: .shortAndLong, help: "MQTT Server topic.")
-    var topic: String = "test/sma/sunnymanager"
+    var basetopic: String = "test/sma/sunnymanager"
     #else
     @Option(name: .shortAndLong, help: "MQTT Server topic.")
-    var topic: String = "sma/sunnymanager"
+    var basetopic: String = "sma/sunnymanager"
     #endif
 
     #if DEBUG
@@ -57,23 +63,21 @@ struct sma2mqtt: AsyncParsableCommand
 
     @Option(name: .long, help: "Multicast Group Port number.")
     var mcastPort: UInt16 = 9522;
-}
 
-
-extension sma2mqtt
-{
-    mutating func run() async throws
+    func run() async throws
     {
-        let mqttServer  = JNXMQTTServer(server: JNXServer(hostname: mqttServername, port: Int(mqttPort),username:mqttUsername,password:mqttPassword), emitInterval: interval, topic: topic)
-        let mcastServer = JNXMCASTGroup(server: JNXServer(hostname: mcastAddress, port: Int(mcastPort)), bind: JNXServer(hostname: bindAddress, port: Int(bindPort)) )
+        JLog.loglevel =  Logger.Level(rawValue:debug) ?? Logger.Level.notice
 
-        if debug > 0
-        {
-            JLog.loglevel =  debug > 1 ? .trace : .debug
-        }
-        try await startSma2mqtt(mcastServer:mcastServer,mqttServer:mqttServer,jsonOutput:json)
-
+        let mqttPublisher = try await MQTTPublisher(    hostname: mqttServername,
+                                                        port: Int(mqttPort),
+                                                        username:mqttUsername,
+                                                        password:mqttPassword,
+                                                        emitInterval: interval,
+                                                        baseTopic: basetopic
+                                                    )
+        let sunnyHome = try SunnyHomeManager(mqttPublisher:mqttPublisher,multicastAddress:mcastAddress, multicastPort: Int(mcastPort), bindAddress:bindAddress,bindPort:Int(bindPort))
+        try await Task.sleep(nanoseconds: UInt64( Int64.max-10) )
+        try await sunnyHome.shutdown()
     }
 }
-//sma2mqtt.main()
 
