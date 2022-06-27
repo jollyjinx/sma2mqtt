@@ -51,13 +51,75 @@ my  $socket = new IO::Socket::INET (PeerHost => $hostname,
 
 my $sessionid   = sprintf '1234 %04x 4321',int(rand(0x10000));
 my $inverterid  = 'ffff ffff ffff';
-    my $commandconversion = 'VVV';
+    my $commandconversion = 'V*';
     $commandconversion =~ s/ //g;
 
 #    "0000 0052 0048 4600 ffff 4600 ",   # multivalues if first
 #    "0000 0051 0048 4600 ffff 4600 ",   # normal values
 # 0x52000200, 0x00237700, 0x002377FF inverter temp
+
+my $timenow = time(); # unpack('V',pack('N',time()));
+my $time1day = time() - time()%86400 - 7200; # unpack('V',pack('N',time() - time()%86400 ));
+my $time2day = $time1day - (4*86400); # unpack('V',pack('N',time() - time()%86400 ));
 my @commandarguments = (
+
+#[0x70200000,0x4, $time1day,$timenow],
+
+#[0x70200000, $timenow, $time1day],
+#[0x70000000, $time1day, $time1day ],
+
+#[0x61000000, 0x40263F00, 0x40263FFF],
+[0x61020000, 0x40633E00, 0x40633EFF],
+#[0x62000000, 0x40263F00, 0x40263FFF],
+#[0x61000000, 0x40652B00, 0x40652BFF],
+#
+#[0x61000000, 0x402F1E00, 0x402F1EFF],
+#[0x61000000, 0x402F2000, 0x402F20FF],
+#[0x61000000, 0x40652B00, 0x40652BFF],
+#
+#[0x68000000, 0x088F2000, 0x088F20FF],
+#[0x68000000, 0x088F2100, 0x088F21FF],
+#
+#[0x52000000, 0x00237700, 0x002377FF],
+
+
+#[0x61000000, 0x00495C00, 0x00495CFF],
+#[0x68000000, 0x00832A00, 0x00832AFF],
+#[0x68000000, 0x00A21E00 ,0x00A21EFF], # low high  val
+
+#/*
+#       sbs|Code:0x6800|0xa21e|No:0x07|Type:0x00|len:40|2022-06-17T06:36:49|                type.unknown.0xa21e.7|0:0:NaN:NaN:3005625197:3005625197:0:0 |typ:uint|raw: 071e a200 e104 ac62 0000 0000 0000 0000 ffff ffff ffff ffff 6d33 26b3 6d33 26b3 0000 0000 0000 0000
+#
+#            "6800_00A21E00": {
+#                "7": [
+#                    {
+#                        "low": 0,
+#                        "high": null,
+#                        "val": 3005625197
+#                    }
+#                ]
+#
+#*/
+#
+#[0x70000000, $timenow-3600, $timenow], # discharge in interval 5
+#[0x54000000, 0x00496700, 0x004967FF], # charge 2day ?
+##[0x70200000, $timenow-(86400*7000), $timenow],
+#[0x51000000,  0x00464000, 0x004642ff ],#    "0000 0051 0040 4600 FF42 4600 ",   # SpotACPower:    // SPOT_PAC1, SPOT_PAC2, SPOT_PAC3
+#
+#[0x51000000, 0x00230000, 0x0023FFFF],
+#[0x52000000, 0x00237700, 0x002377FF],
+#[0x52000200, 0x00237700, 0x002377FF],
+#	{0x5200, 0x00237700, 0x002377FF, 0x00, 0x2377, DeviceTemperature, 0.01},
+
+#[0x70000000, $timenow-180, $timenow ],
+#[0x70200000, $time2day, $timenow ],
+#[0x70000000, $time1day,$timenow],
+#[0x70200000,0x8, $timenow,$time1day],
+#[0x70200000,0x8, $timenow,$time2day],
+#[0x70200000,0x8, $time1day,$timenow],
+#[0x53800000,  0x00251E00, 0x00251EFF],
+
+#[0x51000000, 0x00460000, 0x0046ffff],
 
 
 #       sbs|Code:0x5100|0x46f0|No:0x07|Type:0x40|len:28|2022-06-10T17:00:07|                type.unknown.0x46f0.7|                     90:90:90:90:1 |typ: int|raw: 07f0 4640 775c a362 5a00 0000 5a00 0000 5a00 0000 5a00 0000 0100 0000
@@ -141,7 +203,6 @@ my @commandarguments = (
 );
 
 my @commandarguments2 = (
-
 [0x00, 0x00, 0x80, 0x51, 0x00214800, 0x002148ff ],#    "0000 8051 0048 2100 ff48 2100 ",   # DeviceStatus:   // INV_STATUS
 [0x00, 0x00, 0x00, 0x51, 0x00263f00, 0x00263fff ],#    "0000 0051 003f 2600 ff3f 2600 ",   # SpotACTotalPower  // SPOT_PACTOT
 [0x00, 0x00, 0x00, 0x51, 0x00295a00, 0x00295aff ],#    "0000 0051 005a 2900 ff5a 2900 ",   # BatteryChargeStatus:
@@ -464,7 +525,8 @@ sub sendCommand
                         .( $inverterid eq 'ffff ffff ffff' ? '0001' : '0001')
                         .$sessionid
                         .( $inverterid eq 'ffff ffff ffff' ? '0001' : '0001')
-                        .'0000 0000'
+                        .'0000' # status
+                        .'0000' # 2come
                         .sprintf("%02x%02x",($packetcounter & 0xFF),(($packetcounter & 0xFF00) >> 8 |0x80))
                         ;
 
@@ -552,10 +614,10 @@ sub printSMAPacket
 
     if( $footer != 0x0 )
     {
-        print "Invalid footer\n";
+        print "invalid footer\n";
         return (undef,0);
     }
-    printf "%5s SMAPacket: %s\n",$prefix,prettyhexdata(substr($data,0,18));
+    #printf "%5s SMAPacket: %s\n",$prefix,prettyhexdata(substr($data,0,18));
 
     my $smanetdata  = substr($data,18,$length);
 
@@ -563,33 +625,6 @@ sub printSMAPacket
 }
 
 
-#sub decodeSMANetHeader
-#{
-#    my($data) = @_;
-#
-#    my ($length,$pkttype, $dstid,$destination, $p8,$p9, $srcid,$source, $type,$response,$px,$p10 ,$packetid, $p12, $command, $remaining) = data2command($data ,'CC nN CC nN v CC v v v v');
-#
-#    my $firstpacket  = $packetid & 0x8000 ? '1' : '0';
-#       $packetid    = $packetid & 0x7FFF;
-#
-#    printf "command:%04x response:%04x: source:%02x%04x destination:%02x%04x pktflg:%s pktid:0x%04x remaining length:%d\n",$command,$response,$srcid,$source,$dstid,$destination,$firstpacket,$packetid,length($remaining);
-#
-#    if( $response != 0 || $command == 0xFFFD )
-#    {
-#        printf "raw:%s\n",prettyhexdata($data);
-#        return $response;
-#    }
-#
-#    sub decodeSMANetValuesStart
-#    {
-#        my ($a,$kind,$format,$time,$remaining) = data2command($remaining , 'C v C V');
-#        my $timestring = POSIX::strftime('%Y-%m-%dT%H:%M:%S',localtime($time));
-#
-#        print "time: $timestring\n";
-#    }
-#
-#
-#}
 
 sub counttimeswrong
 {
@@ -665,59 +700,205 @@ sub printSMANetPacket       # return ( $result, $moretocome )
 
 
     my @header =  data2command($data ,
-       'C             C            n      N           C   C    n      N           v     C       C   v               v          c     c           v');
-       #0             1            2      4           8   9    10     12          16    18      19  20              22         24    25          26
-    my ($quaterlength,$packettype, $dstid,$dstserial, $p8,$p9, $srcid,$srcserial, $type,$result,$px,$packetstocome ,$pktidflg, $p24, $valuetype, $command, $remaining) = @header;
+       'C             C            n      N           C   C    n      N           C    C     v       v               v          C     C           v');
+       #0             1            2      4           8   9    10     12          16   17    18      20              22         24    25          26
+    my ($quaterlength,$packettype, $dstid,$dstserial, $p8,$p9, $srcid,$srcserial, $p16,$p17 ,$result,$packetstocome ,$pktidflg, $p24, $p25, $command, $remaining) = @header;
 
-    printf "SMANet Packet:";
+    printf "SMANet:";
 
     my $packetid    = $pktidflg & 0x7FFF;
     my $direction   = $pktidflg & 0x8000 ? 1 : 0;
 
-    print $direction ? "request " : "response";
 
-    printf " 0x%02x",$result;
+
 #    print $result != 0 ? ' ok ': 'fail';
 
     my $srchostid = sprintf("%02x%04x",$srcid,$srcserial);
     my $dsthostid = sprintf("%02x%04x",$dstid,$dstserial);
 
-    printf " ".hostid2name($srchostid);
-    printf "->".hostid2name($dsthostid);
-    printf " pktid:0x%04x pktremain:%2d",$packetid,$packetstocome;
 
-    printf " command:%04x",$command;
-    printf " p24:0x%02x",$p24;
-    printf " valtype:0x%02x",$valuetype;
+    printf "".hostid2name($srchostid);
+    printf "-".hostid2name($dsthostid);
+
+    printf "|p1:0x%02x",$packettype,$packettype;
+
+#    printf "|p8:0x%02x %08b",$p8,$p8;     # always zero
+#    printf "|p9:0x%02x %08b",$p9,$p9;
+    printf "|p9:0x%02x",$p9,$p9;
+
+#    printf "|p16:0x%02x %08b",$p16,$p16;   # always zero
+    printf "|p17:0x%02x",$p17,$p17;
+#    printf "|reslt:%04x %016b",$result,$result;
+    printf "|reslt:%04x",$result;
+    printf "|2come:0x%02x",$packetstocome;
+
+    printf "|%s",$direction ? "res" : "req";
+    printf "|pktid:0x%04x",$packetid;
+    printf "|p24:0x%02x",$p24,$p24;
+    printf "|p25:0x%02x",$p25,$p25;
+#    printf "|p25-p24:0x%02x-0x%02x",$p25,$p24;
+#    printf "|p24:0x%02x %08b",$p24,$p24;
+    printf "|cmd:%04x",$command;
 
 
     my $remainingsize = length($remaining);
-    printf " remainsize:%3d",$remainingsize;
+    printf "|len:%03x-%03d",$remainingsize,$remainingsize;
+    printf "|head:%s%s\n",prettyhexdata(substr($remaining,0,62)),($remainingsize > 62 ? '..' : '');
+
+#for i in $(cat ~/Desktop/values |grep '^SMANet:sb'|perl -e 'while(<>){$count{$1}++ if /\|(p25.*?)\|/o;} while( my($a,$b) = each %count ) {print "$a\n" }'|sort|perl -pe 's/\n/ /')                                                                                                                      (6:52:36)
+#do
+#echo $i ;
+#b=`cat ~/Desktop/values|grep "$i"|perl -ne 'print $1."\n" if /len:(\d+) /;'|sort -nu|perl -pe 's/\n/ /g;'`
+#echo "b:$b";for c in $(echo "$b")
+#do
+#cat ~/Desktop/values|grep "$i" |grep "len:$c"|head -10
+#done
+#done
+
+
+#    p25:0x00 cnt:256312    cmd=2800, sb3 only, len 12 weird , or 52 ( start 0003 5000 x*16 bytes normal
+#                                               len 12 0100 3001 time 201c 0000
+#
+#    p25:0x01 cnt:437139    cmd 6a02, len 20 , 0400 0000 | x* 16 bytes normal , cmd fffd len 4 , data ffff ffff
+#                           cmd fffd ,len 16 0000 0000 | 12 bytes weird
+
+#SMANet:sbs-any|p1:0xa0|p9:0x03|p17:0x03|..........|..........|...|............|p24:0x0e|p25:0x01|cmd:fffd|len:004-004|head:ffff|ffff
+#SMANet:sh1-any|.......|.......|........|..........|..........|...|............|........|........|........|...........|.........|....
+#SMANet:sb3-sh1|p1:0xe0|.......|........|..........|..........|...|............|p24:0x0d|p25:0x01|........|len:010-016|head:0000|0000|4c4f|434b|4544|....|0000|0000
+
+
+#SMANet:sh1-sb4|p1:0xe0|p9:0x01|.||.|.|.|p24:0x0e|p25:0x01|cmd:6a02|len:014-020|head:0400|0000|0149|9240|0000|2061|a00f|0000|3a00|fec4
+#SMANet:sh1-sb3|.......|.......|.||.|.|.|........|........|........|...........|.........|....|....|....|....|....|b80b|....|....|068a
+#SMANet:sh1-sb4|.......|.......|.||.|.|.|........|........|........|...........|.........|....|....|....|....|2161|a00f|....|....|4145
+#SMANet:sh1-sb3|.......|.......|.||.|.|.|........|........|........|...........|.........|....|....|....|....|....|b80b|....|....|b90b
+#..............|.......|.......|.||.|.|.|........|........|........|len:034-052|.........|....|0745|9208|0429|2061|....|....|....|9d8b|0744|9240|0429|2061|00|074|200|3a00|f9df
+#..............|.......|.......|.||.|.|.|........|........|........|...........|.........|....|....|....|1829|....|....|....|....|7a80|....|....|1829|....|....|....|....|a960|....|....|1829|....|....|....|....|1ed4
+#..............|.......|.......|.||.|.|.|........|........|........|...........|.........|....|....|....|83ae|ab62|....|....|....|4b04|....|....|83ae|ab62|....|....|....|98e4|....|....|83ae|ab62|....|....|....|2f50
+#..............|.......|.......|.||.|.|.|........|........|........|...........|.........|....|....|....|97ae|....|....|....|....|8566|....|....|97ae|....|....|....|....|5686|....|....|97ae|....|....|....|....|e132
+#..............|.......|.......|.||.|.|.|........|........|........|len:064-100|.........|....|0760|8908|0035|ac62|7809|....|....|dbc3|0761|8900|0035|ac62|....|....|....|e1cf|0762|8900|0035|ac62|....|....|....|16c1|0763|8900|0035|ac62|0000|..
+#..............|.......|.......|.||.|.|.|........|........|........|...........|.........|....|....|....|0044|....|....|....|....|e860|....|....|0044|....|....|....|....|d26c|....|....|0044|....|....|....|....|2562|....|....|0044|....|....|..
+#..............|.......|.......|.||.|.|.|........|........|........|...........|.........|....|....|....|0087|1f61|....|....|....|8f90|....|....|0087|1f61|....|....|....|b59c|....|....|0087|1f61|....|....|....|4292|....|....|0087|1f61|....|..
+#..............|.......|.......|.||.|.|.|........|........|........|...........|.........|....|....|....|00ae|ab62|....|....|....|5bcd|....|....|00ae|ab62|....|....|....|61c1|....|....|00ae|ab62|....|....|....|96cf|....|....|00ae|ab62|....|..
+#
+
+
+#    p25:0x02 cnt:604718    normal
+#    p25:0x03 cnt:26        cmd 68*, len 12 weird 0100 0000 xxxx 0000 xxxx xxxx
+
+#SMANet:sb3-sh1|p1:0xe8|p9:0x00|p17:0x00|reslt:0000|2come:0x00|res|pktid:0x....|p24:0x00|p25:0x03|cmd:6800|len:00c-012|head:0100|0000|5601|0000|2b7f|bc76
+#SMANet:sbs-sh1|.......|.......|........|..........|..........|...|............|........|........|........|...........|.........|....|6901|....|6d33|26b3
+#SMANet:sh1-sb3|.......|.......|........|..........|..........|...|............|p24:0x01|........|........|...........|.........|....|7401|....|10e7|f0b2
+#SMANet:sh1-sbs|.......|.......|........|..........|..........|...|............|........|........|........|...........|.........|....|....|....|....|....
+#SMANet:sbs-sh1|.......|.......|........|..........|..........|...|............|p24:0x00|........|cmd:6802|...........|.........|....|6901|....|6d33|26b3
+#SMANet:sh1-sbs|.......|.......|........|..........|..........|...|............|p24:0x01|........|........|...........|.........|....|7401|....|10e7|f0b2
+#SMANet:sbs-sh1|.......|.......|........|..........|..........|...|............|p24:0x00|........|........|...........|head:0101|0001|6901|....|6d33|26b3
+#
+
+#
+#    p25:0x04 cnt:15        cmnd fffd , 0a00 0000 | x* 16 bytes normal
+
+#SMANet:sb3-jnx|p1:0xe0|p9:0x00|p17:0x00|reslt:0018|2come:0x00|res|pktid:0x....|p24:0x0d|p25:0x04|cmd:fffd|len:010-016|head:0700|0000|8403|0000|4c20|cb51|0000|0000
+#..............|.......|p9:0x01|p17:0x01|reslt:0000|..........|...|............|........|........|........|...........|.........|....|....|....|....|....|....|....
+#..............|.......|.......|........|reslt:0102|..........|...|............|........|........|........|...........|.........|....|....|....|....|....|....|....
+#..............|.......|p9:0x02|p17:0x02|reslt:0018|..........|...|............|........|........|........|...........|.........|....|....|....|....|....|....|....
+#SMANet:sb4-jnx|.......|p9:0x00|p17:0x00|..........|..........|...|............|........|........|........|...........|.........|....|....|....|....|....|....|....
+#..............|.......|p9:0x01|........|reslt:0000|..........|...|............|........|........|........|...........|.........|....|....|....|....|....|....|....
+#..............|.......|.......|p17:0x01|..........|..........|...|............|........|........|........|...........|.........|....|....|....|....|....|....|....
+#..............|.......|.......|........|reslt:0102|..........|...|............|........|........|........|...........|.........|....|....|....|....|....|....|....
+#SMANet:sbs-jnx|.......|.......|........|reslt:0000|..........|...|............|........|........|........|...........|.........|....|....|....|....|....|....|....
+#..............|.......|.......|........|reslt:0102|..........|...|............|........|........|........|...........|.........|....|....|....|....|....|....|....
+#SMANet:sbt-jnx|.......|.......|........|reslt:0000|..........|...|............|........|........|........|...........|.........|....|....|....|....|....|....|....
+#SMANet:sb3-sh1|.......|.......|........|..........|..........|...|............|........|........|........|...........|head:0a00|....|....|....|5fae|ab62|....|....
+#SMANet:sb4-sh1|.......|.......|........|..........|..........|...|............|........|........|........|...........|.........|....|....|....|....|....|....|....
+#SMANet:sbs-sh1|.......|.......|........|..........|..........|...|............|........|........|........|...........|.........|....|....|....|....|....|....|....
+#SMANet:sb3-sh1|.......|.......|........|..........|..........|...|............|........|........|........|...........|.........|....|....|....|6704|ac62|....|....
+#SMANet:sb4-sh1|.......|.......|........|..........|..........|...|............|........|........|........|...........|.........|....|....|....|9504|....|....|....
+#SMANet:sbs-sh1|.......|.......|........|..........|..........|...|............|........|........|........|...........|.........|....|....|....|b004|....|....|....
+#..............|.......|.......|........|..........|..........|...|............|........|........|........|...........|.........|....|....|....|b1ef|2061|....|....
+#SMANet:sb3-sh1|.......|.......|........|..........|..........|...|............|........|........|........|...........|.........|....|....|....|d328|....|....|....
+#SMANet:sb4-sh1|.......|.......|........|..........|..........|...|............|........|........|........|...........|.........|....|....|....|....|....|....|....
+#SMANet:sbs-sh1|.......|.......|........|..........|..........|...|............|........|........|........|...........|.........|....|....|....|....|....|....|....
+#..............|.......|.......|........|..........|..........|...|............|........|........|........|...........|.........|....|....|....|d5ef|....|....|....
+#..............|.......|.......|........|..........|..........|...|............|........|........|........|...........|.........|....|....|....|df04|ac62|....|....
+#SMANet:sh1-any|p1:0xa0|.......|........|..........|..........|...|............|p24:0x0c|........|........|len:01c-028|.........|....|....|....|5fae|ab62|....|....|0b07|0feb|1a0e|2a27|1c2d|bbbb
+#SMANet:sh1-sb3|p1:0xe0|.......|........|..........|..........|...|............|........|........|........|...........|.........|....|....|....|6704|ac62|....|....|....|....|....|....|....|....
+#SMANet:sh1-sb4|.......|.......|........|..........|..........|...|............|........|........|........|...........|.........|....|....|....|9504|....|....|....|....|....|....|....|....|....
+#SMANet:sh1-sbs|.......|.......|........|..........|..........|...|............|........|........|........|...........|.........|....|....|....|b004|....|....|....|....|....|....|....|....|....
+#..............|.......|.......|........|..........|..........|...|............|........|........|........|...........|.........|....|....|....|b1ef|2061|....|....|....|....|....|....|....|....
+#SMANet:sh1-any|p1:0xa0|.......|........|..........|..........|...|............|........|........|........|...........|.........|....|....|....|d328|....|....|....|....|....|....|....|....|....
+#SMANet:sh1-sbs|p1:0xe0|.......|........|..........|..........|...|............|........|........|........|...........|.........|....|....|....|d5ef|....|....|....|....|....|....|....|....|....
+#SMANet:sbs-any|p1:0xa0|.......|........|..........|..........|...|............|........|........|........|...........|.........|....|....|....|d9ef|....|....|....|....|....|....|....|....|....
+#SMANet:sh1-sbs|p1:0xe0|.......|........|..........|..........|...|............|........|........|........|...........|.........|....|....|....|df04|ac62|....|....|....|....|....|....|....|....
+#SMANet:sbs-any|p1:0xa0|.......|........|..........|..........|...|............|........|........|........|...........|.........|....|....|....|e404|....|....|....|....|....|....|....|....|....
+
+
+
+
+
+
+
+#    p25-p24:0x00-0x0c
+#    p25-p24:0x00-0x0e  0003 5000 | x*16 bytes normal
+#    p25-p24:0x01-0x0d
+#    p25-p24:0x01-0x0e  0400 0000 | x* 16 bytes normal
+#    p25-p24:0x02-0x00
+#    p25-p24:0x02-0x01  normal
+#    p25-p24:0x02-0x0a  normal
+#    p25-p24:0x03-0x00  normal ? (8 only)
+#    p25-p24:0x04-0x0c  normal ? (8 only)
+#    p25-p24:0x04-0x0d  0a00 0000 | x*16 bytes normal
+#                       0700 0000 | x*16 bytes normal
+
+#   02 0a normal
+#   02 01 normal
+#   03 00 normal ? (8 only)
+#   04 00 normal ? (8 only)
+#
+#   00 0e 0003 5000 | 12 bytes time ? | 16 bytes ? | 4bytes 0 | 16 bytes
+#
+#   01 0e 0400 0000 | x* 16 bytes normal
+#
+#   04 0d 0a00 0000 | x*16 bytes normal
+#         0700 0000 | x*16 bytes normal
+
+
+#
+
+
+
+
 
     if( $remainingsize > 0)
     {
-        if( 0x02 == $valuetype )
+        if( 0x02 == $p25 )
         {
-            print "WEIRD:".prettyhexdata($data) if length($remaining) < 8;
-
-            my $valuesheader = substr($remaining,0,8);
-            my $valuesdata   = substr($remaining,8);
-
-            my ($from,$to)  = unpack('VV',$valuesheader);
-            my $valuescount = $to - $from + 1;
-
-            printf " start:0x%08x end:0x%08x valcnt:%2d",$from,$to,$valuescount;
-
-            if( $valuescount > 0)
+            if( 0x0000 == $command )
             {
-                my $valuelength = length($valuesdata) / $valuescount;
+                print " data:".prettyhexdata($remaining);
+            }
+            else
+            {
+                print " invalid:".prettyhexdata($data) if length($remaining) < 8;
 
-                printValues($srchostid,$command,$valuelength,$valuesdata);
+                my $valuesheader = substr($remaining,0,8);
+                my $valuesdata   = substr($remaining,8);
+
+                my ($from,$to)  = unpack('VV',$valuesheader);
+                my $valuescount = $to - $from + 1;
+
+                printf " start:0x%08x end:0x%08x valcnt:%2d",$from,$to,$valuescount;
+
+                if( $valuescount > 0)
+                {
+                    my $valuelength = length($valuesdata) / $valuescount;
+
+                    printValues($srchostid,$command,$valuelength,$valuesdata);
+                }
             }
         }
-        elsif( 0x01 == $valuetype || 0x04 == $valuetype )
+        elsif( 0x01 == $p25 || 0x04 == $p25 )
         {
-            print "WEIRD:".prettyhexdata($data) if length($remaining) < 4;
+            print " invalid:".prettyhexdata($data) if length($remaining) < 4;
 
             my $valuesheader = substr($remaining,0,4);
             my $valuesdata   = substr($remaining,4);
@@ -725,15 +906,15 @@ sub printSMANetPacket       # return ( $result, $moretocome )
             my ($unknown)  = unpack('V',$valuesheader);
 
             my $valueslength = length($valuesdata);
-            my $valuelength  = 0x01 == $valuetype ? 16 : $valueslength;
+            my $valuelength  = 0x01 == $p25 ? 16 : $valueslength;
 
             printf " valhead:0%08x vallen=%2d",$unknown,$valuelength;
 
             printValues($srchostid,$command,$valuelength,$valuesdata);
         }
-        elsif( 0x00 == $valuetype )
+        elsif( 0x00 == $p25 )
         {
-            print " keepalivepacket";
+            print " keepalivepacket:".prettyhexdata($remaining);
         }
         else
         {
@@ -777,17 +958,41 @@ sub hostid2name
                             '56012b7fbc76' => 'sb3',
                             '9901f6a22fb3' => 'sb4',
                             '7a01d39c05b3' => 'sbt',
-                            '740110e7f0b2' => 'shm',
+                            '740110e7f0b2' => 'sh1',
+                            '57012b7fbc76' => 'sh2',
+                            '3701ffffffff' => 'sh3',
                             'ffffffffffff' => 'any',
-                            '1234b2c14321' => 'jnx',
+                            'fdffffffffff' => 'an2',
+                            'e70064063a2e' => 'jn2',
                         );
-    $source = $knownsources{$source} || $source;
-    return $source;
+
+    my $newsource = $knownsources{$source};
+
+    if( !$newsource )
+    {
+        if( substr($source,0,4) eq '1234' && substr($source,-4) == '4321' )
+        {
+            $newsource = 'jnx';
+        }
+        else
+        {
+            $newsource = 'unk'.$source;
+        }
+    }
+
+    return $newsource;
 }
 
 sub SMANetPacketValueParsing
 {
     my($source,$command,$footer) = @_;
+
+    if($command == 0x7020 || $command == 0x7000)
+    {
+        my $time  = unpack('V',substr($footer,0,4));
+        my $value = unpack('V',substr($footer,4,4));
+        printf "time:".localtime($time)."value:".$value."\n";
+    }
 
     my $number = unpack('C',substr($footer,0,1));
     my $code = unpack('v',substr($footer,1,2));

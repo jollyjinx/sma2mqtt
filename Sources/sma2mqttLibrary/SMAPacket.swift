@@ -15,7 +15,7 @@ public struct SMAPacket:Encodable,Decodable
     var obisPackets:[ObisPacket]
     var smaNetPackets:[SMANetPacket]
 
-    public var obis:[ObisValue] { obisPackets.first!.obisvalues }
+    public var obis:[ObisValue] { obisPackets.first?.obisvalues ?? []}
 }
 
 
@@ -141,6 +141,9 @@ extension SMAPacket:BinaryDecodable
             }
         }
         while !decoder.isAtEnd && !endPacketRead
+
+       print("\npayload:\(self.json)")
+
     }
 }
 

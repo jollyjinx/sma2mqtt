@@ -42,17 +42,62 @@ final class sma2mqttTests: XCTestCase
     func testSMAFile() throws
     {
         JLog.debug("loading data")
-        let data = try Data(contentsOf: URL(fileURLWithPath:"/Users/jolly/Documents/GitHub/sma2mqtt/Temp/Reverseengineering/testswift.sma"),options:.mappedRead)
+//        let filedata = try Data(contentsOf: URL(fileURLWithPath:"/Users/jolly/Documents/GitHub/sma2mqtt/Temp/Reverseengineering/testswift.sma"),options:.mappedRead)
+        let filedata = try Data(contentsOf: URL(fileURLWithPath:"/Users/jolly/Documents/GitHub/sma2mqtt/Temp/Reverseengineering/shm.20220615.pcap"),options:.mappedRead)
         JLog.debug("data loaded")
         
         let separator = Data.init( [0x53, 0x4d, 0x41, 0x00] )
-        var splitter = DataSplitter(data: data, splitData: separator)
+        var splitter = DataSplitter(data: filedata, splitData: separator)
 
         JLog.debug("splitter instanciated")
 
         JLog.loglevel = .error  // too much output otherwise
         var goodcounter = 0
         var badcounter = 0
+
+        var position = 0
+        let binaryDecoder = BinaryDecoder(data: [UInt8](filedata) )
+
+        while position  < (filedata.count - separator.count)
+        {
+            let chunk = filedata[position..<position+separator.count]
+
+            if chunk == separator
+            {
+//                print("position: \(position)")
+
+                binaryDecoder.position = position //let bigChunk = filedata[position..<filedata.count] // position + 2000]
+
+                do
+                {
+                    let packet = try SMAPacket(fromBinary:binaryDecoder)
+
+                    goodcounter += 1
+                    position = binaryDecoder.position
+                    JLog.debug("Packet \(goodcounter):\(packet)")
+                }
+                catch
+                {
+                    badcounter += 1
+                    position += 1
+
+                    JLog.error("Packet \(goodcounter): got error: \(error) data:\(chunk.hexDump)")
+                }
+                if (goodcounter + badcounter) % 1000 == 0
+                {
+                    print("Good:\(goodcounter)  Bad:\(badcounter)")
+                }
+
+
+            }
+            else
+            {
+                position += 1
+            }
+        }
+
+        goodcounter = 0
+        badcounter = 0
 
         while let chunk = splitter.next()
         {

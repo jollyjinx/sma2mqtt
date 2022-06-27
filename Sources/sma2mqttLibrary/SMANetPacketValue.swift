@@ -74,7 +74,6 @@ extension SMANetPacketValue:Encodable
         try container.encode(packetDefinition.topic   ,forKey:.topic)
         try container.encode(packetDefinition.title   ,forKey:.title)
 
-
         let factor      = packetDefinition.factor
         let hasFactor   = packetDefinition.factor != nil && packetDefinition.factor! != 0 && packetDefinition.factor! != 1
 
@@ -164,7 +163,7 @@ extension SMANetPacketValue:BinaryDecodable
 
             case .unknown:  let data = try decoder.decode(Data.self, length:decoder.countToEnd)
                             value = .unknown(data)
-                            JLog.error("unkown: \( String(format:"no:0x%02x code:0x%04x type:0x%02x",number,address,type) )  time:\(date) data:\(data.hexDump) ")
+                            JLog.info("unkown: \( String(format:"no:0x%02x code:0x%04x type:0x%02x",number,address,type) )  time:\(date) data:\(data.hexDump) ")
 
         }
         JLog.trace("Got Value: \(self.json)")

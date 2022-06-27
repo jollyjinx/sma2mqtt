@@ -9,6 +9,9 @@ I did not find any thorough documentation on the SMA UDP Protocol, so I started 
 - SBSpot [SBSpot](https://github.com/SBFspot/SBFspot) seems to have a few things correct
 - SMA old Protocol [smadat-11-ze2203.pdf](http://test.sma.de/dateien/1995/SMADAT-11-ZE2203.pdf)
 - SMA [YASDI](https://www.sma.de/en/products/monitoring-control/yasdi.html)
+- Objects http(s)://inverter/data/ObjectMetadata_Istl.json
+- Translation http(s)://inverter/data/l10n/en-US.json
+
 
 ## SMA Protocol
 
@@ -124,40 +127,42 @@ Responses from the inverter have the same header with data then attached (e.g. a
 
 ### 0x6065 Protocol Header
 
-    addr | type| explanation
-    -----------------------------------
-    0x00 | U8  | Length in 32bit words, to get length in bytes * 4
-    0x01 | U8  | Type        0xA0  1010 0000b    Dest.SysID != 0xF4
-         |     |             0xE0  1110 0000b    Dest.SysID == 0xF4 == 244 = 1111 0100
-         |     |                    -X-- ----     0 network address ?
-         |     |                                  1 group address ?
+    addr |addr | type| explanation
+    ----- -----------------------------------
+    0x00 | 00 | U8  | Length in 32bit words, to get length in bytes * 4
+    0x01 | 01 | U8  | Type        0xA0  1010 0000b    Dest.SysID != 0xF4
+         |    |     |             0xE0  1110 0000b    Dest.SysID == 0xF4 == 244 = 1111 0100
+         |    |     |                    -X-- ----     0 network address ?
+         |    |     |                                  1 group address ?
 
-    0x02 | U16 | Source SysID
-    0x04 | U32 | Source Serial number
+    0x02 | 02 | U16 | Destination SysID
+    0x04 | 04 | U32 | Destination Serial number
 
-    0x08 | U8  | 0x00                        needs to be 0x00
-    0x09 | U8  | 0x00 sending does not seem to matter except for login
-         |     |  receiving same value sent except bit 6
-         |     |  0xA1 1010 0000b
-         |     |  0xE0 1110 0000b          e0 means failed
-         |     |       -X-- ----           0 ok, 1, failed
+    0x08 | 08 | U8  | 0x00                             needs to be 0x00
+    0x09 | 09 | U8  | 0x00 sending does not seem to matter except for login
+         |    |     |  receiving same value sent except bit 6
+         |    |     |  0xA1 1010 0000b
+         |    |     |  0xE0 1110 0000b          e0 means failed
+         |    |     |       -X-- ----           0 ok, 1, failed
 
 
-    0x0A | U16 |  Destination SysID           Any: 0xFFFF
-    0x0C | U32 |  Destination Serial number   Any: 0xFFFF FFFF
+    0x0A | 10 | U16 |  Source SysID           Any: 0xFFFF
+    0x0C | 12 | U32 |  Source Serial number   Any: 0xFFFF FFFF
 
-    0x10 | U16 |  ??ctrl      0x0000              sending 0xA0 0x01 0x03
-    0x12 | U16 |  Result:     0x0000 ok
-         |     |              0x0002  0000 0010b  incorrect command ?
-         |     |              0x0014              unkown command ?
-         |     |              0x0015  0000 1111b  no values
-         |     |              0x0017  0001 0001b  not logged in
-         |     |              0x0102              login not possible (busy)?
+    0x10 | 16 | U16 |  ??ctrl      0x0000              sending 0xA0 0x01 0x03
+    0x12 | 18 | U16 |  Result:     0x0000 ok
+         |    |     |              0x0002  0000 0010b  incorrect command ?
+         |    |     |              0x0014              unkown command ?
+         |    |     |              0x0015  0000 1111b  no values 
+         |    |     |              0x0017  0001 0001b  not logged in
+         |    |     |              0x0102              login not possible (busy)?
 
-    0x14 | U16 | Bit 0-14 packet id
-         |     | bit 15   request / bit 15 needs to be set
-         |     |          response 0 - fail
-         |     |                    1 - ok
+    0x14 |    | U16 | Bit 0-14 packet id
+         |    |     | bit 15   request / bit 15 needs to be set
+         |    |     |          response 0 - fail
+         |    |     |                   1 - ok
+    
+
 
 
 # Requests to Inverter

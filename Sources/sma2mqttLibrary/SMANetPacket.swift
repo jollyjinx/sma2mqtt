@@ -15,6 +15,7 @@ struct SMANetPacket:Encodable,Decodable
     let header:SMANetPacketHeader
     let valuesheader:[Int]
     let values:[SMANetPacketValue]
+    let directvalue:String?
 }
 
 extension SMANetPacket:BinaryDecodable
@@ -31,11 +32,13 @@ extension SMANetPacket:BinaryDecodable
         self.header         = try decoder.decode(SMANetPacketHeader.self)
         var valuesheader    = [Int]()
         var values          = [SMANetPacketValue]()
+        var directvalue:String? = nil
 
         if decoder.isAtEnd
         {
             self.valuesheader = valuesheader
             self.values = values
+            self.directvalue = nil
             return
         }
 
@@ -58,8 +61,17 @@ extension SMANetPacket:BinaryDecodable
                         valuesize = valuecount > 0 ? decoder.countToEnd / valuecount : 0
                         guard decoder.countToEnd == valuecount * valuesize else { throw SMANetPacketDecodingError.decoding("valuecount wrong: header:\(header) valuecount:\(valuecount) toEnd:\(decoder.countToEnd)") }
 
+            case 0x0C:  valuesize = 0
+                        if decoder.countToEnd > 0
+                        {
+                            var ok = true
+                            let data = try decoder.decode(Data.self,length: decoder.countToEnd).filter{ ok = ok && ($0 != 0) ; return ok }
+                            directvalue = String(data:data ,encoding: .isoLatin1)!
+                        }
+
             case 0x00:  valuesize = decoder.countToEnd // keepalive packet
-            default:    throw SMANetPacketDecodingError.decoding("unknown valuestype:\(header.valuestype) header:\(header) toEnd:\(decoder.countToEnd)") 
+            default:    throw SMANetPacketDecodingError.decoding("unknown valuestype:\(header.valuestype) header:\(header) toEnd:\(decoder.countToEnd)")
+
         }
 
         if valuesize > 0
@@ -76,6 +88,7 @@ extension SMANetPacket:BinaryDecodable
         assert(decoder.isAtEnd)
         self.valuesheader = valuesheader
         self.values = values
+        self.directvalue = directvalue
     }
 }
 

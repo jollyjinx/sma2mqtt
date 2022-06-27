@@ -1,0 +1,5819 @@
+{
+  "6180_08414B00": {
+    "Prio": 2,
+    "TagId": 76,
+    "TagIdEvtMsg": 10113,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 5,
+    "TagHier": [
+      830,
+      309,
+      888
+    ]
+  },
+  "6100_00418000": {
+    "Prio": 2,
+    "TagId": 153,
+    "TagIdEvtMsg": 10109,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      830,
+      309,
+      888
+    ],
+    "Min": true,
+    "Max": true,
+    "Cnt": true,
+    "MinD": true,
+    "MaxD": true
+  },
+  "6180_08414900": {
+    "Prio": 2,
+    "TagId": 297,
+    "TagIdEvtMsg": 10112,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 5,
+    "TagHier": [
+      830,
+      309,
+      888
+    ]
+  },
+  "6180_08414A00": {
+    "Prio": 2,
+    "TagId": 335,
+    "TagIdEvtMsg": 10111,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 5,
+    "TagHier": [
+      830,
+      309,
+      888
+    ]
+  },
+  "6100_00412000": {
+    "Prio": 2,
+    "TagId": 35,
+    "TagIdEvtMsg": 10083,
+    "Unit": 18,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      830,
+      309,
+      241
+    ],
+    "Sum": true,
+    "Cnt": true,
+    "SumD": true
+  },
+  "6100_00411E00": {
+    "Prio": 2,
+    "TagId": 307,
+    "TagIdEvtMsg": 10081,
+    "Unit": 18,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      830,
+      309,
+      241
+    ],
+    "Sum": true,
+    "Cnt": true,
+    "SumD": true
+  },
+  "6100_00411F00": {
+    "Prio": 2,
+    "TagId": 455,
+    "TagIdEvtMsg": 10082,
+    "Unit": 18,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      830,
+      309,
+      241
+    ],
+    "Sum": true,
+    "Cnt": true,
+    "SumD": true
+  },
+  "6402_00618D00": {
+    "Prio": 3,
+    "TagId": 103,
+    "TagIdEvtMsg": 10013,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      830,
+      309
+    ],
+    "Sum": true,
+    "SumD": true
+  },
+  "6400_00618C00": {
+    "Prio": 3,
+    "TagId": 105,
+    "TagIdEvtMsg": 10009,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      830,
+      309
+    ],
+    "Sum": true,
+    "SumD": true
+  },
+  "6180_08416400": {
+    "Prio": 2,
+    "TagId": 238,
+    "TagIdEvtMsg": 10114,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 5,
+    "TagHier": [
+      830,
+      309
+    ]
+  },
+  "6180_08214800": {
+    "Prio": 1,
+    "TagId": 240,
+    "TagIdEvtMsg": 10110,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 5,
+    "TagHier": [
+      830,
+      309
+    ]
+  },
+  "6100_00416600": {
+    "Prio": 2,
+    "TagId": 350,
+    "TagIdEvtMsg": 10028,
+    "Unit": 13,
+    "DataFrmt": 7,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      830,
+      309
+    ],
+    "Min": true,
+    "Max": true,
+    "Avg": true,
+    "Cnt": true,
+    "MinD": true,
+    "MaxD": true
+  },
+  "6800_08811F00": {
+    "Prio": 4,
+    "TagId": 3145,
+    "TagIdEvtMsg": 11526,
+    "DataFrmt": 23,
+    "Typ": 1,
+    "WriteLevel": 1,
+    "TagHier": [
+      830,
+      394
+    ]
+  },
+  "6180_08412900": {
+    "Prio": 2,
+    "TagId": 50,
+    "TagIdEvtMsg": 11533,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 5,
+    "TagHier": [
+      830,
+      704
+    ]
+  },
+  "6802_08822200": {
+    "Prio": 4,
+    "TagId": 574,
+    "TagIdEvtMsg": 10280,
+    "DataFrmt": 23,
+    "Typ": 1,
+    "WriteLevel": 5,
+    "TagHier": [
+      831,
+      299
+    ]
+  },
+  "6800_08822100": {
+    "Prio": 4,
+    "TagId": 573,
+    "TagIdEvtMsg": 10279,
+    "DataFrmt": 23,
+    "Typ": 1,
+    "WriteLevel": 5,
+    "TagHier": [
+      831,
+      299
+    ]
+  },
+  "6802_00823300": {
+    "Prio": 4,
+    "TagId": 533,
+    "TagIdEvtMsg": 10258,
+    "DataFrmt": 24,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      831,
+      299
+    ]
+  },
+  "6800_10821E00": {
+    "Prio": 4,
+    "TagId": 284,
+    "TagIdEvtMsg": 10127,
+    "DataFrmt": 8,
+    "Typ": 2,
+    "WriteLevel": 1,
+    "Len": 24,
+    "TagHier": [
+      831,
+      299
+    ]
+  },
+  "680E_10821E00": {
+    "Prio": 4,
+    "TagId": 284,
+    "TagIdEvtMsg": 10127,
+    "DataFrmt": 8,
+    "Typ": 2,
+    "WriteLevel": 1,
+    "Len": 24,
+    "TagHier": [
+      831,
+      299
+    ]
+  },
+  "6800_10A22F00": {
+    "Prio": 5,
+    "TagId": 1717,
+    "TagIdEvtMsg": 10888,
+    "DataFrmt": 8,
+    "Typ": 2,
+    "WriteLevel": 5,
+    "TagHier": [
+      831,
+      299
+    ]
+  },
+  "6800_08821F00": {
+    "Prio": 4,
+    "TagId": 286,
+    "TagIdEvtMsg": 10128,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 5,
+    "TagHier": [
+      831,
+      299
+    ]
+  },
+  "680E_08821F00": {
+    "Prio": 4,
+    "TagId": 286,
+    "TagIdEvtMsg": 10128,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 5,
+    "TagHier": [
+      831,
+      299
+    ]
+  },
+  "6800_08822000": {
+    "Prio": 4,
+    "TagId": 294,
+    "TagIdEvtMsg": 10129,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 3,
+    "TagHier": [
+      831,
+      299
+    ]
+  },
+  "680E_08822000": {
+    "Prio": 4,
+    "TagId": 294,
+    "TagIdEvtMsg": 10129,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 3,
+    "TagHier": [
+      831,
+      299
+    ]
+  },
+  "6800_00823400": {
+    "Prio": 4,
+    "TagId": 875,
+    "TagIdEvtMsg": 10373,
+    "DataFrmt": 9,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      831,
+      299
+    ]
+  },
+  "6800_00A21E00": {
+    "Prio": 5,
+    "TagId": 372,
+    "TagIdEvtMsg": 10080,
+    "DataFrmt": 15,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 3,
+    "TagHier": [
+      831,
+      299
+    ]
+  },
+  "680E_00A21E00": {
+    "Prio": 5,
+    "TagId": 372,
+    "TagIdEvtMsg": 10080,
+    "DataFrmt": 15,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      831,
+      299
+    ]
+  },
+  "6800_10A23000": {
+    "Prio": 5,
+    "TagId": 3399,
+    "TagIdEvtMsg": 11641,
+    "DataFrmt": 8,
+    "Typ": 2,
+    "WriteLevel": 5,
+    "TagHier": [
+      831,
+      299
+    ]
+  },
+  "6800_08837800": {
+    "Prio": 4,
+    "TagId": 725,
+    "TagIdEvtMsg": 10309,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 1,
+    "TagHier": [
+      832,
+      56
+    ]
+  },
+  "6102_40633E00": {
+    "Prio": 3,
+    "TagId": 400,
+    "TagIdEvtMsg": 10104,
+    "Unit": 2,
+    "DataFrmt": 12,
+    "Scale": 0.1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      832,
+      58,
+      267
+    ],
+    "Min": true,
+    "Max": true,
+    "Avg": true,
+    "Cnt": true,
+    "MinD": true,
+    "MaxD": true
+  },
+  "6802_00832F00": {
+    "Prio": 4,
+    "TagId": 1062,
+    "TagIdEvtMsg": 10474,
+    "Unit": 15,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      832,
+      267
+    ],
+    "Deprecated": true
+  },
+  "6802_00832E00": {
+    "Prio": 4,
+    "TagId": 1061,
+    "TagIdEvtMsg": 10473,
+    "Unit": 15,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "TagHier": [
+      832,
+      267
+    ],
+    "Deprecated": true
+  },
+  "6800_00832A00": {
+    "Prio": 4,
+    "TagId": 314,
+    "TagIdEvtMsg": 10121,
+    "Unit": 18,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      832,
+      267
+    ],
+    "Deprecated": true
+  },
+  "6802_00832B00": {
+    "Prio": 4,
+    "TagId": 315,
+    "TagIdEvtMsg": 10159,
+    "Unit": 18,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "TagHier": [
+      832,
+      267
+    ],
+    "Deprecated": true
+  },
+  "6800_00233400": {
+    "Prio": 1,
+    "TagId": 3716,
+    "TagIdEvtMsg": 11863,
+    "DataFrmt": 23,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 1,
+    "TagHier": [
+      832,
+      309,
+      454
+    ]
+  },
+  "6800_00232B00": {
+    "Prio": 1,
+    "TagId": 65,
+    "TagIdEvtMsg": 11753,
+    "Unit": 14,
+    "DataFrmt": 23,
+    "Scale": 0.1,
+    "Typ": 0,
+    "WriteLevel": 1,
+    "TagHier": [
+      832,
+      309,
+      454
+    ]
+  },
+  "6800_00232A00": {
+    "Prio": 1,
+    "TagId": 761,
+    "TagIdEvtMsg": 11752,
+    "DataFrmt": 23,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 1,
+    "TagHier": [
+      832,
+      309,
+      454
+    ]
+  },
+  "6800_00232D00": {
+    "Prio": 1,
+    "TagId": 763,
+    "TagIdEvtMsg": 11755,
+    "Unit": 14,
+    "DataFrmt": 23,
+    "Scale": 0.1,
+    "Typ": 0,
+    "WriteLevel": 1,
+    "TagHier": [
+      832,
+      309,
+      454
+    ]
+  },
+  "6800_00232C00": {
+    "Prio": 1,
+    "TagId": 762,
+    "TagIdEvtMsg": 11754,
+    "DataFrmt": 23,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 1,
+    "TagHier": [
+      832,
+      309,
+      454
+    ]
+  },
+  "6800_00232900": {
+    "Prio": 1,
+    "TagId": 331,
+    "TagIdEvtMsg": 11751,
+    "Unit": 14,
+    "DataFrmt": 23,
+    "Scale": 0.1,
+    "Typ": 0,
+    "WriteLevel": 1,
+    "TagHier": [
+      832,
+      309,
+      454
+    ]
+  },
+  "6800_00232800": {
+    "Prio": 1,
+    "TagId": 760,
+    "TagIdEvtMsg": 11750,
+    "DataFrmt": 23,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 1,
+    "TagHier": [
+      832,
+      309,
+      454
+    ]
+  },
+  "6800_00232700": {
+    "Prio": 1,
+    "TagId": 416,
+    "TagIdEvtMsg": 11749,
+    "Unit": 18,
+    "DataFrmt": 23,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 1,
+    "TagHier": [
+      832,
+      309,
+      454
+    ]
+  },
+  "6800_00232600": {
+    "Prio": 1,
+    "TagId": 759,
+    "TagIdEvtMsg": 11748,
+    "Unit": 18,
+    "DataFrmt": 23,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 1,
+    "TagHier": [
+      832,
+      309,
+      454
+    ]
+  },
+  "6800_00232500": {
+    "Prio": 1,
+    "TagId": 758,
+    "TagIdEvtMsg": 11747,
+    "DataFrmt": 23,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 1,
+    "TagHier": [
+      832,
+      309,
+      454
+    ]
+  },
+  "6800_00233500": {
+    "Prio": 1,
+    "TagId": 437,
+    "TagIdEvtMsg": 11864,
+    "Unit": 16,
+    "DataFrmt": 23,
+    "Scale": 0.1,
+    "Typ": 0,
+    "WriteLevel": 1,
+    "TagHier": [
+      832,
+      309,
+      454
+    ]
+  },
+  "6800_00232200": {
+    "Prio": 1,
+    "TagId": 286,
+    "TagIdEvtMsg": 11743,
+    "DataFrmt": 23,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 1,
+    "TagHier": [
+      832,
+      309,
+      299
+    ]
+  },
+  "6800_10233200": {
+    "Prio": 1,
+    "TagId": 294,
+    "TagIdEvtMsg": 11760,
+    "DataFrmt": 23,
+    "Typ": 2,
+    "WriteLevel": 1,
+    "TagHier": [
+      832,
+      309,
+      299
+    ]
+  },
+  "6800_00233100": {
+    "Prio": 1,
+    "TagId": 372,
+    "TagIdEvtMsg": 11759,
+    "DataFrmt": 23,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 1,
+    "TagHier": [
+      832,
+      309,
+      299
+    ]
+  },
+  "6800_10233000": {
+    "Prio": 1,
+    "TagId": 440,
+    "TagIdEvtMsg": 11758,
+    "DataFrmt": 23,
+    "Typ": 2,
+    "WriteLevel": 1,
+    "TagHier": [
+      832,
+      309,
+      299
+    ]
+  },
+  "6100_00234D00": {
+    "Prio": 1,
+    "TagId": 35,
+    "TagIdEvtMsg": 11744,
+    "DataFrmt": 23,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      832,
+      309
+    ]
+  },
+  "6800_00232400": {
+    "Prio": 1,
+    "TagId": 757,
+    "TagIdEvtMsg": 11746,
+    "DataFrmt": 23,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 1,
+    "TagHier": [
+      832,
+      309
+    ]
+  },
+  "6800_00232E00": {
+    "Prio": 1,
+    "TagId": 764,
+    "TagIdEvtMsg": 11756,
+    "DataFrmt": 23,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 1,
+    "TagHier": [
+      832,
+      309
+    ]
+  },
+  "6800_00232300": {
+    "Prio": 1,
+    "TagId": 756,
+    "TagIdEvtMsg": 11745,
+    "DataFrmt": 23,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 1,
+    "TagHier": [
+      832,
+      309
+    ]
+  },
+  "6800_08834300": {
+    "Prio": 4,
+    "TagId": 3275,
+    "TagIdEvtMsg": 11600,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 1,
+    "TagHier": [
+      832,
+      309
+    ]
+  },
+  "6802_08837300": {
+    "Prio": 4,
+    "TagId": 63,
+    "TagIdEvtMsg": 10143,
+    "DataFrmt": 30,
+    "Typ": 1,
+    "WriteLevel": 2,
+    "TagHier": [
+      832,
+      309
+    ]
+  },
+  "6800_08831E00": {
+    "Prio": 4,
+    "TagId": 310,
+    "TagIdEvtMsg": 10123,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 2,
+    "TagHier": [
+      832,
+      309
+    ]
+  },
+  "6800_00232F00": {
+    "Prio": 1,
+    "TagId": 765,
+    "TagIdEvtMsg": 11757,
+    "DataFrmt": 23,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 1,
+    "TagHier": [
+      832,
+      309
+    ]
+  },
+  "6802_08834D00": {
+    "Prio": 4,
+    "TagId": 52,
+    "TagIdEvtMsg": 10141,
+    "DataFrmt": 30,
+    "Typ": 1,
+    "WriteLevel": 2,
+    "TagHier": [
+      832,
+      309
+    ]
+  },
+  "6100_00234E00": {
+    "Prio": 1,
+    "TagId": 455,
+    "TagIdEvtMsg": 11761,
+    "DataFrmt": 23,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      832,
+      309
+    ]
+  },
+  "6802_08833A00": {
+    "Prio": 4,
+    "TagId": 3133,
+    "TagIdEvtMsg": 11525,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 2,
+    "TagHier": [
+      832,
+      394
+    ]
+  },
+  "6802_08833900": {
+    "Prio": 4,
+    "TagId": 3217,
+    "TagIdEvtMsg": 11566,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 5,
+    "TagHier": [
+      832,
+      394
+    ]
+  },
+  "6800_08838B00": {
+    "Prio": 4,
+    "TagId": 730,
+    "TagIdEvtMsg": 10314,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 1,
+    "TagHier": [
+      832,
+      703
+    ]
+  },
+  "6800_10838F00": {
+    "Prio": 4,
+    "TagId": 1626,
+    "TagIdEvtMsg": 10834,
+    "DataFrmt": 8,
+    "Typ": 2,
+    "WriteLevel": 2,
+    "TagHier": [
+      832,
+      703
+    ]
+  },
+  "6800_08838C00": {
+    "Prio": 4,
+    "TagId": 3258,
+    "TagIdEvtMsg": 11592,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 1,
+    "TagHier": [
+      832,
+      703
+    ]
+  },
+  "6800_08836E00": {
+    "Prio": 4,
+    "TagId": 731,
+    "TagIdEvtMsg": 10315,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 1,
+    "TagHier": [
+      832,
+      703
+    ]
+  },
+  "6800_08838D00": {
+    "Prio": 4,
+    "TagId": 732,
+    "TagIdEvtMsg": 10316,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 1,
+    "TagHier": [
+      832,
+      703
+    ]
+  },
+  "6802_00839C00": {
+    "Prio": 4,
+    "TagId": 393,
+    "TagIdEvtMsg": 11295,
+    "DataFrmt": 9,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      832,
+      2497,
+      2498
+    ]
+  },
+  "6802_00839F00": {
+    "Prio": 4,
+    "TagId": 393,
+    "TagIdEvtMsg": 11620,
+    "DataFrmt": 9,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      832,
+      2497,
+      3328
+    ]
+  },
+  "6802_00839E00": {
+    "Prio": 4,
+    "TagId": 393,
+    "TagIdEvtMsg": 11543,
+    "DataFrmt": 9,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      832,
+      2497,
+      3197
+    ]
+  },
+  "6802_10841F00": {
+    "Prio": 4,
+    "TagId": 592,
+    "TagIdEvtMsg": 10285,
+    "DataFrmt": 20,
+    "Typ": 2,
+    "WriteLevel": 2,
+    "Len": 12,
+    "TagHier": [
+      833,
+      584
+    ]
+  },
+  "6800_10841E00": {
+    "Prio": 4,
+    "TagId": 591,
+    "TagIdEvtMsg": 10284,
+    "DataFrmt": 20,
+    "Typ": 2,
+    "WriteLevel": 1,
+    "Len": 12,
+    "TagHier": [
+      833,
+      584
+    ]
+  },
+  "6322_00854D00": {
+    "Prio": 4,
+    "TagId": 447,
+    "TagIdEvtMsg": 10247,
+    "Unit": 14,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "TagHier": [
+      834,
+      62,
+      57
+    ]
+  },
+  "6802_00855D00": {
+    "Prio": 4,
+    "TagId": 1202,
+    "TagIdEvtMsg": 10610,
+    "Unit": 13,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "TagHier": [
+      834,
+      62,
+      1201
+    ]
+  },
+  "6800_08855C00": {
+    "Prio": 4,
+    "TagId": 733,
+    "TagIdEvtMsg": 10612,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 1,
+    "TagHier": [
+      834,
+      62,
+      1201
+    ]
+  },
+  "6802_00852000": {
+    "Prio": 4,
+    "TagId": 1358,
+    "TagIdEvtMsg": 10706,
+    "Unit": 14,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "TagHier": [
+      834,
+      62
+    ]
+  },
+  "6322_00852000": {
+    "Prio": 4,
+    "TagId": 1358,
+    "TagIdEvtMsg": 10706,
+    "Unit": 14,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "TagHier": [
+      834,
+      62
+    ]
+  },
+  "6802_00851E00": {
+    "Prio": 4,
+    "TagId": 387,
+    "TagIdEvtMsg": 10242,
+    "Unit": 14,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "TagHier": [
+      834,
+      62
+    ]
+  },
+  "6322_00851E00": {
+    "Prio": 4,
+    "TagId": 387,
+    "TagIdEvtMsg": 10242,
+    "Unit": 14,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "TagHier": [
+      834,
+      62
+    ]
+  },
+  "6200_40652100": {
+    "Prio": 3,
+    "TagId": 38,
+    "TagIdEvtMsg": 10213,
+    "Unit": 3,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      834,
+      67
+    ],
+    "Min": true,
+    "Max": true,
+    "Sum": true,
+    "Avg": true,
+    "Cnt": true,
+    "MinD": true,
+    "MaxD": true
+  },
+  "6100_40452100": {
+    "Prio": 2,
+    "TagId": 38,
+    "TagIdEvtMsg": 10213,
+    "Unit": 3,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      834,
+      67
+    ],
+    "Min": true,
+    "Max": true,
+    "Sum": true,
+    "Avg": true,
+    "Cnt": true,
+    "MinD": true,
+    "MaxD": true
+  },
+  "6300_40452100": {
+    "Prio": 2,
+    "TagId": 38,
+    "TagIdEvtMsg": 10213,
+    "Unit": 3,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      834,
+      67
+    ],
+    "Min": true,
+    "Max": true,
+    "Sum": true,
+    "Avg": true,
+    "Cnt": true,
+    "MinD": true,
+    "MaxD": true
+  },
+  "6310_40652100": {
+    "Prio": 3,
+    "TagId": 38,
+    "TagIdEvtMsg": 10213,
+    "Unit": 3,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      834,
+      67
+    ]
+  },
+  "6380_40452100": {
+    "Prio": 2,
+    "TagId": 38,
+    "TagIdEvtMsg": 10213,
+    "Unit": 3,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      834,
+      67
+    ],
+    "Min": true,
+    "Max": true,
+    "Sum": true,
+    "Avg": true,
+    "Cnt": true,
+    "MinD": true,
+    "MaxD": true
+  },
+  "6200_40651F00": {
+    "Prio": 3,
+    "TagId": 441,
+    "TagIdEvtMsg": 10209,
+    "Unit": 14,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      834,
+      67
+    ],
+    "Min": true,
+    "Max": true,
+    "Avg": true,
+    "Cnt": true,
+    "MinD": true,
+    "MaxD": true
+  },
+  "6100_40451F00": {
+    "Prio": 2,
+    "TagId": 441,
+    "TagIdEvtMsg": 10209,
+    "Unit": 14,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      834,
+      67
+    ],
+    "Min": true,
+    "Max": true,
+    "Avg": true,
+    "Cnt": true,
+    "MinD": true,
+    "MaxD": true
+  },
+  "6300_40451F00": {
+    "Prio": 2,
+    "TagId": 441,
+    "TagIdEvtMsg": 10209,
+    "Unit": 14,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      834,
+      67
+    ],
+    "Min": true,
+    "Max": true,
+    "Avg": true,
+    "Cnt": true,
+    "MinD": true,
+    "MaxD": true
+  },
+  "6310_40651F00": {
+    "Prio": 3,
+    "TagId": 441,
+    "TagIdEvtMsg": 10209,
+    "Unit": 14,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      834,
+      67
+    ]
+  },
+  "6380_40451F00": {
+    "Prio": 2,
+    "TagId": 441,
+    "TagIdEvtMsg": 10209,
+    "Unit": 14,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      834,
+      67
+    ],
+    "Min": true,
+    "Max": true,
+    "Avg": true,
+    "Cnt": true,
+    "MinD": true,
+    "MaxD": true
+  },
+  "6200_40451E00": {
+    "Prio": 2,
+    "TagId": 450,
+    "TagIdEvtMsg": 10217,
+    "Unit": 18,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      834,
+      67
+    ],
+    "Min": true,
+    "Max": true,
+    "Sum": true,
+    "Avg": true,
+    "Cnt": true,
+    "SumD": true
+  },
+  "6100_40251E00": {
+    "Prio": 1,
+    "TagId": 450,
+    "TagIdEvtMsg": 10217,
+    "Unit": 18,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      834,
+      67
+    ],
+    "Min": true,
+    "Max": true,
+    "Sum": true,
+    "Avg": true,
+    "Cnt": true,
+    "SumD": true
+  },
+  "6300_40251E00": {
+    "Prio": 1,
+    "TagId": 450,
+    "TagIdEvtMsg": 10217,
+    "Unit": 18,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      834,
+      67
+    ],
+    "Min": true,
+    "Max": true,
+    "Sum": true,
+    "Avg": true,
+    "Cnt": true,
+    "SumD": true
+  },
+  "6310_40651E00": {
+    "Prio": 3,
+    "TagId": 450,
+    "TagIdEvtMsg": 10217,
+    "Unit": 18,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      834,
+      67
+    ]
+  },
+  "6380_40251E00": {
+    "Prio": 1,
+    "TagId": 450,
+    "TagIdEvtMsg": 10217,
+    "Unit": 18,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      834,
+      67
+    ],
+    "Min": true,
+    "Max": true,
+    "Sum": true,
+    "Avg": true,
+    "Cnt": true,
+    "SumD": true
+  },
+  "6202_40254E00": {
+    "Prio": 1,
+    "TagId": 217,
+    "TagIdEvtMsg": 10078,
+    "Unit": 3,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      834,
+      268
+    ],
+    "Min": true,
+    "Max": true,
+    "Avg": true,
+    "Cnt": true,
+    "MinD": true,
+    "MaxD": true
+  },
+  "6102_40254E00": {
+    "Prio": 1,
+    "TagId": 217,
+    "TagIdEvtMsg": 10078,
+    "Unit": 3,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      834,
+      268
+    ],
+    "Min": true,
+    "Max": true,
+    "Avg": true,
+    "Cnt": true,
+    "MinD": true,
+    "MaxD": true
+  },
+  "6102_00254F00": {
+    "Prio": 1,
+    "TagId": 272,
+    "TagIdEvtMsg": 10079,
+    "Unit": 11,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      834,
+      268
+    ],
+    "Min": true,
+    "Max": true,
+    "Avg": true,
+    "Cnt": true,
+    "MinD": true,
+    "MaxD": true
+  },
+  "6800_00852A00": {
+    "Prio": 4,
+    "TagId": 2134,
+    "TagIdEvtMsg": 11043,
+    "Unit": 18,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "TagHier": [
+      834,
+      340
+    ]
+  },
+  "6200_00465000": {
+    "Prio": 2,
+    "TagId": 325,
+    "TagIdEvtMsg": 10039,
+    "Unit": 3,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      835,
+      230,
+      20
+    ],
+    "Min": true,
+    "Max": true,
+    "Avg": true,
+    "Cnt": true,
+    "MinD": true,
+    "MaxD": true,
+    "Deprecated": true
+  },
+  "6200_40465300": {
+    "Prio": 2,
+    "TagId": 325,
+    "TagIdEvtMsg": 10039,
+    "Unit": 3,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      835,
+      230,
+      20
+    ],
+    "Min": true,
+    "Max": true,
+    "Avg": true,
+    "Cnt": true,
+    "MinD": true,
+    "MaxD": true
+  },
+  "6100_00465000": {
+    "Prio": 2,
+    "TagId": 325,
+    "TagIdEvtMsg": 10039,
+    "Unit": 3,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      835,
+      230,
+      20
+    ],
+    "Min": true,
+    "Max": true,
+    "Sum": true,
+    "Avg": true,
+    "Cnt": true,
+    "MinD": true,
+    "MaxD": true,
+    "Deprecated": true
+  },
+  "6100_40465300": {
+    "Prio": 2,
+    "TagId": 325,
+    "TagIdEvtMsg": 10039,
+    "Unit": 3,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      835,
+      230,
+      20
+    ],
+    "Min": true,
+    "Max": true,
+    "Sum": true,
+    "Avg": true,
+    "Cnt": true,
+    "MinD": true,
+    "MaxD": true
+  },
+  "6200_00465100": {
+    "Prio": 2,
+    "TagId": 327,
+    "TagIdEvtMsg": 10040,
+    "Unit": 3,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      835,
+      230,
+      20
+    ],
+    "Min": true,
+    "Max": true,
+    "Avg": true,
+    "Cnt": true,
+    "MinD": true,
+    "MaxD": true,
+    "Deprecated": true
+  },
+  "6200_40465400": {
+    "Prio": 2,
+    "TagId": 327,
+    "TagIdEvtMsg": 10040,
+    "Unit": 3,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      835,
+      230,
+      20
+    ],
+    "Min": true,
+    "Max": true,
+    "Avg": true,
+    "Cnt": true,
+    "MinD": true,
+    "MaxD": true
+  },
+  "6100_00465100": {
+    "Prio": 2,
+    "TagId": 327,
+    "TagIdEvtMsg": 10040,
+    "Unit": 3,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      835,
+      230,
+      20
+    ],
+    "Min": true,
+    "Max": true,
+    "Sum": true,
+    "Avg": true,
+    "Cnt": true,
+    "MinD": true,
+    "MaxD": true,
+    "Deprecated": true
+  },
+  "6100_40465400": {
+    "Prio": 2,
+    "TagId": 327,
+    "TagIdEvtMsg": 10040,
+    "Unit": 3,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      835,
+      230,
+      20
+    ],
+    "Min": true,
+    "Max": true,
+    "Sum": true,
+    "Avg": true,
+    "Cnt": true,
+    "MinD": true,
+    "MaxD": true
+  },
+  "6200_00465200": {
+    "Prio": 2,
+    "TagId": 329,
+    "TagIdEvtMsg": 10041,
+    "Unit": 3,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      835,
+      230,
+      20
+    ],
+    "Min": true,
+    "Max": true,
+    "Avg": true,
+    "Cnt": true,
+    "MinD": true,
+    "MaxD": true,
+    "Deprecated": true
+  },
+  "6200_40465500": {
+    "Prio": 2,
+    "TagId": 329,
+    "TagIdEvtMsg": 10041,
+    "Unit": 3,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      835,
+      230,
+      20
+    ],
+    "Min": true,
+    "Max": true,
+    "Avg": true,
+    "Cnt": true,
+    "MinD": true,
+    "MaxD": true
+  },
+  "6100_00465200": {
+    "Prio": 2,
+    "TagId": 329,
+    "TagIdEvtMsg": 10041,
+    "Unit": 3,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      835,
+      230,
+      20
+    ],
+    "Min": true,
+    "Max": true,
+    "Sum": true,
+    "Avg": true,
+    "Cnt": true,
+    "MinD": true,
+    "MaxD": true,
+    "Deprecated": true
+  },
+  "6100_40465500": {
+    "Prio": 2,
+    "TagId": 329,
+    "TagIdEvtMsg": 10041,
+    "Unit": 3,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      835,
+      230,
+      20
+    ],
+    "Min": true,
+    "Max": true,
+    "Sum": true,
+    "Avg": true,
+    "Cnt": true,
+    "MinD": true,
+    "MaxD": true
+  },
+  "6200_00464800": {
+    "Prio": 2,
+    "TagId": 325,
+    "TagIdEvtMsg": 10035,
+    "Unit": 14,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      835,
+      230,
+      331
+    ],
+    "Min": true,
+    "Max": true,
+    "Avg": true,
+    "Cnt": true,
+    "MinD": true,
+    "MaxD": true
+  },
+  "6100_00464800": {
+    "Prio": 2,
+    "TagId": 325,
+    "TagIdEvtMsg": 10035,
+    "Unit": 14,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      835,
+      230,
+      331
+    ],
+    "Min": true,
+    "Max": true,
+    "Avg": true,
+    "Cnt": true,
+    "MinD": true,
+    "MaxD": true
+  },
+  "6200_00464900": {
+    "Prio": 2,
+    "TagId": 327,
+    "TagIdEvtMsg": 10036,
+    "Unit": 14,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      835,
+      230,
+      331
+    ],
+    "Min": true,
+    "Max": true,
+    "Avg": true,
+    "Cnt": true,
+    "MinD": true,
+    "MaxD": true
+  },
+  "6100_00464900": {
+    "Prio": 2,
+    "TagId": 327,
+    "TagIdEvtMsg": 10036,
+    "Unit": 14,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      835,
+      230,
+      331
+    ],
+    "Min": true,
+    "Max": true,
+    "Avg": true,
+    "Cnt": true,
+    "MinD": true,
+    "MaxD": true
+  },
+  "6200_00464A00": {
+    "Prio": 2,
+    "TagId": 329,
+    "TagIdEvtMsg": 10037,
+    "Unit": 14,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      835,
+      230,
+      331
+    ],
+    "Min": true,
+    "Max": true,
+    "Avg": true,
+    "Cnt": true,
+    "MinD": true,
+    "MaxD": true
+  },
+  "6100_00464A00": {
+    "Prio": 2,
+    "TagId": 329,
+    "TagIdEvtMsg": 10037,
+    "Unit": 14,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      835,
+      230,
+      331
+    ],
+    "Min": true,
+    "Max": true,
+    "Avg": true,
+    "Cnt": true,
+    "MinD": true,
+    "MaxD": true
+  },
+  "6200_00465700": {
+    "Prio": 2,
+    "TagId": 254,
+    "TagIdEvtMsg": 10042,
+    "Unit": 7,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      835,
+      230
+    ],
+    "Min": true,
+    "Max": true,
+    "Avg": true,
+    "Cnt": true,
+    "AvgD": true
+  },
+  "6100_00465700": {
+    "Prio": 2,
+    "TagId": 254,
+    "TagIdEvtMsg": 10042,
+    "Unit": 7,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      835,
+      230
+    ],
+    "Min": true,
+    "Max": true,
+    "Avg": true,
+    "Cnt": true,
+    "AvgD": true
+  },
+  "6180_08465A00": {
+    "Prio": 2,
+    "TagId": 1402,
+    "TagIdEvtMsg": 10711,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 5,
+    "TagHier": [
+      835,
+      230
+    ]
+  },
+  "6200_00665900": {
+    "Prio": 3,
+    "TagId": 1401,
+    "TagIdEvtMsg": 10710,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      835,
+      230
+    ],
+    "Min": true,
+    "Max": true,
+    "Avg": true,
+    "AvgD": true
+  },
+  "6100_00665900": {
+    "Prio": 3,
+    "TagId": 1401,
+    "TagIdEvtMsg": 10710,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      835,
+      230
+    ],
+    "Min": true,
+    "Max": true,
+    "Avg": true,
+    "AvgD": true
+  },
+  "6200_40666700": {
+    "Prio": 3,
+    "TagId": 412,
+    "TagIdEvtMsg": 10047,
+    "Unit": 15,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      835,
+      230
+    ],
+    "Min": true,
+    "Max": true,
+    "Sum": true,
+    "Avg": true,
+    "Cnt": true,
+    "SumD": true
+  },
+  "6100_40666700": {
+    "Prio": 3,
+    "TagId": 412,
+    "TagIdEvtMsg": 10047,
+    "Unit": 15,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      835,
+      230
+    ],
+    "Min": true,
+    "Max": true,
+    "Sum": true,
+    "Avg": true,
+    "Cnt": true,
+    "SumD": true
+  },
+  "6200_40665F00": {
+    "Prio": 3,
+    "TagId": 413,
+    "TagIdEvtMsg": 10043,
+    "Unit": 16,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      835,
+      230
+    ],
+    "Min": true,
+    "Max": true,
+    "Sum": true,
+    "Avg": true,
+    "Cnt": true,
+    "SumD": true
+  },
+  "6100_40665F00": {
+    "Prio": 3,
+    "TagId": 413,
+    "TagIdEvtMsg": 10043,
+    "Unit": 16,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      835,
+      230
+    ],
+    "Min": true,
+    "Max": true,
+    "Sum": true,
+    "Avg": true,
+    "Cnt": true,
+    "SumD": true
+  },
+  "6200_40263F00": {
+    "Prio": 1,
+    "TagId": 416,
+    "TagIdEvtMsg": 10030,
+    "Unit": 18,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      835,
+      230
+    ],
+    "Min": true,
+    "Max": true,
+    "Sum": true,
+    "Avg": true,
+    "Cnt": true,
+    "SumD": true
+  },
+  "6100_40263F00": {
+    "Prio": 1,
+    "TagId": 416,
+    "TagIdEvtMsg": 10030,
+    "Unit": 18,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      835,
+      230
+    ],
+    "Min": true,
+    "Max": true,
+    "Sum": true,
+    "Avg": true,
+    "Cnt": true,
+    "SumD": true
+  },
+  "6802_08861E00": {
+    "Prio": 4,
+    "TagId": 312,
+    "TagIdEvtMsg": 10164,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 2,
+    "TagHier": [
+      835,
+      267
+    ]
+  },
+  "6800_40A63B00": {
+    "Prio": 5,
+    "TagId": 2475,
+    "TagIdEvtMsg": 11281,
+    "Unit": 8,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 1,
+    "TagHier": [
+      835,
+      290,
+      230
+    ]
+  },
+  "6800_40A63A00": {
+    "Prio": 5,
+    "TagId": 2474,
+    "TagIdEvtMsg": 11280,
+    "Unit": 8,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 1,
+    "TagHier": [
+      835,
+      290,
+      230
+    ]
+  },
+  "6400_00462500": {
+    "Prio": 2,
+    "TagId": 417,
+    "TagIdEvtMsg": 10715,
+    "Unit": 19,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      835,
+      290,
+      230
+    ],
+    "Sum": true,
+    "SumD": true
+  },
+  "6400_00462400": {
+    "Prio": 2,
+    "TagId": 418,
+    "TagIdEvtMsg": 10714,
+    "Unit": 19,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      835,
+      290,
+      230
+    ],
+    "Sum": true,
+    "SumD": true
+  },
+  "6200_40463700": {
+    "Prio": 2,
+    "TagId": 890,
+    "TagIdEvtMsg": 10718,
+    "Unit": 18,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      835,
+      290,
+      230
+    ],
+    "Min": true,
+    "Max": true,
+    "Sum": true,
+    "Avg": true,
+    "Cnt": true,
+    "SumD": true
+  },
+  "6100_40463700": {
+    "Prio": 2,
+    "TagId": 890,
+    "TagIdEvtMsg": 10718,
+    "Unit": 18,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      835,
+      290,
+      230
+    ],
+    "Min": true,
+    "Max": true,
+    "Sum": true,
+    "Avg": true,
+    "Cnt": true,
+    "SumD": true
+  },
+  "6200_40463600": {
+    "Prio": 2,
+    "TagId": 1408,
+    "TagIdEvtMsg": 10717,
+    "Unit": 18,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      835,
+      290,
+      230
+    ],
+    "Min": true,
+    "Max": true,
+    "Sum": true,
+    "Avg": true,
+    "Cnt": true,
+    "SumD": true
+  },
+  "6100_40463600": {
+    "Prio": 2,
+    "TagId": 1408,
+    "TagIdEvtMsg": 10717,
+    "Unit": 18,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      835,
+      290,
+      230
+    ],
+    "Min": true,
+    "Max": true,
+    "Sum": true,
+    "Avg": true,
+    "Cnt": true,
+    "SumD": true
+  },
+  "6400_00262200": {
+    "Prio": 1,
+    "TagId": 563,
+    "TagIdEvtMsg": 10272,
+    "Unit": 19,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      835,
+      290
+    ],
+    "Sum": true,
+    "SumD": true
+  },
+  "6802_00A62B00": {
+    "Prio": 5,
+    "TagId": 410,
+    "TagIdEvtMsg": 10135,
+    "Unit": 6,
+    "DataFrmt": 7,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "TagHier": [
+      835,
+      290
+    ]
+  },
+  "6400_00462F00": {
+    "Prio": 2,
+    "TagId": 411,
+    "TagIdEvtMsg": 10012,
+    "Unit": 13,
+    "DataFrmt": 7,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      835,
+      290
+    ],
+    "Sum": true,
+    "SumD": true
+  },
+  "6800_00A63500": {
+    "Prio": 5,
+    "TagId": 530,
+    "TagIdEvtMsg": 10259,
+    "Unit": 8,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 1,
+    "TagHier": [
+      835,
+      290
+    ]
+  },
+  "6802_00A62A00": {
+    "Prio": 5,
+    "TagId": 408,
+    "TagIdEvtMsg": 10134,
+    "Unit": 6,
+    "DataFrmt": 7,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "TagHier": [
+      835,
+      290
+    ]
+  },
+  "6400_00462E00": {
+    "Prio": 2,
+    "TagId": 409,
+    "TagIdEvtMsg": 10011,
+    "Unit": 13,
+    "DataFrmt": 7,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      835,
+      290
+    ],
+    "Sum": true,
+    "SumD": true
+  },
+  "6400_00260100": {
+    "Prio": 1,
+    "TagId": 418,
+    "TagIdEvtMsg": 10001,
+    "Unit": 19,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      835,
+      290
+    ],
+    "Sum": true,
+    "SumD": true
+  },
+  "6402_00666F00": {
+    "Prio": 3,
+    "TagId": 237,
+    "TagIdEvtMsg": 10010,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      835,
+      309
+    ],
+    "Sum": true,
+    "SumD": true
+  },
+  "6200_0046C200": {
+    "Prio": 2,
+    "TagId": 2369,
+    "TagIdEvtMsg": 11220,
+    "Unit": 18,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      835,
+      2360
+    ],
+    "Min": true,
+    "Max": true,
+    "Sum": true,
+    "Avg": true,
+    "Cnt": true,
+    "SumD": true
+  },
+  "6100_0046C200": {
+    "Prio": 2,
+    "TagId": 2369,
+    "TagIdEvtMsg": 11220,
+    "Unit": 18,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      835,
+      2360
+    ],
+    "Min": true,
+    "Max": true,
+    "Sum": true,
+    "Avg": true,
+    "Cnt": true,
+    "SumD": true
+  },
+  "6400_0046C300": {
+    "Prio": 2,
+    "TagId": 2366,
+    "TagIdEvtMsg": 11214,
+    "Unit": 19,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      835,
+      2360
+    ],
+    "Sum": true,
+    "SumD": true
+  },
+  "6802_0887A500": {
+    "Prio": 4,
+    "TagId": 50,
+    "TagIdEvtMsg": 11282,
+    "DataFrmt": 18,
+    "Scale": 1,
+    "Typ": 1,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      836,
+      229,
+      53,
+      28
+    ]
+  },
+  "6802_00878200": {
+    "Prio": 4,
+    "TagId": 242,
+    "TagIdEvtMsg": 10176,
+    "Unit": 7,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      836,
+      229,
+      53,
+      222
+    ]
+  },
+  "6802_00878300": {
+    "Prio": 4,
+    "TagId": 243,
+    "TagIdEvtMsg": 10177,
+    "Unit": 10,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      836,
+      229,
+      53,
+      222
+    ]
+  },
+  "6802_00878400": {
+    "Prio": 4,
+    "TagId": 245,
+    "TagIdEvtMsg": 10178,
+    "Unit": 7,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      836,
+      229,
+      53,
+      222
+    ]
+  },
+  "6802_00878500": {
+    "Prio": 4,
+    "TagId": 246,
+    "TagIdEvtMsg": 10179,
+    "Unit": 10,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      836,
+      229,
+      53,
+      222
+    ]
+  },
+  "6802_00878600": {
+    "Prio": 4,
+    "TagId": 278,
+    "TagIdEvtMsg": 10180,
+    "Unit": 7,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      836,
+      229,
+      53,
+      222
+    ]
+  },
+  "6802_00878700": {
+    "Prio": 4,
+    "TagId": 279,
+    "TagIdEvtMsg": 10181,
+    "Unit": 10,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      836,
+      229,
+      53,
+      222
+    ]
+  },
+  "6802_00878800": {
+    "Prio": 4,
+    "TagId": 281,
+    "TagIdEvtMsg": 10182,
+    "Unit": 7,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      836,
+      229,
+      53,
+      222
+    ]
+  },
+  "6802_00878900": {
+    "Prio": 4,
+    "TagId": 282,
+    "TagIdEvtMsg": 10183,
+    "Unit": 10,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      836,
+      229,
+      53,
+      222
+    ]
+  },
+  "6802_00878F00": {
+    "Prio": 4,
+    "TagId": 1102,
+    "TagIdEvtMsg": 10501,
+    "Unit": 7,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      836,
+      229,
+      53,
+      222
+    ]
+  },
+  "6802_00878E00": {
+    "Prio": 4,
+    "TagId": 1101,
+    "TagIdEvtMsg": 10500,
+    "Unit": 7,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      836,
+      229,
+      53,
+      222
+    ]
+  },
+  "6802_00879000": {
+    "Prio": 4,
+    "TagId": 2011,
+    "TagIdEvtMsg": 11016,
+    "Unit": 7,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      836,
+      229,
+      53,
+      222
+    ]
+  },
+  "6802_00879100": {
+    "Prio": 4,
+    "TagId": 2012,
+    "TagIdEvtMsg": 11017,
+    "Unit": 10,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      836,
+      229,
+      53,
+      222
+    ]
+  },
+  "6802_00879200": {
+    "Prio": 4,
+    "TagId": 2013,
+    "TagIdEvtMsg": 11018,
+    "Unit": 7,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      836,
+      229,
+      53,
+      222
+    ]
+  },
+  "6802_00879300": {
+    "Prio": 4,
+    "TagId": 2014,
+    "TagIdEvtMsg": 11019,
+    "Unit": 10,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      836,
+      229,
+      53,
+      222
+    ]
+  },
+  "6802_00875000": {
+    "Prio": 4,
+    "TagId": 242,
+    "TagIdEvtMsg": 10188,
+    "Unit": 14,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      836,
+      229,
+      53,
+      442
+    ]
+  },
+  "6802_00875100": {
+    "Prio": 4,
+    "TagId": 243,
+    "TagIdEvtMsg": 10189,
+    "Unit": 10,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      836,
+      229,
+      53,
+      442
+    ]
+  },
+  "6802_00875200": {
+    "Prio": 4,
+    "TagId": 245,
+    "TagIdEvtMsg": 10190,
+    "Unit": 14,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      836,
+      229,
+      53,
+      442
+    ]
+  },
+  "6802_00875300": {
+    "Prio": 4,
+    "TagId": 246,
+    "TagIdEvtMsg": 10191,
+    "Unit": 10,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      836,
+      229,
+      53,
+      442
+    ]
+  },
+  "6802_00875400": {
+    "Prio": 4,
+    "TagId": 278,
+    "TagIdEvtMsg": 10192,
+    "Unit": 14,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      836,
+      229,
+      53,
+      442
+    ]
+  },
+  "6802_00875500": {
+    "Prio": 4,
+    "TagId": 279,
+    "TagIdEvtMsg": 10193,
+    "Unit": 10,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      836,
+      229,
+      53,
+      442
+    ]
+  },
+  "6802_00875600": {
+    "Prio": 4,
+    "TagId": 281,
+    "TagIdEvtMsg": 10194,
+    "Unit": 14,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      836,
+      229,
+      53,
+      442
+    ]
+  },
+  "6802_00875700": {
+    "Prio": 4,
+    "TagId": 282,
+    "TagIdEvtMsg": 10195,
+    "Unit": 10,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      836,
+      229,
+      53,
+      442
+    ]
+  },
+  "6802_00876000": {
+    "Prio": 4,
+    "TagId": 3484,
+    "TagIdEvtMsg": 11674,
+    "Unit": 14,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      836,
+      229,
+      53,
+      442
+    ]
+  },
+  "6802_00876100": {
+    "Prio": 4,
+    "TagId": 3485,
+    "TagIdEvtMsg": 11675,
+    "Unit": 10,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      836,
+      229,
+      53,
+      442
+    ]
+  },
+  "6802_00876200": {
+    "Prio": 4,
+    "TagId": 3482,
+    "TagIdEvtMsg": 11676,
+    "Unit": 14,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      836,
+      229,
+      53,
+      442
+    ]
+  },
+  "6802_00876300": {
+    "Prio": 4,
+    "TagId": 3483,
+    "TagIdEvtMsg": 11677,
+    "Unit": 10,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      836,
+      229,
+      53,
+      442
+    ]
+  },
+  "6802_00877900": {
+    "Prio": 4,
+    "TagId": 1102,
+    "TagIdEvtMsg": 10649,
+    "Unit": 14,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      836,
+      229,
+      53,
+      442
+    ]
+  },
+  "6802_00877800": {
+    "Prio": 4,
+    "TagId": 1101,
+    "TagIdEvtMsg": 10648,
+    "Unit": 14,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      836,
+      229,
+      53,
+      442
+    ]
+  },
+  "6802_00877600": {
+    "Prio": 4,
+    "TagId": 351,
+    "TagIdEvtMsg": 10198,
+    "Unit": 14,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      836,
+      229,
+      53,
+      442
+    ]
+  },
+  "6802_00877500": {
+    "Prio": 4,
+    "TagId": 2111,
+    "TagIdEvtMsg": 11034,
+    "Unit": 10,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      836,
+      229,
+      53,
+      442
+    ]
+  },
+  "6802_40879400": {
+    "Prio": 4,
+    "TagId": 36,
+    "TagIdEvtMsg": 10167,
+    "Unit": 3,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      836,
+      229,
+      53
+    ]
+  },
+  "6802_00879500": {
+    "Prio": 4,
+    "TagId": 37,
+    "TagIdEvtMsg": 10168,
+    "Unit": 10,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      836,
+      229,
+      53
+    ]
+  },
+  "6802_00873700": {
+    "Prio": 4,
+    "TagId": 232,
+    "TagIdEvtMsg": 10171,
+    "Unit": 13,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      836,
+      229,
+      53
+    ]
+  },
+  "6802_00873600": {
+    "Prio": 4,
+    "TagId": 233,
+    "TagIdEvtMsg": 10170,
+    "Unit": 13,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      836,
+      229,
+      53
+    ]
+  },
+  "6802_00873500": {
+    "Prio": 4,
+    "TagId": 234,
+    "TagIdEvtMsg": 10169,
+    "Unit": 13,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      836,
+      229,
+      53
+    ]
+  },
+  "6802_00873800": {
+    "Prio": 4,
+    "TagId": 236,
+    "TagIdEvtMsg": 10172,
+    "Unit": 13,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      836,
+      229,
+      53
+    ]
+  },
+  "6802_00877F00": {
+    "Prio": 4,
+    "TagId": 1103,
+    "TagIdEvtMsg": 10502,
+    "Unit": 7,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      836,
+      229,
+      53
+    ]
+  },
+  "6802_00872A00": {
+    "Prio": 4,
+    "TagId": 273,
+    "TagIdEvtMsg": 10203,
+    "Unit": 11,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      836,
+      229,
+      53
+    ]
+  },
+  "6802_08872000": {
+    "Prio": 4,
+    "TagId": 1369,
+    "TagIdEvtMsg": 10709,
+    "DataFrmt": 23,
+    "Typ": 1,
+    "WriteLevel": 5,
+    "TagHier": [
+      836,
+      229,
+      53
+    ]
+  },
+  "6802_08872B00": {
+    "Prio": 4,
+    "TagId": 323,
+    "TagIdEvtMsg": 10202,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      836,
+      229,
+      53
+    ]
+  },
+  "6802_00874D00": {
+    "Prio": 4,
+    "TagId": 449,
+    "TagIdEvtMsg": 10257,
+    "Unit": 14,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      836,
+      229,
+      53
+    ]
+  },
+  "6180_08671E00": {
+    "Prio": 3,
+    "TagId": 53,
+    "TagIdEvtMsg": 10126,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 5,
+    "TagHier": [
+      836,
+      229
+    ]
+  },
+  "6800_08871E00": {
+    "Prio": 4,
+    "TagId": 53,
+    "TagIdEvtMsg": 10126,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 5,
+    "TagHier": [
+      836,
+      229
+    ]
+  },
+  "6802_08672200": {
+    "Prio": 3,
+    "TagId": 453,
+    "TagIdEvtMsg": 10205,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 5,
+    "TagHier": [
+      836,
+      229
+    ],
+    "Deprecated": true
+  },
+  "6802_08872200": {
+    "Prio": 4,
+    "TagId": 453,
+    "TagIdEvtMsg": 10205,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 5,
+    "TagHier": [
+      836,
+      229
+    ]
+  },
+  "6802_08871F00": {
+    "Prio": 4,
+    "TagId": 54,
+    "TagIdEvtMsg": 10201,
+    "DataFrmt": 30,
+    "Typ": 1,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      836,
+      229
+    ]
+  },
+  "6180_084AAA00": {
+    "Prio": 2,
+    "TagId": 240,
+    "TagIdEvtMsg": 11174,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 5,
+    "TagHier": [
+      839,
+      290,
+      2314
+    ]
+  },
+  "6800_008AA200": {
+    "Prio": 4,
+    "TagId": 2244,
+    "TagIdEvtMsg": 11173,
+    "DataFrmt": 15,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 1,
+    "TagHier": [
+      839,
+      290,
+      2314
+    ]
+  },
+  "6800_008AA300": {
+    "Prio": 4,
+    "TagId": 3199,
+    "TagIdEvtMsg": 11552,
+    "DataFrmt": 15,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      839,
+      290,
+      2314
+    ]
+  },
+  "6800_088A3300": {
+    "Prio": 4,
+    "TagId": 733,
+    "TagIdEvtMsg": 12146,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 1,
+    "TagHier": [
+      839,
+      309,
+      4288
+    ],
+    "Hidden": true
+  },
+  "6802_108A2300": {
+    "Prio": 4,
+    "TagId": 819,
+    "TagIdEvtMsg": 11777,
+    "DataFrmt": 8,
+    "Typ": 2,
+    "WriteLevel": 5,
+    "TagHier": [
+      839,
+      818
+    ]
+  },
+  "6180_084A9700": {
+    "Prio": 2,
+    "TagId": 1711,
+    "TagIdEvtMsg": 10879,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 5,
+    "TagHier": [
+      839,
+      1708,
+      1709
+    ]
+  },
+  "6182_084A9E00": {
+    "Prio": 2,
+    "TagId": 1728,
+    "TagIdEvtMsg": 10896,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 5,
+    "TagHier": [
+      839,
+      1708,
+      1709
+    ]
+  },
+  "6180_084A9600": {
+    "Prio": 2,
+    "TagId": 50,
+    "TagIdEvtMsg": 10878,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 5,
+    "TagHier": [
+      839,
+      1708,
+      1709
+    ]
+  },
+  "6180_104A9D00": {
+    "Prio": 2,
+    "TagId": 1715,
+    "TagIdEvtMsg": 10885,
+    "DataFrmt": 8,
+    "Typ": 2,
+    "WriteLevel": 5,
+    "TagHier": [
+      839,
+      1708
+    ]
+  },
+  "6180_104A9C00": {
+    "Prio": 2,
+    "TagId": 1714,
+    "TagIdEvtMsg": 10884,
+    "DataFrmt": 8,
+    "Typ": 2,
+    "WriteLevel": 5,
+    "TagHier": [
+      839,
+      1708
+    ]
+  },
+  "6180_104A9A00": {
+    "Prio": 2,
+    "TagId": 1712,
+    "TagIdEvtMsg": 10882,
+    "DataFrmt": 8,
+    "Typ": 2,
+    "WriteLevel": 5,
+    "TagHier": [
+      839,
+      1708
+    ]
+  },
+  "6180_104A9B00": {
+    "Prio": 2,
+    "TagId": 1713,
+    "TagIdEvtMsg": 10883,
+    "DataFrmt": 8,
+    "Typ": 2,
+    "WriteLevel": 5,
+    "TagHier": [
+      839,
+      1708
+    ]
+  },
+  "6800_088A8A00": {
+    "Prio": 4,
+    "TagId": 1718,
+    "TagIdEvtMsg": 10889,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 1,
+    "GroupChange": [
+      "6800_10AA6400",
+      "6800_10AA6300",
+      "6800_10AA6100",
+      "6800_10AA6200"
+    ],
+    "TagHier": [
+      839,
+      1708
+    ]
+  },
+  "6800_10AA6400": {
+    "Prio": 5,
+    "TagId": 714,
+    "TagIdEvtMsg": 10893,
+    "DataFrmt": 27,
+    "Typ": 2,
+    "WriteLevel": 1,
+    "GroupChange": [
+      "6800_088A8A00",
+      "6800_10AA6300",
+      "6800_10AA6100",
+      "6800_10AA6200"
+    ],
+    "TagHier": [
+      839,
+      1708
+    ]
+  },
+  "6800_10AA6300": {
+    "Prio": 5,
+    "TagId": 715,
+    "TagIdEvtMsg": 10892,
+    "DataFrmt": 27,
+    "Typ": 2,
+    "WriteLevel": 1,
+    "GroupChange": [
+      "6800_088A8A00",
+      "6800_10AA6400",
+      "6800_10AA6100",
+      "6800_10AA6200"
+    ],
+    "TagHier": [
+      839,
+      1708
+    ]
+  },
+  "6802_008A7600": {
+    "Prio": 4,
+    "TagId": 3233,
+    "TagIdEvtMsg": 11588,
+    "Unit": 13,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "TagHier": [
+      839,
+      1708
+    ]
+  },
+  "6802_088A7500": {
+    "Prio": 4,
+    "TagId": 3147,
+    "TagIdEvtMsg": 11527,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 2,
+    "TagHier": [
+      839,
+      1708
+    ]
+  },
+  "6800_10AA6100": {
+    "Prio": 5,
+    "TagId": 716,
+    "TagIdEvtMsg": 10890,
+    "DataFrmt": 27,
+    "Typ": 2,
+    "WriteLevel": 1,
+    "GroupChange": [
+      "6800_088A8A00",
+      "6800_10AA6400",
+      "6800_10AA6300",
+      "6800_10AA6200"
+    ],
+    "TagHier": [
+      839,
+      1708
+    ]
+  },
+  "6800_10AA6200": {
+    "Prio": 5,
+    "TagId": 717,
+    "TagIdEvtMsg": 10891,
+    "DataFrmt": 27,
+    "Typ": 2,
+    "WriteLevel": 1,
+    "GroupChange": [
+      "6800_088A8A00",
+      "6800_10AA6400",
+      "6800_10AA6300",
+      "6800_10AA6100"
+    ],
+    "TagHier": [
+      839,
+      1708
+    ]
+  },
+  "6800_088A5B00": {
+    "Prio": 4,
+    "TagId": 1826,
+    "TagIdEvtMsg": 11775,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 1,
+    "GroupChange": [
+      "6800_108A5A00",
+      "6800_108A5900"
+    ],
+    "TagHier": [
+      839,
+      3313,
+      817
+    ]
+  },
+  "6800_108A5A00": {
+    "Prio": 4,
+    "TagId": 3320,
+    "TagIdEvtMsg": 11774,
+    "DataFrmt": 20,
+    "Typ": 2,
+    "WriteLevel": 1,
+    "GroupChange": [
+      "6800_088A5B00",
+      "6800_108A5900"
+    ],
+    "Len": 63,
+    "TagHier": [
+      839,
+      3313,
+      817
+    ]
+  },
+  "6800_108A5900": {
+    "Prio": 4,
+    "TagId": 3319,
+    "TagIdEvtMsg": 11773,
+    "DataFrmt": 8,
+    "Typ": 2,
+    "WriteLevel": 1,
+    "GroupChange": [
+      "6800_088A5B00",
+      "6800_108A5A00"
+    ],
+    "Len": 32,
+    "TagHier": [
+      839,
+      3313,
+      817
+    ]
+  },
+  "6180_084ABB00": {
+    "Prio": 2,
+    "TagId": 3365,
+    "TagIdEvtMsg": 11636,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 5,
+    "TagHier": [
+      839,
+      3313
+    ]
+  },
+  "6180_104ABA00": {
+    "Prio": 2,
+    "TagId": 1715,
+    "TagIdEvtMsg": 11605,
+    "DataFrmt": 8,
+    "Typ": 2,
+    "WriteLevel": 5,
+    "TagHier": [
+      839,
+      3313
+    ]
+  },
+  "6180_104AB900": {
+    "Prio": 2,
+    "TagId": 1714,
+    "TagIdEvtMsg": 11604,
+    "DataFrmt": 8,
+    "Typ": 2,
+    "WriteLevel": 5,
+    "TagHier": [
+      839,
+      3313
+    ]
+  },
+  "6180_104AB700": {
+    "Prio": 2,
+    "TagId": 1712,
+    "TagIdEvtMsg": 11602,
+    "DataFrmt": 8,
+    "Typ": 2,
+    "WriteLevel": 5,
+    "TagHier": [
+      839,
+      3313
+    ]
+  },
+  "6180_104AB800": {
+    "Prio": 2,
+    "TagId": 1713,
+    "TagIdEvtMsg": 11603,
+    "DataFrmt": 8,
+    "Typ": 2,
+    "WriteLevel": 5,
+    "TagHier": [
+      839,
+      3313
+    ]
+  },
+  "6800_088A5200": {
+    "Prio": 4,
+    "TagId": 1718,
+    "TagIdEvtMsg": 11615,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 1,
+    "GroupChange": [
+      "6800_108A5600",
+      "6800_108A5500",
+      "6800_108A5300",
+      "6800_108A5400"
+    ],
+    "TagHier": [
+      839,
+      3313
+    ]
+  },
+  "6180_084ABC00": {
+    "Prio": 2,
+    "TagId": 3316,
+    "TagIdEvtMsg": 11607,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 5,
+    "TagHier": [
+      839,
+      3313
+    ]
+  },
+  "6800_108A5600": {
+    "Prio": 4,
+    "TagId": 714,
+    "TagIdEvtMsg": 11619,
+    "DataFrmt": 27,
+    "Typ": 2,
+    "WriteLevel": 1,
+    "GroupChange": [
+      "6800_088A5200",
+      "6800_108A5500",
+      "6800_108A5300",
+      "6800_108A5400"
+    ],
+    "TagHier": [
+      839,
+      3313
+    ]
+  },
+  "6800_088AA500": {
+    "Prio": 4,
+    "TagId": 3342,
+    "TagIdEvtMsg": 11621,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 1,
+    "TagHier": [
+      839,
+      3313
+    ]
+  },
+  "6800_088A5100": {
+    "Prio": 4,
+    "TagId": 3321,
+    "TagIdEvtMsg": 11614,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 1,
+    "TagHier": [
+      839,
+      3313
+    ]
+  },
+  "6800_108AA400": {
+    "Prio": 4,
+    "TagId": 3315,
+    "TagIdEvtMsg": 11606,
+    "DataFrmt": 8,
+    "Typ": 2,
+    "WriteLevel": 5,
+    "TagHier": [
+      839,
+      3313
+    ]
+  },
+  "6800_108A5500": {
+    "Prio": 4,
+    "TagId": 715,
+    "TagIdEvtMsg": 11618,
+    "DataFrmt": 27,
+    "Typ": 2,
+    "WriteLevel": 1,
+    "GroupChange": [
+      "6800_088A5200",
+      "6800_108A5600",
+      "6800_108A5300",
+      "6800_108A5400"
+    ],
+    "TagHier": [
+      839,
+      3313
+    ]
+  },
+  "6800_108A5300": {
+    "Prio": 4,
+    "TagId": 716,
+    "TagIdEvtMsg": 11616,
+    "DataFrmt": 27,
+    "Typ": 2,
+    "WriteLevel": 1,
+    "GroupChange": [
+      "6800_088A5200",
+      "6800_108A5600",
+      "6800_108A5500",
+      "6800_108A5400"
+    ],
+    "TagHier": [
+      839,
+      3313
+    ]
+  },
+  "6800_088A4C00": {
+    "Prio": 4,
+    "TagId": 733,
+    "TagIdEvtMsg": 11609,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 1,
+    "TagHier": [
+      839,
+      3313
+    ]
+  },
+  "6100_004AB600": {
+    "Prio": 2,
+    "TagId": 3314,
+    "TagIdEvtMsg": 11601,
+    "Unit": 1,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      839,
+      3313
+    ],
+    "Min": true,
+    "Max": true,
+    "Avg": true,
+    "Cnt": true,
+    "MinD": true,
+    "MaxD": true
+  },
+  "6800_108A5400": {
+    "Prio": 4,
+    "TagId": 717,
+    "TagIdEvtMsg": 11617,
+    "DataFrmt": 27,
+    "Typ": 2,
+    "WriteLevel": 1,
+    "GroupChange": [
+      "6800_088A5200",
+      "6800_108A5600",
+      "6800_108A5500",
+      "6800_108A5300"
+    ],
+    "TagHier": [
+      839,
+      3313
+    ]
+  },
+  "6800_088A4D00": {
+    "Prio": 4,
+    "TagId": 3318,
+    "TagIdEvtMsg": 11610,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 1,
+    "TagHier": [
+      839,
+      3313
+    ]
+  },
+  "6800_088B7000": {
+    "Prio": 4,
+    "TagId": 733,
+    "TagIdEvtMsg": 10824,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 2,
+    "TagHier": [
+      840,
+      1628,
+      1629
+    ]
+  },
+  "6800_008B7100": {
+    "Prio": 4,
+    "TagId": 330,
+    "TagIdEvtMsg": 10825,
+    "DataFrmt": 15,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "TagHier": [
+      840,
+      1628,
+      1629
+    ]
+  },
+  "6800_088B7200": {
+    "Prio": 4,
+    "TagId": 733,
+    "TagIdEvtMsg": 10826,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 2,
+    "TagHier": [
+      840,
+      1628,
+      1630
+    ]
+  },
+  "6800_008B7300": {
+    "Prio": 4,
+    "TagId": 330,
+    "TagIdEvtMsg": 10827,
+    "DataFrmt": 15,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "TagHier": [
+      840,
+      1628,
+      1630
+    ]
+  },
+  "6800_088B5200": {
+    "Prio": 4,
+    "TagId": 733,
+    "TagIdEvtMsg": 10887,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 1,
+    "TagHier": [
+      840,
+      1716
+    ]
+  },
+  "6180_084B1E00": {
+    "Prio": 2,
+    "TagId": 50,
+    "TagIdEvtMsg": 10886,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 5,
+    "TagHier": [
+      840,
+      1716
+    ]
+  },
+  "6800_008B2E00": {
+    "Prio": 4,
+    "TagId": 393,
+    "TagIdEvtMsg": 12132,
+    "DataFrmt": 9,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      840,
+      1716
+    ]
+  },
+  "6802_008B8A00": {
+    "Prio": 4,
+    "TagId": 2010,
+    "TagIdEvtMsg": 11015,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      840,
+      2018,
+      2019
+    ]
+  },
+  "6802_108B8B00": {
+    "Prio": 4,
+    "TagId": 2112,
+    "TagIdEvtMsg": 11035,
+    "DataFrmt": 8,
+    "Typ": 2,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      840,
+      2018,
+      2019
+    ]
+  },
+  "6800_088E7B00": {
+    "Prio": 4,
+    "TagId": 1590,
+    "TagIdEvtMsg": 10794,
+    "DataFrmt": 23,
+    "Typ": 1,
+    "WriteLevel": 5,
+    "TagHier": [
+      843,
+      309
+    ]
+  },
+  "680E_088E7B00": {
+    "Prio": 4,
+    "TagId": 1590,
+    "TagIdEvtMsg": 10794,
+    "DataFrmt": 23,
+    "Typ": 1,
+    "WriteLevel": 5,
+    "TagHier": [
+      843,
+      309
+    ]
+  },
+  "6802_00912A00": {
+    "Prio": 4,
+    "TagId": 253,
+    "TagIdEvtMsg": 10382,
+    "DataFrmt": 10,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      846,
+      299,
+      901
+    ]
+  },
+  "6802_00912B00": {
+    "Prio": 4,
+    "TagId": 348,
+    "TagIdEvtMsg": 10383,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 3,
+    "TagHier": [
+      846,
+      299,
+      901
+    ]
+  },
+  "6802_00B12900": {
+    "Prio": 5,
+    "TagId": 372,
+    "TagIdEvtMsg": 10385,
+    "DataFrmt": 15,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      846,
+      299,
+      901
+    ]
+  },
+  "6802_00B12A00": {
+    "Prio": 5,
+    "TagId": 880,
+    "TagIdEvtMsg": 10386,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      846,
+      299,
+      901
+    ]
+  },
+  "6802_00912900": {
+    "Prio": 4,
+    "TagId": 393,
+    "TagIdEvtMsg": 10381,
+    "DataFrmt": 9,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      846,
+      299,
+      901
+    ]
+  },
+  "6802_00912300": {
+    "Prio": 4,
+    "TagId": 348,
+    "TagIdEvtMsg": 10377,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 3,
+    "TagHier": [
+      846,
+      299,
+      900
+    ]
+  },
+  "6802_00B12100": {
+    "Prio": 5,
+    "TagId": 372,
+    "TagIdEvtMsg": 10379,
+    "DataFrmt": 15,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      846,
+      299,
+      900
+    ]
+  },
+  "6800_00912100": {
+    "Prio": 4,
+    "TagId": 393,
+    "TagIdEvtMsg": 10375,
+    "DataFrmt": 9,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      846,
+      299,
+      900
+    ]
+  },
+  "6802_00919900": {
+    "Prio": 4,
+    "TagId": 393,
+    "TagIdEvtMsg": 11593,
+    "DataFrmt": 9,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      846,
+      299,
+      921
+    ]
+  },
+  "6802_0892EC00": {
+    "Prio": 4,
+    "TagId": 2501,
+    "TagIdEvtMsg": 11303,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 2,
+    "TagHier": [
+      847,
+      267,
+      2500,
+      1075
+    ]
+  },
+  "6802_4092EE00": {
+    "Prio": 4,
+    "TagId": 2504,
+    "TagIdEvtMsg": 11305,
+    "DataFrmt": 26,
+    "Scale": 0.0001,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "TagHier": [
+      847,
+      267,
+      2500,
+      1075
+    ]
+  },
+  "6802_0892EF00": {
+    "Prio": 4,
+    "TagId": 2505,
+    "TagIdEvtMsg": 11306,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 2,
+    "TagHier": [
+      847,
+      267,
+      2500,
+      1075
+    ]
+  },
+  "6802_0092ED00": {
+    "Prio": 4,
+    "TagId": 2502,
+    "TagIdEvtMsg": 11304,
+    "Unit": 13,
+    "DataFrmt": 7,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "TagHier": [
+      847,
+      267,
+      2500,
+      1075
+    ]
+  },
+  "6802_0892E900": {
+    "Prio": 4,
+    "TagId": 2501,
+    "TagIdEvtMsg": 11300,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 2,
+    "TagHier": [
+      847,
+      267,
+      2500,
+      1072
+    ]
+  },
+  "6802_4092EB00": {
+    "Prio": 4,
+    "TagId": 2503,
+    "TagIdEvtMsg": 11302,
+    "Unit": 1,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "TagHier": [
+      847,
+      267,
+      2500,
+      1072
+    ]
+  },
+  "6802_0092EA00": {
+    "Prio": 4,
+    "TagId": 2502,
+    "TagIdEvtMsg": 11301,
+    "Unit": 13,
+    "DataFrmt": 7,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "TagHier": [
+      847,
+      267,
+      2500,
+      1072
+    ]
+  },
+  "6802_0892E600": {
+    "Prio": 4,
+    "TagId": 2501,
+    "TagIdEvtMsg": 11297,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 2,
+    "TagHier": [
+      847,
+      267,
+      2500,
+      1079
+    ]
+  },
+  "6802_0092E800": {
+    "Prio": 4,
+    "TagId": 2513,
+    "TagIdEvtMsg": 11299,
+    "Unit": 1,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "TagHier": [
+      847,
+      267,
+      2500,
+      1079
+    ]
+  },
+  "6802_0092E700": {
+    "Prio": 4,
+    "TagId": 2502,
+    "TagIdEvtMsg": 11298,
+    "Unit": 13,
+    "DataFrmt": 7,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "TagHier": [
+      847,
+      267,
+      2500,
+      1079
+    ]
+  },
+  "6802_00928000": {
+    "Prio": 4,
+    "TagId": 1538,
+    "TagIdEvtMsg": 10784,
+    "Unit": 1,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1230,
+      1262
+    ]
+  },
+  "6802_00928C00": {
+    "Prio": 4,
+    "TagId": 1604,
+    "TagIdEvtMsg": 10797,
+    "Unit": 13,
+    "DataFrmt": 1,
+    "Scale": 0.1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1602,
+      1603
+    ]
+  },
+  "6802_00928F00": {
+    "Prio": 4,
+    "TagId": 1607,
+    "TagIdEvtMsg": 10800,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1602,
+      1603
+    ]
+  },
+  "6802_08928A00": {
+    "Prio": 4,
+    "TagId": 1973,
+    "TagIdEvtMsg": 10981,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1602,
+      1603
+    ]
+  },
+  "6802_40929000": {
+    "Prio": 4,
+    "TagId": 1608,
+    "TagIdEvtMsg": 10801,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1602,
+      1603
+    ]
+  },
+  "6802_40929200": {
+    "Prio": 4,
+    "TagId": 1610,
+    "TagIdEvtMsg": 10803,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1602,
+      1603
+    ]
+  },
+  "6802_40929400": {
+    "Prio": 4,
+    "TagId": 1612,
+    "TagIdEvtMsg": 10805,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1602,
+      1603
+    ]
+  },
+  "6802_40929600": {
+    "Prio": 4,
+    "TagId": 1614,
+    "TagIdEvtMsg": 10807,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1602,
+      1603
+    ]
+  },
+  "6802_08928B00": {
+    "Prio": 4,
+    "TagId": 1974,
+    "TagIdEvtMsg": 10982,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1602,
+      1603
+    ]
+  },
+  "6802_40929100": {
+    "Prio": 4,
+    "TagId": 1609,
+    "TagIdEvtMsg": 10802,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1602,
+      1603
+    ]
+  },
+  "6802_40929300": {
+    "Prio": 4,
+    "TagId": 1611,
+    "TagIdEvtMsg": 10804,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1602,
+      1603
+    ]
+  },
+  "6802_40929500": {
+    "Prio": 4,
+    "TagId": 1613,
+    "TagIdEvtMsg": 10806,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1602,
+      1603
+    ]
+  },
+  "6802_40929700": {
+    "Prio": 4,
+    "TagId": 1615,
+    "TagIdEvtMsg": 10808,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1602,
+      1603
+    ]
+  },
+  "6802_0092B400": {
+    "Prio": 4,
+    "TagId": 1604,
+    "TagIdEvtMsg": 10983,
+    "Unit": 13,
+    "DataFrmt": 1,
+    "Scale": 0.1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1602,
+      1991
+    ]
+  },
+  "6802_0092B700": {
+    "Prio": 4,
+    "TagId": 1607,
+    "TagIdEvtMsg": 10986,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1602,
+      1991
+    ]
+  },
+  "6802_0892B800": {
+    "Prio": 4,
+    "TagId": 1973,
+    "TagIdEvtMsg": 10987,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1602,
+      1991
+    ]
+  },
+  "6802_4092BA00": {
+    "Prio": 4,
+    "TagId": 1608,
+    "TagIdEvtMsg": 10989,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1602,
+      1991
+    ]
+  },
+  "6802_4092BC00": {
+    "Prio": 4,
+    "TagId": 1610,
+    "TagIdEvtMsg": 10990,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1602,
+      1991
+    ]
+  },
+  "6802_4092BE00": {
+    "Prio": 4,
+    "TagId": 1612,
+    "TagIdEvtMsg": 10991,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1602,
+      1991
+    ]
+  },
+  "6802_4092C000": {
+    "Prio": 4,
+    "TagId": 1614,
+    "TagIdEvtMsg": 10992,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1602,
+      1991
+    ]
+  },
+  "6802_0892B900": {
+    "Prio": 4,
+    "TagId": 1974,
+    "TagIdEvtMsg": 10988,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1602,
+      1991
+    ]
+  },
+  "6802_4092BB00": {
+    "Prio": 4,
+    "TagId": 1609,
+    "TagIdEvtMsg": 10997,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1602,
+      1991
+    ]
+  },
+  "6802_4092BD00": {
+    "Prio": 4,
+    "TagId": 1611,
+    "TagIdEvtMsg": 10998,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1602,
+      1991
+    ]
+  },
+  "6802_4092BF00": {
+    "Prio": 4,
+    "TagId": 1613,
+    "TagIdEvtMsg": 10999,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1602,
+      1991
+    ]
+  },
+  "6802_4092C100": {
+    "Prio": 4,
+    "TagId": 1615,
+    "TagIdEvtMsg": 11000,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1602,
+      1991
+    ]
+  },
+  "6802_08920500": {
+    "Prio": 4,
+    "TagId": 1973,
+    "TagIdEvtMsg": 11705,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1602,
+      3513
+    ]
+  },
+  "6802_40920700": {
+    "Prio": 4,
+    "TagId": 1608,
+    "TagIdEvtMsg": 11707,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1602,
+      3513
+    ]
+  },
+  "6802_40920900": {
+    "Prio": 4,
+    "TagId": 1610,
+    "TagIdEvtMsg": 11708,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1602,
+      3513
+    ]
+  },
+  "6802_40920B00": {
+    "Prio": 4,
+    "TagId": 1612,
+    "TagIdEvtMsg": 11709,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1602,
+      3513
+    ]
+  },
+  "6802_40920D00": {
+    "Prio": 4,
+    "TagId": 1614,
+    "TagIdEvtMsg": 11710,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1602,
+      3513
+    ]
+  },
+  "6802_08920600": {
+    "Prio": 4,
+    "TagId": 1974,
+    "TagIdEvtMsg": 11706,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1602,
+      3513
+    ]
+  },
+  "6802_40920800": {
+    "Prio": 4,
+    "TagId": 1609,
+    "TagIdEvtMsg": 11715,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1602,
+      3513
+    ]
+  },
+  "6802_40920A00": {
+    "Prio": 4,
+    "TagId": 1611,
+    "TagIdEvtMsg": 11716,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1602,
+      3513
+    ]
+  },
+  "6802_40920C00": {
+    "Prio": 4,
+    "TagId": 1613,
+    "TagIdEvtMsg": 11717,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1602,
+      3513
+    ]
+  },
+  "6802_40920E00": {
+    "Prio": 4,
+    "TagId": 1615,
+    "TagIdEvtMsg": 11718,
+    "DataFrmt": 3,
+    "Scale": 0.001,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1602,
+      3513
+    ]
+  },
+  "6802_08924D00": {
+    "Prio": 4,
+    "TagId": 2274,
+    "TagIdEvtMsg": 11529,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1602,
+      3159
+    ]
+  },
+  "6802_00924C00": {
+    "Prio": 4,
+    "TagId": 1601,
+    "TagIdEvtMsg": 11528,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1602,
+      3159
+    ]
+  },
+  "6802_40923100": {
+    "Prio": 4,
+    "TagId": 1039,
+    "TagIdEvtMsg": 10455,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1024,
+      1038
+    ]
+  },
+  "6802_08923200": {
+    "Prio": 4,
+    "TagId": 1040,
+    "TagIdEvtMsg": 10456,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1024,
+      1038
+    ]
+  },
+  "6A02_00923500": {
+    "Prio": 4,
+    "TagId": 1039,
+    "TagIdEvtMsg": 10587,
+    "DataFrmt": 26,
+    "Scale": 0.0001,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "TagHier": [
+      847,
+      267,
+      1024,
+      1194
+    ]
+  },
+  "6A12_00923500": {
+    "Prio": 4,
+    "TagId": 1039,
+    "TagIdEvtMsg": 10587,
+    "DataFrmt": 26,
+    "Scale": 0.0001,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "TagHier": [
+      847,
+      267,
+      1024,
+      1194
+    ]
+  },
+  "6A02_40923700": {
+    "Prio": 4,
+    "TagId": 3481,
+    "TagIdEvtMsg": 11673,
+    "DataFrmt": 26,
+    "Scale": 0.0001,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "TagHier": [
+      847,
+      267,
+      1024,
+      1194
+    ]
+  },
+  "6A02_08923600": {
+    "Prio": 4,
+    "TagId": 1040,
+    "TagIdEvtMsg": 10588,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 2,
+    "TagHier": [
+      847,
+      267,
+      1024,
+      1194
+    ]
+  },
+  "6A12_08923600": {
+    "Prio": 4,
+    "TagId": 1040,
+    "TagIdEvtMsg": 10588,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 2,
+    "TagHier": [
+      847,
+      267,
+      1024,
+      1194
+    ]
+  },
+  "6802_00927400": {
+    "Prio": 4,
+    "TagId": 1990,
+    "TagIdEvtMsg": 10980,
+    "Unit": 1,
+    "DataFrmt": 1,
+    "Scale": 0.1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1024,
+      1043
+    ]
+  },
+  "6802_00927300": {
+    "Prio": 4,
+    "TagId": 1989,
+    "TagIdEvtMsg": 10979,
+    "Unit": 1,
+    "DataFrmt": 1,
+    "Scale": 0.1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1024,
+      1043
+    ]
+  },
+  "6802_08927200": {
+    "Prio": 4,
+    "TagId": 1046,
+    "TagIdEvtMsg": 10460,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1024,
+      1043
+    ]
+  },
+  "6802_08926F00": {
+    "Prio": 4,
+    "TagId": 1044,
+    "TagIdEvtMsg": 10457,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1024,
+      1043
+    ]
+  },
+  "6802_00927100": {
+    "Prio": 4,
+    "TagId": 1047,
+    "TagIdEvtMsg": 10461,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1024,
+      1043
+    ]
+  },
+  "6802_00926E00": {
+    "Prio": 4,
+    "TagId": 1045,
+    "TagIdEvtMsg": 10458,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1024,
+      1043
+    ]
+  },
+  "6802_00927000": {
+    "Prio": 4,
+    "TagId": 1225,
+    "TagIdEvtMsg": 10656,
+    "Unit": 1,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1024,
+      1043
+    ]
+  },
+  "6802_00926D00": {
+    "Prio": 4,
+    "TagId": 1224,
+    "TagIdEvtMsg": 10655,
+    "Unit": 1,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1024,
+      1043
+    ]
+  },
+  "6802_40922B00": {
+    "Prio": 4,
+    "TagId": 1031,
+    "TagIdEvtMsg": 10449,
+    "Unit": 1,
+    "DataFrmt": 1,
+    "Scale": 0.1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1024,
+      1067
+    ]
+  },
+  "6A02_40923900": {
+    "Prio": 4,
+    "TagId": 1031,
+    "TagIdEvtMsg": 10584,
+    "Unit": 1,
+    "DataFrmt": 1,
+    "Scale": 0.1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "TagHier": [
+      847,
+      267,
+      1024,
+      1192
+    ]
+  },
+  "6A12_40923900": {
+    "Prio": 4,
+    "TagId": 1031,
+    "TagIdEvtMsg": 10584,
+    "Unit": 1,
+    "DataFrmt": 1,
+    "Scale": 0.1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "TagHier": [
+      847,
+      267,
+      1024,
+      1192
+    ]
+  },
+  "6A02_40923A00": {
+    "Prio": 4,
+    "TagId": 2043,
+    "TagIdEvtMsg": 11028,
+    "Unit": 1,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "TagHier": [
+      847,
+      267,
+      1024,
+      1192
+    ]
+  },
+  "6A12_40923A00": {
+    "Prio": 4,
+    "TagId": 2043,
+    "TagIdEvtMsg": 11028,
+    "Unit": 1,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "TagHier": [
+      847,
+      267,
+      1024,
+      1192
+    ]
+  },
+  "6802_0092AA00": {
+    "Prio": 4,
+    "TagId": 1987,
+    "TagIdEvtMsg": 10977,
+    "Unit": 1,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1024,
+      1985
+    ]
+  },
+  "6802_0092A900": {
+    "Prio": 4,
+    "TagId": 1986,
+    "TagIdEvtMsg": 10976,
+    "Unit": 1,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1024,
+      1985
+    ]
+  },
+  "6802_08922900": {
+    "Prio": 4,
+    "TagId": 1022,
+    "TagIdEvtMsg": 10438,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1024
+    ]
+  },
+  "6802_08925D00": {
+    "Prio": 4,
+    "TagId": 1057,
+    "TagIdEvtMsg": 10469,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1052,
+      1053
+    ]
+  },
+  "6802_00925C00": {
+    "Prio": 4,
+    "TagId": 1056,
+    "TagIdEvtMsg": 10468,
+    "Unit": 7,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1052,
+      1053
+    ]
+  },
+  "6802_00925E00": {
+    "Prio": 4,
+    "TagId": 1620,
+    "TagIdEvtMsg": 10813,
+    "Unit": 1,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1052,
+      1053
+    ]
+  },
+  "6802_00925A00": {
+    "Prio": 4,
+    "TagId": 1054,
+    "TagIdEvtMsg": 10466,
+    "Unit": 7,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1052,
+      1053
+    ]
+  },
+  "6802_00926200": {
+    "Prio": 4,
+    "TagId": 3183,
+    "TagIdEvtMsg": 11534,
+    "Unit": 10,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1052,
+      1053
+    ]
+  },
+  "6802_00925B00": {
+    "Prio": 4,
+    "TagId": 1055,
+    "TagIdEvtMsg": 10467,
+    "Unit": 1,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1052,
+      1053
+    ]
+  },
+  "6802_08925900": {
+    "Prio": 4,
+    "TagId": 1023,
+    "TagIdEvtMsg": 10440,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1052
+    ]
+  },
+  "6802_00924200": {
+    "Prio": 4,
+    "TagId": 448,
+    "TagIdEvtMsg": 10463,
+    "Unit": 18,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1048,
+      1049
+    ]
+  },
+  "6802_00924300": {
+    "Prio": 4,
+    "TagId": 1050,
+    "TagIdEvtMsg": 10464,
+    "Unit": 1,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1048,
+      1049
+    ]
+  },
+  "6A02_40924900": {
+    "Prio": 4,
+    "TagId": 448,
+    "TagIdEvtMsg": 10585,
+    "Unit": 18,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "TagHier": [
+      847,
+      267,
+      1048,
+      1193
+    ]
+  },
+  "6A12_40924900": {
+    "Prio": 4,
+    "TagId": 448,
+    "TagIdEvtMsg": 10585,
+    "Unit": 18,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "TagHier": [
+      847,
+      267,
+      1048,
+      1193
+    ]
+  },
+  "6A02_40924A00": {
+    "Prio": 4,
+    "TagId": 1050,
+    "TagIdEvtMsg": 10586,
+    "Unit": 1,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "TagHier": [
+      847,
+      267,
+      1048,
+      1193
+    ]
+  },
+  "6A12_40924A00": {
+    "Prio": 4,
+    "TagId": 1050,
+    "TagIdEvtMsg": 10586,
+    "Unit": 1,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "TagHier": [
+      847,
+      267,
+      1048,
+      1193
+    ]
+  },
+  "6A02_40924B00": {
+    "Prio": 4,
+    "TagId": 2042,
+    "TagIdEvtMsg": 11027,
+    "Unit": 1,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "TagHier": [
+      847,
+      267,
+      1048,
+      1193
+    ]
+  },
+  "6A12_40924B00": {
+    "Prio": 4,
+    "TagId": 2042,
+    "TagIdEvtMsg": 11027,
+    "Unit": 1,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "TagHier": [
+      847,
+      267,
+      1048,
+      1193
+    ]
+  },
+  "6802_08924000": {
+    "Prio": 4,
+    "TagId": 1599,
+    "TagIdEvtMsg": 10795,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 2,
+    "TagHier": [
+      847,
+      267,
+      1048
+    ]
+  },
+  "6802_08924100": {
+    "Prio": 4,
+    "TagId": 316,
+    "TagIdEvtMsg": 10439,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267,
+      1048
+    ]
+  },
+  "6A02_0892B000": {
+    "Prio": 4,
+    "TagId": 1690,
+    "TagIdEvtMsg": 10858,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 2,
+    "TagHier": [
+      847,
+      267
+    ]
+  },
+  "6A12_0892B000": {
+    "Prio": 4,
+    "TagId": 1690,
+    "TagIdEvtMsg": 10858,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 2,
+    "TagHier": [
+      847,
+      267
+    ]
+  },
+  "6A02_0892B100": {
+    "Prio": 4,
+    "TagId": 2017,
+    "TagIdEvtMsg": 11022,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 2,
+    "TagHier": [
+      847,
+      267
+    ]
+  },
+  "6802_00922300": {
+    "Prio": 4,
+    "TagId": 1621,
+    "TagIdEvtMsg": 10814,
+    "Unit": 1,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267
+    ]
+  },
+  "6802_00921700": {
+    "Prio": 4,
+    "TagId": 3685,
+    "TagIdEvtMsg": 10646,
+    "Unit": 1,
+    "DataFrmt": 2,
+    "Scale": 0.01,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267
+    ]
+  },
+  "6802_00922000": {
+    "Prio": 4,
+    "TagId": 1065,
+    "TagIdEvtMsg": 10477,
+    "Unit": 1,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267
+    ]
+  },
+  "6802_08922100": {
+    "Prio": 4,
+    "TagId": 1066,
+    "TagIdEvtMsg": 10478,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 2,
+    "GridGuard": true,
+    "TagHier": [
+      847,
+      267
+    ]
+  },
+  "6180_08522F00": {
+    "Prio": 2,
+    "TagId": 50,
+    "TagIdEvtMsg": 11632,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 5,
+    "TagHier": [
+      847,
+      309,
+      2509
+    ]
+  },
+  "6800_0092D700": {
+    "Prio": 4,
+    "TagId": 315,
+    "TagIdEvtMsg": 11046,
+    "Unit": 18,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "TagHier": [
+      847,
+      2113
+    ]
+  },
+  "6800_0892D600": {
+    "Prio": 4,
+    "TagId": 2135,
+    "TagIdEvtMsg": 11044,
+    "DataFrmt": 18,
+    "Typ": 1,
+    "WriteLevel": 2,
+    "TagHier": [
+      847,
+      2113
+    ]
+  },
+  "6800_0092D800": {
+    "Prio": 4,
+    "TagId": 2140,
+    "TagIdEvtMsg": 11047,
+    "Unit": 1,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 2,
+    "TagHier": [
+      847,
+      2113
+    ]
+  },
+  "6400_00543C00": {
+    "Prio": 2,
+    "TagId": 2368,
+    "TagIdEvtMsg": 11217,
+    "Unit": 19,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      849,
+      2361
+    ],
+    "Sum": true,
+    "SumD": true
+  },
+  "6400_00543B00": {
+    "Prio": 2,
+    "TagId": 1343,
+    "TagIdEvtMsg": 11216,
+    "Unit": 19,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      849,
+      2361
+    ],
+    "Sum": true,
+    "SumD": true
+  },
+  "6400_00543D00": {
+    "Prio": 2,
+    "TagId": 2454,
+    "TagIdEvtMsg": 11269,
+    "Unit": 19,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      849,
+      2361
+    ],
+    "Sum": true,
+    "SumD": true
+  },
+  "6400_00543A00": {
+    "Prio": 2,
+    "TagId": 2367,
+    "TagIdEvtMsg": 11215,
+    "Unit": 19,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      849,
+      2361
+    ],
+    "Sum": true,
+    "SumD": true
+  },
+  "6200_00543600": {
+    "Prio": 2,
+    "TagId": 2374,
+    "TagIdEvtMsg": 11230,
+    "Unit": 1,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      849,
+      2362
+    ],
+    "Min": true,
+    "Max": true,
+    "Avg": true,
+    "Cnt": true,
+    "MinD": true,
+    "MaxD": true
+  },
+  "6100_00543600": {
+    "Prio": 2,
+    "TagId": 2374,
+    "TagIdEvtMsg": 11230,
+    "Unit": 1,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      849,
+      2362
+    ],
+    "Min": true,
+    "Max": true,
+    "Avg": true,
+    "Cnt": true,
+    "MinD": true,
+    "MaxD": true
+  },
+  "6200_00543300": {
+    "Prio": 2,
+    "TagId": 2368,
+    "TagIdEvtMsg": 11223,
+    "Unit": 18,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      849,
+      2362
+    ],
+    "Min": true,
+    "Max": true,
+    "Sum": true,
+    "Avg": true,
+    "Cnt": true,
+    "SumD": true
+  },
+  "6100_00543300": {
+    "Prio": 2,
+    "TagId": 2368,
+    "TagIdEvtMsg": 11223,
+    "Unit": 18,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      849,
+      2362
+    ],
+    "Min": true,
+    "Max": true,
+    "Sum": true,
+    "Avg": true,
+    "Cnt": true,
+    "SumD": true
+  },
+  "6200_00543800": {
+    "Prio": 2,
+    "TagId": 2375,
+    "TagIdEvtMsg": 11232,
+    "Unit": 1,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      849,
+      2362
+    ],
+    "Min": true,
+    "Max": true,
+    "Avg": true,
+    "Cnt": true,
+    "MinD": true,
+    "MaxD": true
+  },
+  "6100_00543800": {
+    "Prio": 2,
+    "TagId": 2375,
+    "TagIdEvtMsg": 11232,
+    "Unit": 1,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      849,
+      2362
+    ],
+    "Min": true,
+    "Max": true,
+    "Avg": true,
+    "Cnt": true,
+    "MinD": true,
+    "MaxD": true
+  },
+  "6200_00543200": {
+    "Prio": 2,
+    "TagId": 1343,
+    "TagIdEvtMsg": 11222,
+    "Unit": 18,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      849,
+      2362
+    ],
+    "Min": true,
+    "Max": true,
+    "Sum": true,
+    "Avg": true,
+    "Cnt": true,
+    "SumD": true
+  },
+  "6100_00543200": {
+    "Prio": 2,
+    "TagId": 1343,
+    "TagIdEvtMsg": 11222,
+    "Unit": 18,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      849,
+      2362
+    ],
+    "Min": true,
+    "Max": true,
+    "Sum": true,
+    "Avg": true,
+    "Cnt": true,
+    "SumD": true
+  },
+  "6200_00543400": {
+    "Prio": 2,
+    "TagId": 2372,
+    "TagIdEvtMsg": 11226,
+    "Unit": 1,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      849,
+      2362
+    ],
+    "Min": true,
+    "Max": true,
+    "Avg": true,
+    "Cnt": true,
+    "MinD": true,
+    "MaxD": true
+  },
+  "6100_00543400": {
+    "Prio": 2,
+    "TagId": 2372,
+    "TagIdEvtMsg": 11226,
+    "Unit": 1,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      849,
+      2362
+    ],
+    "Min": true,
+    "Max": true,
+    "Avg": true,
+    "Cnt": true,
+    "MinD": true,
+    "MaxD": true
+  },
+  "6200_00543E00": {
+    "Prio": 2,
+    "TagId": 2454,
+    "TagIdEvtMsg": 11270,
+    "Unit": 18,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      849,
+      2362
+    ],
+    "Min": true,
+    "Max": true,
+    "Sum": true,
+    "Avg": true,
+    "Cnt": true,
+    "SumD": true
+  },
+  "6100_00543E00": {
+    "Prio": 2,
+    "TagId": 2454,
+    "TagIdEvtMsg": 11270,
+    "Unit": 18,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      849,
+      2362
+    ],
+    "Min": true,
+    "Max": true,
+    "Sum": true,
+    "Avg": true,
+    "Cnt": true,
+    "SumD": true
+  },
+  "6200_00543100": {
+    "Prio": 2,
+    "TagId": 2367,
+    "TagIdEvtMsg": 11221,
+    "Unit": 18,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      849,
+      2362
+    ],
+    "Min": true,
+    "Max": true,
+    "Sum": true,
+    "Avg": true,
+    "Cnt": true,
+    "SumD": true
+  },
+  "6100_00543100": {
+    "Prio": 2,
+    "TagId": 2367,
+    "TagIdEvtMsg": 11221,
+    "Unit": 18,
+    "DataFrmt": 0,
+    "Scale": 1,
+    "Typ": 0,
+    "WriteLevel": 5,
+    "TagHier": [
+      849,
+      2362
+    ],
+    "Min": true,
+    "Max": true,
+    "Sum": true,
+    "Avg": true,
+    "Cnt": true,
+    "SumD": true
+  }
+}

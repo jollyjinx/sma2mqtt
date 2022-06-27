@@ -99,11 +99,11 @@ final class SMAMessageReceiver: ChannelInboundHandler
         var lasttime:Date = Date.distantPast
         let timenow = Date()
 
-        if  timenow.timeIntervalSince(lasttime) > mqttPublisher.emitInterval,
-            let byteArray = buffer.readBytes(length: buffer.readableBytes)
+        print("remoteAddress:\(envelope.remoteAddress.ipAddress)")
+
+        if let byteArray = buffer.readBytes(length: buffer.readableBytes)
         {
             JLog.debug("\(timenow) Data: \(byteArray.count) from: \(envelope.remoteAddress) ")
-
 
             if let sma = try? SMAPacket(byteArray:byteArray)
             {
