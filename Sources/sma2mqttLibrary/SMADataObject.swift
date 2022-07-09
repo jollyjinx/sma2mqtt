@@ -21,7 +21,7 @@ struct SMADataObject
 
     let Unit:Int?
     let DataFrmt:Int
-    let Scale:Double?
+    let Scale:Decimal?
     let Typ:Int
 
     let WriteLevel:Int
@@ -36,19 +36,14 @@ struct SMADataObject
     let MinD:Bool
     let MaxD:Bool
     let SumD:Bool
-
 }
 
 extension SMADataObject // Descriptions
 {
     var id:String           { "\( String(object,radix: 16) )_\( String(lri,radix: 16) )" }
-    var tagName:String      { Self.translation[TagId] ?? "tag-\( Int(TagId) )" }
-    var eventName:String    { TagIdEventMsg != nil ? Self.translation[TagIdEventMsg!] ?? "event-\( Int(TagIdEventMsg!) )" :  "" }
-    var tagHierachy:String  { TagHier.map{ Self.translation[$0] ?? "tag-\( Int($0) )" }.joined(separator:".") }
-    var unitName:String     { Unit != nil ? Self.translation[Unit!] ?? "unit-\( Int(Unit!) )"  : "" }
-
-    var description:String  { "\(id): \(tagName) \(eventName) \(tagHierachy) \(unitName) \(self.json)" }
+    var description:String  { "\(id): \(self.json)" }
 }
+
 
 extension SMADataObject:Decodable,Encodable
 {
@@ -61,11 +56,11 @@ extension SMADataObject:Decodable,Encodable
         let values = try decoder.container(keyedBy: CodingKeys.self)
 
         let objectString = try values.decode(String.self, forKey: .object)
-        guard let object = Int(objectString , radix: 16) else { throw DecodingError.dataCorruptedError(forKey: .object, in: values, debugDescription: "could not decode hex string") }
+        guard let object = Int(objectString , radix: 16) else { throw DecodingError.dataCorruptedError(forKey: .object, in: values, debugDescription: "could not decode hex string:\(objectString) ") }
         self.object = object
 
         let lriString = try values.decode(String.self, forKey: .lri)
-        guard let lri = Int(lriString , radix: 16) else { throw DecodingError.dataCorruptedError(forKey: .lri, in: values, debugDescription: "could not decode hex string") }
+        guard let lri = Int(lriString , radix: 16) else { throw DecodingError.dataCorruptedError(forKey: .lri, in: values, debugDescription: "could not decode hex string:\(lriString)") }
         self.lri = lri
 
         Prio        = try values.decode(Int.self, forKey: .Prio)
@@ -73,7 +68,7 @@ extension SMADataObject:Decodable,Encodable
         TagIdEventMsg = try values.decodeIfPresent(Int.self, forKey: .TagIdEventMsg)
         Unit        = try values.decodeIfPresent(Int.self, forKey: .Unit)
         DataFrmt    = try values.decode(Int.self, forKey: .DataFrmt)
-        Scale       = try values.decodeIfPresent(Double.self, forKey: .Scale)
+        Scale       = try values.decodeIfPresent(Decimal.self, forKey: .Scale)
 
         Typ         = try values.decode(Int.self, forKey: .Typ)
         WriteLevel  = try values.decode(Int.self, forKey: .WriteLevel)
@@ -94,9 +89,11 @@ extension SMADataObject:Decodable,Encodable
 }
 
 
+
+
 extension SMADataObject
 {
-    static let translation:[Int:String] =
+    static let defaultTranslations:[Int:String] =
     {
         guard let url = Bundle.module.url(forResource: "sma.data.Translation_Names", withExtension: "json")
         else
@@ -125,7 +122,7 @@ extension SMADataObject
 
 extension SMADataObject
 {
-    static let dataObjects:[String:SMADataObject] =
+    static let defaultDataObjects:[String:SMADataObject] =
     {
         guard let url = Bundle.module.url(forResource: "sma.data.objectMetaData", withExtension: "json")
         else
@@ -155,7 +152,3 @@ extension SMADataObject
         return [String:SMADataObject]()
     }()
 }
-
-
-
-

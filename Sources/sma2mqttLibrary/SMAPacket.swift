@@ -65,40 +65,60 @@ extension SMAPacket:BinaryDecodable
 
         var endPacketRead = false
 
-        repeat
+        struct SMATagPacket
         {
-            let length  = try decoder.decode(UInt16.self).bigEndian
-            let tag     = try decoder.decode(UInt16.self).bigEndian
+            let length:UInt16
+            let tag:UInt16
+            let data:Data
 
-            JLog.debug("Decoding tag: \( String(format:"0x%x == %d",tag,tag) ) length:\(length) )")
-            guard Int(length) <= decoder.countToEnd
-            else
+            enum TagType:Int
             {
-                throw SMAPacketError.prematureEndOfSMAContentData("sma content too short expected length:\(length) has:\(decoder.countToEnd)")
+                case end        = 0x0000
+                case net        = 0x0010
+                case group      = 0x02A0
+                case unknown    = 0xFFFF_FFFF
             }
 
-            let smaNetData    = try decoder.decode(Data.self,length:Int(length))
-            let smaNetDecoder = BinaryDecoder(data: [UInt8](smaNetData) )
-
-            switch tag
+            public init(fromBinary decoder: BinaryDecoder) throws
             {
-                case 0x0000:    endPacketRead = true
-                                if length != 0
-                                {
-                                    JLog.error("Weird SMAPacket End Tag with length:\(length) - ignoring")
-                                }
+                self.length  = try decoder.decode(UInt16.self).bigEndian
+                self.tag     = try decoder.decode(UInt16.self).bigEndian
 
-                case 0x02A0:    if let group = try? smaNetDecoder.decode(UInt32.self).bigEndian
+                JLog.debug("SMATagPacket tag: \( String(format:"0x%x == %d",tag,tag) ) length:\(length) )")
+
+                guard Int(length) <= decoder.countToEnd
+                else
+                {
+                    throw SMAPacketError.prematureEndOfSMAContentData("SMATagPacket content too short expected length:\(length) has:\(decoder.countToEnd)")
+                }
+                self.data    = try decoder.decode(Data.self,length:Int(length))
+
+                if length != 0
+                {
+                    JLog.error("SMATagPacket End Tag with length:\(length) - ignoring")
+                }
+            }
+
+            var type:TagType { TagType(rawValue: Int(self.tag)) ?? .unknown }
+        }
+
+
+        repeat
+        {
+            let smaTagPacket    = try SMATagPacket(fromBinary: decoder)
+            let smaNetDecoder   = BinaryDecoder(data: [UInt8](smaTagPacket.data) )
+
+            switch smaTagPacket.type
+            {
+                case .end:      endPacketRead = true
+
+                case .group:    if let group = try? smaNetDecoder.decode(UInt32.self).bigEndian
                                 {
                                     JLog.trace("\(String(format:"group: 0x%08x d:%d",group,group))")
                                     self.group = group
                                 }
-                                else
-                                {
-                                    JLog.error(("Could not decode tag:\(tag) length:\(length) data:\(smaNetData.hexDump)"))
-                                }
 
-                case 0x0010:    if  let protocolid = try? smaNetDecoder.decode(UInt16.self).bigEndian
+                case .net:      if  let protocolid = try? smaNetDecoder.decode(UInt16.self).bigEndian
                                 {
                                     JLog.debug("got protocol id:\(String(format:"0x%x",protocolid))")
 
@@ -134,16 +154,15 @@ extension SMAPacket:BinaryDecodable
                                 }
                                 else
                                 {
-                                    JLog.error("Could not decode protocol:\(tag) length:\(length) data:\(smaNetData.hexDump)")
+                                    JLog.error("Could not decode protocolid of smaTagType:\(smaTagPacket.type) length:\(smaTagPacket.data.count) data:\(smaTagPacket.data.hexDump)")
                                 }
 
-                default:        JLog.warning("Could not decode tag:\(tag) length:\(length) data:\(smaNetData.hexDump) trying detection")
+                case .unknown:  JLog.warning("smaTagPacketType unknown:\(smaTagPacket.tag) length:\(smaTagPacket.data.count) data:\(smaTagPacket.data.hexDump)")
             }
         }
         while !decoder.isAtEnd && !endPacketRead
 
        print("\npayload:\(self.json)")
-
     }
 }
 

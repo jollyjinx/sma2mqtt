@@ -107,7 +107,7 @@ final class SMAMessageReceiver: ChannelInboundHandler
 
             if let sma = try? SMAPacket(byteArray:byteArray)
             {
-                JLog.debug("Decoded: \(sma)")
+                JLog.debug("Decoded: \(sma.json)")
 
                 for obisvalue in sma.obis
                 {
