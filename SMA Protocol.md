@@ -11,6 +11,7 @@ I did not find any thorough documentation on the SMA UDP Protocol, so I started 
 - SMA [YASDI](https://www.sma.de/en/products/monitoring-control/yasdi.html)
 - Objects http(s)://inverter/data/ObjectMetadata_Istl.json
 - Translation http(s)://inverter/data/l10n/en-US.json
+- Python Webclient [SMAPY][https://github.com/jonkerj/smapy]
 
 
 ## SMA Protocol

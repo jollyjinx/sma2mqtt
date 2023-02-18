@@ -6,10 +6,10 @@
 //
 
 import Foundation
-import Regex
+import RegexBuilder
 import JLog
 
-struct SMADataObject
+public struct SMADataObject
 {
     let object:Int
     let lri:Int
@@ -51,7 +51,7 @@ extension SMADataObject:Decodable,Encodable
         case object,lri,Prio,TagId,TagIdEventMsg,Unit,DataFrmt,Scale,Typ,WriteLevel,GridGuard,TagHier,Min,Max,Sum,Avg,Cnt,MinD,MaxD,SumD
     }
 
-    init(from decoder: Decoder) throws
+    public init(from decoder: Decoder) throws
     {
         let values = try decoder.container(keyedBy: CodingKeys.self)
 
@@ -122,23 +122,27 @@ extension SMADataObject
 
 extension SMADataObject
 {
-    static let defaultDataObjects:[String:SMADataObject] =
+    public static let defaultDataObjects:[String:SMADataObject] =
     {
-        guard let url = Bundle.module.url(forResource: "sma.data.objectMetaData", withExtension: "json")
-        else
-        {
-            JLog.error("Could not find objectMetaData resource file")
-            return [String:SMADataObject]()
-        }
+        let url = Bundle.module.url(forResource: "sma.data.objectMetaData", withExtension: "json")!
+        let jsonString = try! String(contentsOf: url)
+        return try! dataObjects(from: jsonString)
+    }()
 
+    static func dataObjects(from jsonString:String) throws -> [String:SMADataObject]
+    {
         do
         {
-            let jsonString = try String(contentsOf: url)
-            let regexString = "(\"([\\da-f]{4})_([\\da-f]{8})\": \\{)"
-            let regex = regexString.r
-            let replaced = regex?.replaceAll(in: jsonString, with: "$0 \"object\" : \"$2\", \"lri\" : \"$3\",")
-
-            if let jsonData = replaced?.data(using: .utf8)
+            let regex = #/("([0-9a-fA-F]{4})_([0-9a-fA-F]{8})": {)/#
+            let replaced = jsonString.replacing(regex) { match in
+            """
+            \(match.1)
+                "object": "\( Int(match.2, radix:16)! )",
+                "lri": "\( Int(match.3, radix:16)! )",
+            """
+            }
+            //print(replaced)
+            if let jsonData = replaced.data(using: .utf8)
             {
                 let jsonObjects = try JSONDecoder().decode([String:SMADataObject].self, from: jsonData)
 
@@ -147,8 +151,9 @@ extension SMADataObject
         }
         catch
         {
-            JLog.error("Could not create Data Objects \(error)")
+            JLog.error("Could not create Data Objects from json:\(error)")
+            throw error
         }
-        return [String:SMADataObject]()
-    }()
+        return [String:SMADataObject]() // never reached
+    }
 }

@@ -18,6 +18,47 @@ public struct SMAPacket:Encodable,Decodable
     public var obis:[ObisValue] { obisPackets.first?.obisvalues ?? []}
 }
 
+fileprivate struct SMATagPacket
+{
+    let length:UInt16
+    let tag:UInt16
+    let data:Data
+
+    enum TagType:Int
+    {
+        case end            = 0x0000
+        case net            = 0x0010
+        case group          = 0x02A0    // tag 0x02a == 42, version 0x0
+
+        case unknown        = 0xFFFF_FFFF
+    }
+
+    public init(fromBinary decoder: BinaryDecoder) throws
+    {
+        self.length  = try decoder.decode(UInt16.self).bigEndian
+        self.tag     = try decoder.decode(UInt16.self).bigEndian
+
+        if let type = TagType(rawValue: Int(self.tag))
+        {
+            JLog.debug("SMATagPacket tagtype: \(type) \( String(format:"(0x%x == %d)",tag,tag) ) length:\(length) )")
+        }
+        else
+        {
+            JLog.error("SMATagPacket tagtype:UNKNOWN \( String(format:"0x%x == %d",tag,tag) ) length:\(length) )")
+        }
+
+
+        guard Int(length) <= decoder.countToEnd
+        else
+        {
+            throw SMAPacket.SMAPacketError.prematureEndOfSMAContentData("SMATagPacket content too short expected length:\(length) has:\(decoder.countToEnd)")
+        }
+        self.data    = try decoder.decode(Data.self,length:Int(length))
+    }
+
+    var type:TagType { TagType(rawValue: Int(self.tag)) ?? .unknown }
+}
+
 
 extension SMAPacket:BinaryDecodable
 {
@@ -63,45 +104,9 @@ extension SMAPacket:BinaryDecodable
 
         JLog.debug("Valid SMA Prefix")
 
+
+
         var endPacketRead = false
-
-        struct SMATagPacket
-        {
-            let length:UInt16
-            let tag:UInt16
-            let data:Data
-
-            enum TagType:Int
-            {
-                case end        = 0x0000
-                case net        = 0x0010
-                case group      = 0x02A0
-                case unknown    = 0xFFFF_FFFF
-            }
-
-            public init(fromBinary decoder: BinaryDecoder) throws
-            {
-                self.length  = try decoder.decode(UInt16.self).bigEndian
-                self.tag     = try decoder.decode(UInt16.self).bigEndian
-
-                JLog.debug("SMATagPacket tag: \( String(format:"0x%x == %d",tag,tag) ) length:\(length) )")
-
-                guard Int(length) <= decoder.countToEnd
-                else
-                {
-                    throw SMAPacketError.prematureEndOfSMAContentData("SMATagPacket content too short expected length:\(length) has:\(decoder.countToEnd)")
-                }
-                self.data    = try decoder.decode(Data.self,length:Int(length))
-
-                if length != 0
-                {
-                    JLog.error("SMATagPacket End Tag with length:\(length) - ignoring")
-                }
-            }
-
-            var type:TagType { TagType(rawValue: Int(self.tag)) ?? .unknown }
-        }
-
 
         repeat
         {
@@ -110,54 +115,38 @@ extension SMAPacket:BinaryDecodable
 
             switch smaTagPacket.type
             {
-                case .end:      endPacketRead = true
+                case .end:              endPacketRead = true
 
-                case .group:    if let group = try? smaNetDecoder.decode(UInt32.self).bigEndian
-                                {
-                                    JLog.trace("\(String(format:"group: 0x%08x d:%d",group,group))")
-                                    self.group = group
-                                }
+                case .group:            JLog.trace("tag0 :\(smaTagPacket)")
+                                        let groupnumber = try smaNetDecoder.decode(UInt32.self).bigEndian
+                                        JLog.trace("\(String(format:"groupnumber : 0x%08x d:%d",groupnumber,groupnumber))")
+                                        self.group = groupnumber
 
-                case .net:      if  let protocolid = try? smaNetDecoder.decode(UInt16.self).bigEndian
-                                {
-                                    JLog.debug("got protocol id:\(String(format:"0x%x",protocolid))")
+                case .net:              if  let protocolid = try? smaNetDecoder.decode(UInt16.self).bigEndian
+                                        {
+                                            JLog.debug("got protocol id:\(String(format:"0x%x",protocolid))")
 
-                                    switch protocolid
-                                    {
-                                        case 0x6069:    JLog.debug("recognizing ObisPacket")
+                                            switch protocolid
+                                            {
+                                                case 0x6069:    JLog.debug("recognizing ObisPacket")
 
-                                                        do
-                                                        {
-                                                            let obisPacket = try ObisPacket.init(fromBinary: smaNetDecoder)
-                                                            self.obisPackets.append(obisPacket)
-                                                        }
-                                                        catch
-                                                        {
-                                                            JLog.error("ObisPacket decoding error:\(error)")
-                                                        }
+                                                                let obisPacket = try ObisPacket.init(fromBinary: smaNetDecoder)
+                                                                self.obisPackets.append(obisPacket)
 
+                                                case 0x6065:    JLog.debug("recognizing SMANetPacket")
 
-                                        case 0x6065:    JLog.debug("recognizing SMANetPacket")
+                                                                let smaNetPacket = try SMANetPacket.init(fromBinary: smaNetDecoder)
+                                                                self.smaNetPackets.append(smaNetPacket)
 
-                                                        do
-                                                        {
-                                                            let smanetPacket = try SMANetPacket.init(fromBinary: smaNetDecoder)
-                                                            self.smaNetPackets.append(smanetPacket)
-                                                        }
-                                                        catch
-                                                        {
-                                                            JLog.error("SMANetPacket decoding error:\(error)")
-                                                        }
+                                                default:        JLog.error("protocol unknown.")
+                                            }
+                                        }
+                                        else
+                                        {
+                                            JLog.error("Could not decode protocolid of smaTagType:\(smaTagPacket.type) length:\(smaTagPacket.data.count) data:\(smaTagPacket.data.hexDump)")
+                                        }
 
-                                        default:        JLog.error("protocol unknown.")
-                                    }
-                                }
-                                else
-                                {
-                                    JLog.error("Could not decode protocolid of smaTagType:\(smaTagPacket.type) length:\(smaTagPacket.data.count) data:\(smaTagPacket.data.hexDump)")
-                                }
-
-                case .unknown:  JLog.warning("smaTagPacketType unknown:\(smaTagPacket.tag) length:\(smaTagPacket.data.count) data:\(smaTagPacket.data.hexDump)")
+                case .unknown:          JLog.warning("smaTagPacketType unknown:\(smaTagPacket.tag) length:\(smaTagPacket.data.count) data:\(smaTagPacket.data.hexDump)")
             }
         }
         while !decoder.isAtEnd && !endPacketRead

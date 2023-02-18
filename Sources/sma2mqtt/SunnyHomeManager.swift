@@ -40,7 +40,7 @@ class SunnyHomeManager
                 channel in
 
                 return channel.pipeline.addHandler(SMAMessageEncoder()).flatMap {
-                                                                                    channel.pipeline.addHandler( SMAMessageReceiver(mqttPublisher:mqttPublisher) )
+                                                                                    channel.pipeline.addHandler( SMAMessageReceiver(mqttPublisher:mqttPublisher,multicastAddress:multicastAddress, multicastPort:multicastPort, bindAddress:bindAddress,bindPort:bindPort) )
                                                                                 }
             }
 
@@ -86,10 +86,14 @@ final class SMAMessageReceiver: ChannelInboundHandler
 {
     public typealias InboundIn = AddressedEnvelope<ByteBuffer>
     let mqttPublisher:MQTTPublisher
+    let description:String
+    var knownAddresses = [String:Date]()
 
-    init(mqttPublisher:MQTTPublisher)
+    init(mqttPublisher:MQTTPublisher,multicastAddress:String, multicastPort:Int, bindAddress:String = "0.0.0.0",bindPort:Int = 12222)
     {
+        JLog.debug("init:\(multicastAddress):\(multicastPort)")
         self.mqttPublisher = mqttPublisher
+        self.description = "\(multicastAddress):\(multicastPort)-\(bindAddress):\(bindPort)"
     }
 
     public func channelRead(context: ChannelHandlerContext, data: NIOAny)
@@ -99,7 +103,14 @@ final class SMAMessageReceiver: ChannelInboundHandler
         var lasttime:Date = Date.distantPast
         let timenow = Date()
 
-        print("remoteAddress:\(envelope.remoteAddress.ipAddress)")
+        let remoteAddress = envelope.remoteAddress.ipAddress ?? "0.0.0.0"
+        if let lastTimeSeen = knownAddresses[remoteAddress]
+        {
+            return
+        }
+        knownAddresses[remoteAddress] = Date()
+
+        JLog.debug("\(self.description) remoteAddress:\(envelope.remoteAddress.ipAddress)")
 
         if let byteArray = buffer.readBytes(length: buffer.readableBytes)
         {
@@ -107,7 +118,7 @@ final class SMAMessageReceiver: ChannelInboundHandler
 
             if let sma = try? SMAPacket(byteArray:byteArray)
             {
-                JLog.debug("Decoded: \(sma.json)")
+                JLog.debug("Decoded from \(envelope.remoteAddress): \(sma.json)")
 
                 for obisvalue in sma.obis
                 {

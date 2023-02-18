@@ -40,6 +40,12 @@ public extension Data
             }
             return string
         }
+    func toHexString(octetGrouped:Bool = false) -> String
+    {
+        let formatString = octetGrouped ? "%02hhx " : "%02hhx"
+        let string = map { String(format: formatString, $0) }.joined()
+        return string
+    }
 }
 
 extension Encodable

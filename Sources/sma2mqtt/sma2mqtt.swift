@@ -17,14 +17,8 @@ struct sma2mqtt: ParsableCommand
     @Flag(name: .long, help: "send json output to stdout")
     var json:Bool = false
 
-
-    #if DEBUG
-    @Option(name: .long, help: "MQTT Server hostname")
-    var mqttServername: String = "pltmqtt.jinx.eu."
-    #else
     @Option(name: .long, help: "MQTT Server hostname")
     var mqttServername: String = "mqtt"
-    #endif
 
     @Option(name: .long, help: "MQTT Server port")
     var mqttPort: UInt16 = 1883
@@ -40,7 +34,7 @@ struct sma2mqtt: ParsableCommand
 
     #if DEBUG
     @Option(name: .shortAndLong, help: "MQTT Server topic.")
-    var basetopic: String = "test/sma/sunnymanager"
+    var basetopic: String = "example/sma/sunnymanager"
     #else
     @Option(name: .shortAndLong, help: "MQTT Server topic.")
     var basetopic: String = "sma/sunnymanager"
@@ -112,6 +106,7 @@ struct sma2mqtt: ParsableCommand
             for multicastGroup in multicastGroups
             {
                 let sunnyHomeB = try SunnyHomeManager(mqttPublisher:mqttPublisher,multicastAddress:multicastGroup, multicastPort: Int(mcastPort), bindAddress:bindAddress,bindPort:Int(bindPort))
+                
             }
         }
         dispatchMain()

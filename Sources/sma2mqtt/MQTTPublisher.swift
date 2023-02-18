@@ -29,7 +29,7 @@ actor MQTTPublisher
                                     port: port,
                                     identifier: ProcessInfo().processName,
                                     eventLoopGroupProvider: .createNew,
-                                    configuration: .init(userName: username, password: password)
+                                    configuration: .init(userName: username, password: "")
                                 )
         try await activateClient()
     }
@@ -58,3 +58,4 @@ actor MQTTPublisher
         try await mqttClient.publish(to: topic, payload: byteBuffer, qos:qos , retain:retain)
     }
 }
+
