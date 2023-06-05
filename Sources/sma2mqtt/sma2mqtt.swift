@@ -4,7 +4,7 @@ import JLog
 import Logging
 
 @main
-struct sma2mqtt: ParsableCommand
+struct sma2mqtt: AsyncParsableCommand
 {
     #if DEBUG
     @Option(name: .shortAndLong, help: "optional debug output")
@@ -58,60 +58,63 @@ struct sma2mqtt: ParsableCommand
     @Option(name: .long, help: "Multicast Group Port number.")
     var mcastPort: UInt16 = 9522;
 
-    func run() throws
+    @Option(name: .long, help: "Inverter Password.")
+    var inverterPassword: String = "0000"
+
+
+    func run() async throws
     {
+        var sunnyHomeManagers = [SunnyHomeManager]()
         JLog.loglevel =  Logger.Level(rawValue:debug) ?? Logger.Level.notice
+        let mqttPublisher = try await MQTTPublisher(    hostname: mqttServername,
+                                                        port: Int(mqttPort),
+                                                        username:mqttUsername,
+                                                        password:mqttPassword,
+                                                        emitInterval: interval,
+                                                        baseTopic: basetopic
+                                                    )
+        let multicastGroups = [
+                                "239.12.0.78",
+                                "239.12.1.105",     // 10.112.16.166
+                                "239.12.1.153",     // 10.112.16.127
+                                "239.12.1.55",      // 10.112.16.166
+                                "239.12.1.87",      // 10.112.16.107
 
-        Task
-        {
-            let mqttPublisher = try await MQTTPublisher(    hostname: mqttServername,
-                                                            port: Int(mqttPort),
-                                                            username:mqttUsername,
-                                                            password:mqttPassword,
-                                                            emitInterval: interval,
-                                                            baseTopic: basetopic
-                                                        )
-            let multicastGroups = [
-                                    "239.12.0.78",
-                                    "239.12.1.105",     // 10.112.16.166
-                                    "239.12.1.153",     // 10.112.16.127
-                                    "239.12.1.55",      // 10.112.16.166
-                                    "239.12.1.87",      // 10.112.16.107
+                                "239.12.255.253",
+                                "239.12.255.254",
+                                "239.12.255.255"    ,
 
-                                    "239.12.255.253",
-                                    "239.12.255.254",
-                                    "239.12.255.255"
+
+
+                                    "239.192.0.0",      //
+
+                                    "224.0.0.251",      // 10.112.16.195
+
 //                                    "239.192.0.0",      //
+        ]
 
-//                                    "239.12.0.78",
-//                                    "239.12.255.253",
-//                                    "239.12.255.254",
-//                                    "239.12.255.255",
-//                                    "224.0.0.251",      // 10.112.16.195
-//
-//                                    "239.192.0.0",      //
-//
-//                                    "239.12.1.153",     // 10.112.16.127
-//                                    "239.12.1.105",     // 10.112.16.166
-//
-//                                    // senden
-//                                    "239.12.255.255",   // 10.112.16.127
-//
-//                                    "239.12.1.55",      // 10.112.16.166
-//                                    "239.12.255.255",    // 10.112.16.166
-//
-//
-//                                    "239.12.1.87",      // 10.112.16.107
-            ]
-            for multicastGroup in multicastGroups
+
+
+
+
+            let sunnyHome = try await SunnyHomeManager(mqttPublisher:mqttPublisher,multicastAddresses:multicastGroups, multicastPort: mcastPort, bindAddress:bindAddress,bindPort:bindPort,password: inverterPassword)
+            sunnyHomeManagers.append(sunnyHome)
+
+            while true
             {
-                let sunnyHomeB = try SunnyHomeManager(mqttPublisher:mqttPublisher,multicastAddress:multicastGroup, multicastPort: Int(mcastPort), bindAddress:bindAddress,bindPort:Int(bindPort))
-                
+                try await sunnyHome.receiveNext()
             }
-        }
-        dispatchMain()
-//        try await Task.sleep(nanoseconds: UInt64( Int64.max-10) )
+//        for multicastGroup in multicastGroups
+//        {
+//            let sunnyHome = try SunnyHomeManager(mqttPublisher:mqttPublisher,multicastAddress:multicastGroup, multicastPort: Int(mcastPort), bindAddress:bindAddress,bindPort:Int(bindPort))
+//            sunnyHomeManagers.append(sunnyHome)
+//        }
+
+//        dispatchMain()
+        try await Task.sleep(nanoseconds: UInt64( Int64.max-10) )
 //        try await sunnyHome.shutdown()
+//
+//
     }
 }
 

@@ -59,8 +59,8 @@ extension SMADataObject:Decodable,Encodable
         guard let object = Int(objectString , radix: 16) else { throw DecodingError.dataCorruptedError(forKey: .object, in: values, debugDescription: "could not decode hex string:\(objectString) ") }
         self.object = object
 
-        let lriString = try values.decode(String.self, forKey: .lri)
-        guard let lri = Int(lriString , radix: 16) else { throw DecodingError.dataCorruptedError(forKey: .lri, in: values, debugDescription: "could not decode hex string:\(lriString)") }
+        guard let lriString = try? values.decode(String.self, forKey: .lri) else { throw DecodingError.dataCorruptedError(forKey: .object, in: values, debugDescription: "could not decode lri:\(objectString) ") }
+        guard let lri = Int(lriString , radix: 16) else { throw DecodingError.dataCorruptedError(forKey: .lri, in: values, debugDescription: "could not decode lri hex string:\(lriString)") }
         self.lri = lri
 
         Prio        = try values.decode(Int.self, forKey: .Prio)
@@ -133,7 +133,7 @@ extension SMADataObject
     {
         do
         {
-            let regex = #/("([0-9a-fA-F]{4})_([0-9a-fA-F]{8})": {)/#
+            let regex = #/("([0-9a-fA-F]{4})_([0-9a-fA-F]{8})":\s*{)/#
             let replaced = jsonString.replacing(regex) { match in
             """
             \(match.1)
@@ -141,7 +141,7 @@ extension SMADataObject
                 "lri": "\( Int(match.3, radix:16)! )",
             """
             }
-            //print(replaced)
+ //           JLog.debug("Replaced json:\(replaced)")
             if let jsonData = replaced.data(using: .utf8)
             {
                 let jsonObjects = try JSONDecoder().decode([String:SMADataObject].self, from: jsonData)
@@ -151,7 +151,7 @@ extension SMADataObject
         }
         catch
         {
-            JLog.error("Could not create Data Objects from json:\(error)")
+            JLog.error("Could not create Data Objects from json:\(error)\njson:\(jsonString)")
             throw error
         }
         return [String:SMADataObject]() // never reached

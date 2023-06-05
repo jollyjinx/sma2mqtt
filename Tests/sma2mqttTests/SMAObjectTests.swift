@@ -8,6 +8,7 @@
 import XCTest
 import class Foundation.Bundle
 
+@testable import ArgumentParser
 @testable import JLog
 @testable import BinaryCoder
 @testable import sma2mqttLibrary
@@ -27,7 +28,7 @@ final class SMAObjectTests: XCTestCase {
         let dataObjects = SMADataObject.defaultDataObjects
 
 
-        for (key,value) in dataObjects
+        for (_,value) in dataObjects
         {
             print("===")
             print(value.description)
@@ -41,13 +42,23 @@ final class SMAObjectTests: XCTestCase {
 
 
 
-    func testSMAInverter() async throws {
+    func testSMAInverter() async throws
+    {
+        let arguments = ProcessInfo.processInfo.arguments
 
-        let inverter = SMAInverter(address: "sunnyboy4.jinx.eu.")
+        var lastTestArgument:String? = nil
+
+        var password = arguments.compactMap { guard lastTestArgument == "--password" else { lastTestArgument = $0 ; return nil }
+                                            return $0
+                                }.first ?? "0000"
+
+
+        let inverter = SMAInverter(address: "sunnyboy3.jinx.eu.",userright:.user, password: password);
         let description = await inverter.description
         print("\(description)")
-
-        
+        await inverter.setupConnection()
+        await inverter.values()
+        //try await Task.sleep(nanoseconds: UInt64( Int64.max-10) )
     }
 
 }

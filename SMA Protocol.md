@@ -84,7 +84,7 @@ Discovery request has 4 bytes of data containing 0xff.
          |        |                  0xFF03 bluethooth ?
 
 
-# SMA Net Version 1 0x0010
+# SMA Net Version 1 (Tag:0x0010)
 
     addr | type   | explanation
     -----|--------|--------------------
@@ -122,7 +122,7 @@ Exact values I figured out can be found in [Obis.swift](Sources/sma2mqtt/Obis.sw
 
 ## 0x6065 Protocol: Inverter Communication (Little Endian)
 
-Warning this protocol uses little endian format. Requests and responses share the same header format. 
+Beware, this protocol uses little endian format. Requests and responses share the same header format. 
 Requests to the inverter send the header followed by a command (e.g. logon, logoff, data request ).
 Responses from the inverter have the same header with data then attached (e.g. ac-power values ).
 

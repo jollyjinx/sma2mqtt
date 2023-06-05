@@ -6,11 +6,10 @@
 //
 
 import Foundation
-import JLog
 
 import NIO
 import MQTTNIO
-
+import JLog
 
 actor MQTTPublisher
 {
