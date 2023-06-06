@@ -1,39 +1,45 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Patrick Stein on 13.06.22.
 //
 
 import XCTest
+
 import class Foundation.Bundle
 
-@testable import JLog
 @testable import BinaryCoder
+@testable import JLog
 @testable import sma2mqttLibrary
 
 extension String
 {
     func hexStringToData() -> Data
     {
-        let stringWithoutSpaces = self.replacingOccurrences(of:" ", with:"")
-                                    .replacingOccurrences(of:"\n", with:"")
-                                    .replacingOccurrences(of:"\t", with:"")
+        let stringWithoutSpaces = self.replacingOccurrences(of: " ", with: "")
+            .replacingOccurrences(of: "\n", with: "")
+            .replacingOccurrences(of: "\t", with: "")
 
         let uInt8Array = stride(from: 0, to: stringWithoutSpaces.count, by: 2)
-            .map{ stringWithoutSpaces[stringWithoutSpaces.index(stringWithoutSpaces.startIndex, offsetBy: $0) ... stringWithoutSpaces.index(stringWithoutSpaces.startIndex, offsetBy: $0 + 1)] }
-            .map{ UInt8($0, radix: 16)! }
+            .map
+            {
+                stringWithoutSpaces[
+                    stringWithoutSpaces.index(stringWithoutSpaces.startIndex, offsetBy: $0) ... stringWithoutSpaces.index(stringWithoutSpaces.startIndex, offsetBy: $0 + 1)
+                ]
+            }
+            .map { UInt8($0, radix: 16)! }
         return Data(uInt8Array)
     }
 }
 
-struct DataSplitter:Sequence, IteratorProtocol
+struct DataSplitter: Sequence, IteratorProtocol
 {
-    let data : Data
-    var index : Data.Index
-    let splitData:Data
+    let data: Data
+    var index: Data.Index
+    let splitData: Data
 
-    init(data: Data,splitData:Data)
+    init(data: Data, splitData: Data)
     {
         self.data = data
         self.splitData = splitData
@@ -54,7 +60,7 @@ struct DataSplitter:Sequence, IteratorProtocol
                 return nil
             }
 
-            let returnData = data[ (index-splitData.count) ..< data.endIndex]
+            let returnData = data[(index - splitData.count) ..< data.endIndex]
             index = data.endIndex
             return returnData
         }
@@ -64,14 +70,15 @@ struct DataSplitter:Sequence, IteratorProtocol
             return next()
         }
 
-        let returnData = data[ (index-splitData.count) ..< range.startIndex]
+        let returnData = data[(index - splitData.count) ..< range.startIndex]
         index = range.endIndex
 
         return returnData
     }
 }
 
-extension Data {
+extension Data
+{
     func split(separator: Data) -> [Data]
     {
         var chunks: [Data] = []
@@ -82,7 +89,7 @@ extension Data {
             // Append if non-empty:
             if matchedRange.lowerBound > pos
             {
-                chunks.append(self[(pos - separator.count)..<matchedRange.lowerBound])
+                chunks.append(self[(pos - separator.count) ..< matchedRange.lowerBound])
             }
             // Update current position:
             pos = matchedRange.upperBound
@@ -90,7 +97,7 @@ extension Data {
         // Append final chunk, if non-empty:
         if pos < endIndex
         {
-            chunks.append(self[pos..<endIndex])
+            chunks.append(self[pos ..< endIndex])
         }
         return chunks
     }

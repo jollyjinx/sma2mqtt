@@ -9,3 +9,8 @@ perl5/
 .cache
 .bash_history
 docker
+
+Temp/
+JNX/
+perl5/
+

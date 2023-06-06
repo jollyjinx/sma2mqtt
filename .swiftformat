@@ -1,0 +1,12 @@
+--swiftversion 5.7
+--indentcase true
+#--maxwidth none
+--allman true
+--yodaswap always
+--wrapparameters after-first
+--wraparguments after-first
+--trimwhitespace always
+--self remove
+--wrapenumcases always
+--enable wrapMultilineStatementBraces
+

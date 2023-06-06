@@ -1,11 +1,11 @@
 import Foundation
-#if os(Linux)
-import Glibc
-#else
-import Darwin
-#endif
-
 import JLog
+
+#if os(Linux)
+    import Glibc
+#else
+    import Darwin
+#endif
 
 struct Packet
 {
@@ -13,7 +13,8 @@ struct Packet
     let sourceAddress: String
 }
 
-enum MulticastReceiverError: Error {
+enum MulticastReceiverError: Error
+{
     case socketCreationFailed(Int32)
     case socketOptionsSettingFailed(Int32)
     case socketBindingFailed(Int32)
@@ -24,7 +25,6 @@ enum MulticastReceiverError: Error {
     case addressStringConversionFailed(Int32)
 }
 
-
 actor MulticastReceiver
 {
     private var socketFileDescriptor: Int32 = -1
@@ -32,59 +32,48 @@ actor MulticastReceiver
     private var bufferSize: Int = 0
     private var isListening: Bool = true
 
-    init(groups: [String], listenAddress:String, listenPort:UInt16,bufferSize: Int = 65536) throws
+    init(groups: [String], listenAddress: String, listenPort: UInt16, bufferSize: Int = 65536) throws
     {
         self.bufferSize = bufferSize
         receiveBuffer = UnsafeMutablePointer<UInt8>.allocate(capacity: bufferSize)
 
         JLog.debug("Started listening on \(listenAddress)")
 
-        let socketFileDescriptor = socket(AF_INET, SOCK_DGRAM, 0 ) // IPPROTO_UDP) // 0 , IPPROTO_MTP
+        let socketFileDescriptor = socket(AF_INET, SOCK_DGRAM, 0) // IPPROTO_UDP) // 0 , IPPROTO_MTP
         self.socketFileDescriptor = socketFileDescriptor
-        guard socketFileDescriptor != -1 else {
-            throw MulticastReceiverError.socketCreationFailed(errno)
-        }
+        guard socketFileDescriptor != -1 else { throw MulticastReceiverError.socketCreationFailed(errno) }
 
         var reuseAddress: Int32 = 1
         guard setsockopt(socketFileDescriptor, SOL_SOCKET, SO_REUSEADDR, &reuseAddress, socklen_t(MemoryLayout<Int32>.size)) != -1
-        else {
+        else
+        {
             throw MulticastReceiverError.socketOptionsSettingFailed(errno)
         }
 
         var socketAddress = sockaddr_in()
-            socketAddress.sin_family = sa_family_t(AF_INET)
-            socketAddress.sin_port = listenPort.bigEndian
-            socketAddress.sin_addr.s_addr =  INADDR_ANY // inet_addr(listenAddress) // INADDR_ANY
+        socketAddress.sin_family = sa_family_t(AF_INET)
+        socketAddress.sin_port = listenPort.bigEndian
+        socketAddress.sin_addr.s_addr = INADDR_ANY // inet_addr(listenAddress) // INADDR_ANY
 
-         guard  bind(socketFileDescriptor, sockaddr_cast(&socketAddress),socklen_t(MemoryLayout<sockaddr_in>.size)) != -1
-         else {
-            throw MulticastReceiverError.socketBindingFailed(errno)
-        }
+        guard bind(socketFileDescriptor, sockaddr_cast(&socketAddress), socklen_t(MemoryLayout<sockaddr_in>.size)) != -1 else { throw MulticastReceiverError.socketBindingFailed(errno) }
 
         for group in groups
         {
-            var multicastRequest = ip_mreq(imr_multiaddr: in_addr(s_addr: inet_addr(group)),
-                                           imr_interface: in_addr(s_addr: inet_addr(listenAddress))) // INADDR_ANY)) //
+            var multicastRequest = ip_mreq(imr_multiaddr: in_addr(s_addr: inet_addr(group)), imr_interface: in_addr(s_addr: inet_addr(listenAddress))) // INADDR_ANY)) //
             guard setsockopt(socketFileDescriptor, IPPROTO_IP, IP_ADD_MEMBERSHIP, &multicastRequest, socklen_t(MemoryLayout<ip_mreq>.size)) != -1
-            else {
+            else
+            {
                 throw MulticastReceiverError.multicastJoinFailed(errno)
             }
             JLog.debug("added group:\(group)")
         }
     }
 
-    nonisolated
-    private func sockaddr_cast<T>(_ ptr: UnsafeMutablePointer<T>) -> UnsafeMutablePointer<sockaddr>
-    {
-        return UnsafeMutableRawPointer(ptr).assumingMemoryBound(to: sockaddr.self)
-    }
+    private nonisolated func sockaddr_cast(_ ptr: UnsafeMutablePointer<some Any>) -> UnsafeMutablePointer<sockaddr> { UnsafeMutableRawPointer(ptr).assumingMemoryBound(to: sockaddr.self) }
 
     deinit
     {
-        if socketFileDescriptor != -1
-        {
-            close(socketFileDescriptor)
-        }
+        if socketFileDescriptor != -1 { close(socketFileDescriptor) }
         receiveBuffer?.deallocate()
     }
 
@@ -94,10 +83,7 @@ actor MulticastReceiver
         isListening = true
     }
 
-    func stopListening()
-    {
-        isListening = false
-    }
+    func stopListening() { isListening = false }
 
     func shutdown()
     {
@@ -107,22 +93,17 @@ actor MulticastReceiver
 
     func receiveNextPacket() async throws -> Packet
     {
-        return try await withUnsafeThrowingContinuation
-        {  continuation in
-
+        try await withUnsafeThrowingContinuation
+        { continuation in
             do
             {
                 let receiveNext = try receiveNext()
 
                 continuation.resume(returning: receiveNext)
             }
-            catch
-            {
-                continuation.resume(throwing: error)
-            }
+            catch { continuation.resume(throwing: error) }
         }
     }
-
 
     private func receiveNext() throws -> Packet
     {
@@ -130,19 +111,18 @@ actor MulticastReceiver
         var socketAddressLength = socklen_t(MemoryLayout<sockaddr_in>.size)
         JLog.debug("recvfrom")
 
-        let bytesRead = recvfrom(socketFileDescriptor, receiveBuffer, bufferSize, 0,sockaddr_cast(&socketAddress), &socketAddressLength )
+        let bytesRead = recvfrom(socketFileDescriptor, receiveBuffer, bufferSize, 0, sockaddr_cast(&socketAddress), &socketAddressLength)
         guard bytesRead != -1 else { throw MulticastReceiverError.receiveError(errno) }
 
         var addr = socketAddress.sin_addr // sa.sin_addr
         var addrBuffer = [CChar](repeating: 0, count: Int(INET_ADDRSTRLEN))
         guard let addrString = inet_ntop(AF_INET, &addr, &addrBuffer, socklen_t(INET_ADDRSTRLEN)) else { throw MulticastReceiverError.addressStringConversionFailed(errno) }
 
-        return Packet(data: Data(bytes: receiveBuffer!, count: bytesRead), sourceAddress: String(cString:addrString) )
+        return Packet(data: Data(bytes: receiveBuffer!, count: bytesRead), sourceAddress: String(cString: addrString))
     }
-
 }
 
-//func main() async {
+// func main() async {
 //    // Define the multicast groups and port
 //    let multicastGroups: [MulticastGroup] = [
 //        MulticastGroup(address: "239.12.0.78", port: 955),
@@ -166,12 +146,12 @@ actor MulticastReceiver
 //    } catch {
 //        print("Error creating MulticastReceiver:", error)
 //    }
-//}
+// }
 //
 //// Run the main function
-//Task {
+// Task {
 //    await main()
-//}
+// }
 //
 //
 //
@@ -213,4 +193,4 @@ actor MulticastReceiver
 //    }
 //
 //
-//print("end")
+// print("end")
