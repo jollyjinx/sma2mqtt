@@ -6,7 +6,7 @@ import Logging
 @main struct sma2mqtt: AsyncParsableCommand
 {
     #if DEBUG
-        @Option(name: .shortAndLong, help: "optional debug output") var debug: String = "trace"
+        @Option(name: .shortAndLong, help: "optional debug output") var debug: String = "debug"
     #else
         @Option(name: .shortAndLong, help: "optional debug output") var debug: String = "notice"
     #endif
@@ -49,12 +49,15 @@ import Logging
         JLog.loglevel = Logger.Level(rawValue: debug) ?? Logger.Level.notice
         let mqttPublisher = try await MQTTPublisher(hostname: mqttServername, port: Int(mqttPort), username: mqttUsername, password: mqttPassword, emitInterval: interval, baseTopic: basetopic)
         let multicastGroups = [
-            "239.12.0.78", "239.12.1.105", // 10.112.16.166
+            "239.12.0.78",
+            "239.12.1.105", // 10.112.16.166
             "239.12.1.153", // 10.112.16.127
             "239.12.1.55", // 10.112.16.166
             "239.12.1.87", // 10.112.16.107
 
-            "239.12.255.253", "239.12.255.254", "239.12.255.255",
+            "239.12.255.253",
+            "239.12.255.254",
+            "239.12.255.255",
 
             "239.192.0.0", //
 

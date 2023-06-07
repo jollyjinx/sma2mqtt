@@ -40,7 +40,9 @@ extension SMANetPacket: BinaryDecodable
 
         let valuesize: Int
 
-        switch header.valuestype { case 0x01, 0x04:
+        switch header.valuestype
+        {
+            case 0x01, 0x04:
                 guard decoder.countToEnd >= 4 else { throw SMANetPacketDecodingError.decoding("Valueheader too short header:\(header) toEnd:\(decoder.countToEnd)") }
                 let startvalue = try Int(decoder.decode(UInt32.self).littleEndian)
                 valuesheader.append(startvalue)

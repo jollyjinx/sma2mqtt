@@ -15,7 +15,7 @@ actor MQTTPublisher
     let mqttClient: MQTTClient
     let emitInterval: Double
     let baseTopic: String
-
+    let dispatchQueue = DispatchQueue(label: "mqttQueue")
     var lasttimeused = [String: Date]()
 
     init(hostname: String, port: Int, username: String? = nil, password _: String? = nil, emitInterval: Double = 1.0, baseTopic: String = "") async throws
@@ -24,6 +24,7 @@ actor MQTTPublisher
         self.baseTopic = baseTopic
 
         mqttClient = MQTTClient(host: hostname, port: port, identifier: ProcessInfo().processName, eventLoopGroupProvider: .createNew, configuration: .init(userName: username, password: ""))
+
         try await activateClient()
     }
 
@@ -41,7 +42,14 @@ actor MQTTPublisher
 
         let byteBuffer = ByteBuffer(string: payload)
 
-        try await activateClient()
-        try await mqttClient.publish(to: topic, payload: byteBuffer, qos: qos, retain: retain)
+//        try await activateClient()
+        dispatchQueue.async
+        {
+            if !self.mqttClient.isActive()
+            {
+                self.mqttClient.connect()
+            }
+            self.mqttClient.publish(to: topic, payload: byteBuffer, qos: qos, retain: retain)
+        }
     }
 }

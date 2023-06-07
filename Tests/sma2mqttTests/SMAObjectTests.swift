@@ -15,9 +15,13 @@ import class Foundation.Bundle
 
 final class SMAObjectTests: XCTestCase
 {
+    var inverterAddress = "sunnyboy"
+    var inverterPassword = "0000"
+
     override func setUpWithError() throws
     {
-        // Put setup code here. This method is called before the invocation of each test method in the class.
+        inverterPassword = ProcessInfo.processInfo.value(forArgument: "--inverter-password") ?? "0000"
+        inverterAddress = ProcessInfo.processInfo.value(forArgument: "--inverter-address") ?? "sunnyboy"
     }
 
     override func tearDownWithError() throws
@@ -43,27 +47,12 @@ final class SMAObjectTests: XCTestCase
 
     func testSMAInverter() async throws
     {
-        let arguments = ProcessInfo.processInfo.arguments
-
-        var lastTestArgument: String? = nil
-
-        let password =
-            arguments.compactMap
-                {
-                    guard lastTestArgument == "--password"
-                    else
-                    {
-                        lastTestArgument = $0
-                        return nil
-                    }
-                    return $0
-                }.first ?? "0000"
-
-        let inverter = SMAInverter(address: "sunnyboy3.jinx.eu.", userright: .user, password: password)
+        let inverter = SMAInverter(address: inverterAddress, userright: .user, password: inverterPassword)
         let description = await inverter.description
         print("\(description)")
         await inverter.setupConnection()
         await inverter.values()
+
         // try await Task.sleep(nanoseconds: UInt64( Int64.max-10) )
     }
 }

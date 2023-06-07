@@ -71,7 +71,7 @@ extension ObisValue: BinaryDecodable
 {
     public init(fromBinary decoder: BinaryDecoder) throws
     {
-        JLog.debug("Decoding ObisValue")
+        JLog.trace("Decoding ObisValue")
 
         let a: UInt8 = try decoder.decode(UInt8.self)
         let b: UInt8 = try decoder.decode(UInt8.self)
@@ -80,13 +80,15 @@ extension ObisValue: BinaryDecodable
 
         let id = "\(a != 0 ? a : 1):\(b).\(c).\(d)"
 
-        JLog.debug("Decoding Obis a':\(a) Id:\(id)")
+        JLog.trace("Decoding Obis a:\(a) Id:\(id)")
 
         let value: ObisType
 
         if let obisDefinition = ObisDefinition.obisDefinitions[id]
         {
-            switch obisDefinition.type { case .version:
+            switch obisDefinition.type
+            {
+                case .version:
                     let intValue = try decoder.decode(Int32.self).bigEndian
                     JLog.trace("name: \(obisDefinition.topic) value:\(String(format: "%08x", intValue))")
                     value = .string("major:\(intValue >> 24) minor:\(intValue >> 16 & 0xFF) build:\(intValue >> 8 & 0xFF) revision:\(String(format: "%c", intValue & 0xFF))")
@@ -117,7 +119,7 @@ extension ObisValue: BinaryDecodable
             JLog.error("Unknown Obis Id: \(id)")
             throw BinaryDecoder.Error.typeNotConformingToBinaryDecodable(ObisValue.self)
         }
-        JLog.debug("Decoded corretly \(id) \(value)")
+        JLog.trace("Decoded corretly \(id) \(value)")
 
         self.id = id
         self.value = value

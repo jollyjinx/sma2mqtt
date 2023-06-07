@@ -46,21 +46,21 @@ struct GetValuesResult: Decodable
             if let intValue = try? container.decode(Int.self, forKey: CodingKeys.val)
             {
                 self = Value.intValue(intValue)
-                print("int:\(intValue)")
+                JLog.debug("int:\(intValue)")
                 return
             }
             if let stringValue = try? container.decode(String.self, forKey: CodingKeys.val)
             {
                 self = Value.stringValue(stringValue)
-                print("str:\(stringValue)")
+                JLog.debug("str:\(stringValue)")
                 return
             }
             if let tagArray = try? container.decode([[String: Int?]].self, forKey: CodingKeys.val)
             {
-                print("tagArray:\(tagArray)")
+                JLog.debug("tagArray:\(tagArray)")
                 let tags = tagArray.map { $0["tag"] ?? nil }
                 self = Value.tagValues(tags)
-                print("tags:\(tags)")
+                JLog.debug("tags:\(tags)")
                 return
             }
             _ = try container.decodeNil(forKey: CodingKeys.val)
@@ -277,10 +277,10 @@ public actor SMAInverter
         if let (data, _) = try? await session.data(for: request, delegate: sessionTaskDelegate), let json = try? decoder.decode([String: [String: String]].self, from: data),
            let sid = json["result"]?["sid"]
         {
-            print(json)
+            JLog.debug("\(json.description)")
 
             let loginUrl2 = URL(string: "\(scheme)://\(address)/dyn/getAllOnlValues.json?sid=\(sid)")!
-            print(loginUrl2)
+            JLog.debug("\(loginUrl2)")
             let params2 = ["destDev": [String]()] as [String: [String]]
 
             var request2 = URLRequest(url: loginUrl2)
@@ -294,21 +294,21 @@ public actor SMAInverter
             if let (data, _) = try? await session.data(for: request2)
             {
                 let string = String(data: data, encoding: .utf8)
-                print("Got:\(string)")
-                print("data:\(data.toHexString())")
+                JLog.debug("Got:\(string)")
+                JLog.debug("data:\(data.toHexString())")
 
                 let decoder = JSONDecoder()
                 if let getValuesResult = try? decoder.decode(GetValuesResult.self, from: data)
                 {
-                    print("values:\(getValuesResult)")
+                    JLog.debug("values:\(getValuesResult)")
 
                     for inverter in getValuesResult.result
                     {
-                        print("inverter:\(inverter.key)")
+                        JLog.debug("inverter:\(inverter.key)")
 
                         for value in inverter.value
                         {
-                            print("objectid:\(value.key)")
+                            JLog.debug("objectid:\(value.key)")
                             let smaDataObjects = await smaDataObjects
                             let translations = await translations
 
@@ -316,14 +316,16 @@ public actor SMAInverter
 
                             //                            if let smaobject = smaDataObjects[value.key]
                             //                            {
-                            //                                print("path:\( translate(translations:translations,tag:smaobject.TagHier) )/\( translate([smaobject.TagId]) ) unit:\( translate([smaobject.Unit]) ) scale: \( smaobject.Scale ?? Decimal.nan )")
+                            //                                JLog.debug("path:\( translate(translations:translations,tag:smaobject.TagHier) )/\( translate([smaobject.TagId]) ) unit:\( translate([smaobject.Unit]) ) scale: \( smaobject.Scale ?? Decimal.nan )")
                             //                            }
                             let values = value.value.values
                             for (number, singlevalue) in values.enumerated()
                             {
-                                switch singlevalue { case let .intValue(value): print("\(number).intValue:\(value == nil ? Decimal.nan : Decimal(value!) * scale)") case let .stringValue(value):
-                                        print("\(number).stringValue:\(value)")
-                                    case let .tagValues(values): print("\(number).tags:\(translate(translations: translations, tags: values))")
+                                switch singlevalue
+                                {
+                                    case let .intValue(value): JLog.debug("\(number).intValue:\(value == nil ? Decimal.nan : Decimal(value!) * scale)")
+                                    case let .stringValue(value): JLog.debug("\(number).stringValue:\(value)")
+                                    case let .tagValues(values): JLog.debug("\(number).tags:\(translate(translations: translations, tags: values))")
                                 }
                             }
                         }

@@ -50,7 +50,7 @@ class SunnyHomeManager: SunnyHomeManagerDelegate
         defer { knownDevices[remoteAddress]?.lastSeen = Date() }
         guard knownDevices[remoteAddress] == nil else { return }
 
-        JLog.debug("remoteAddress:\(remoteAddress)")
+        JLog.debug("Got new SMA Device with remoteAddress:\(remoteAddress)")
 
         knownDevices[remoteAddress] = SMADevice(address: remoteAddress, password: password, bindAddress: bindAddress)
     }
@@ -61,9 +61,8 @@ class SunnyHomeManager: SunnyHomeManagerDelegate
     {
         let packet = try await receiver.receiveNextPacket()
 
-        let hexEncodedData = packet.data.map { String(format: "%02X", $0) }.joined(separator: " ")
-        //        print("Received packet from \(packet.sourceAddress)")
-        print("Received packet from \(packet.sourceAddress): \(hexEncodedData)")
+        JLog.debug("Received packet from \(packet.sourceAddress)")
+//        JLog.debug("Received packet from \(packet.sourceAddress): \(packet.data.hexDump)")
 
         addRemote(remoteAddress: packet.sourceAddress)
 
@@ -71,22 +70,22 @@ class SunnyHomeManager: SunnyHomeManagerDelegate
         {
             if let sma = try? SMAPacket(data: packet.data)
             {
-                //                JLog.debug("Decoded from \(packet.sourceAddress)")
-                JLog.debug("Decoded from \(packet.sourceAddress): \(sma.json)")
+                JLog.debug("Decoded from \(packet.sourceAddress)")
+                JLog.trace("Decoded json:\(sma.json)")
 
                 for obisvalue in sma.obis
                 {
                     if obisvalue.mqtt != .invisible
                     {
-                        // Task.detached
-                        // {
-                        //                            try? await self.mqttPublisher.publish(to: obisvalue.topic, payload: obisvalue.json, qos:.atLeastOnce , retain:obisvalue.mqtt == .retained)
-                        // }
+                        Task.detached
+                        {
+                            try? await self.mqttPublisher.publish(to: obisvalue.topic, payload: obisvalue.json, qos: .atLeastOnce, retain: obisvalue.mqtt == .retained)
+                        }
                     } //                    if jsonOutput
                     //                    {
                     //                        var obisvalue = obisvalue
                     //                        obisvalue.includeTopicInJSON = true
-                    //                        print("\(obisvalue.json)")
+                    //                        JLog.debug("\(obisvalue.json)")
                     //                    }
                 }
             }

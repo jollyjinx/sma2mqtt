@@ -69,7 +69,9 @@ extension SMANetPacketValue: Encodable
         let factor = packetDefinition.factor
         let hasFactor = packetDefinition.factor != nil && packetDefinition.factor! != 0 && packetDefinition.factor! != 1
 
-        switch value { case let .uint(values):
+        switch value
+        {
+            case let .uint(values):
                 let toEncode = values.map { $0 == .max ? nil : (hasFactor ? Decimal($0) / factor! : Decimal($0)) }
                 try container.encode(toEncode, forKey: CodingKeys.value)
 
@@ -100,7 +102,9 @@ extension SMANetPacketValue: BinaryDecodable
 
         let valuetype = ValueType(rawValue: type) ?? .unknown
 
-        switch valuetype { case .uint:
+        switch valuetype
+        {
+            case .uint:
                 var values = [UInt32]()
                 while !decoder.isAtEnd
                 {

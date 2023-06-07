@@ -99,7 +99,9 @@ extension SMAPacket: BinaryDecodable
             let smaTagPacket = try SMATagPacket(fromBinary: decoder)
             let smaNetDecoder = BinaryDecoder(data: [UInt8](smaTagPacket.data))
 
-            switch smaTagPacket.type { case .end: endPacketRead = true
+            switch smaTagPacket.type
+            {
+                case .end: endPacketRead = true
 
                 case .group:
                     JLog.trace("tag0 :\(smaTagPacket)")
@@ -112,7 +114,9 @@ extension SMAPacket: BinaryDecodable
                     {
                         JLog.debug("got protocol id:\(String(format: "0x%x", protocolid))")
 
-                        switch protocolid { case 0x6069:
+                        switch protocolid
+                        {
+                            case 0x6069:
                                 JLog.debug("recognizing ObisPacket")
 
                                 let obisPacket = try ObisPacket(fromBinary: smaNetDecoder)
@@ -137,6 +141,6 @@ extension SMAPacket: BinaryDecodable
         }
         while !decoder.isAtEnd && !endPacketRead
 
-        print("\npayload:\(json)")
+        JLog.trace("\npayload:\(json)")
     }
 }

@@ -102,3 +102,22 @@ extension Data
         return chunks
     }
 }
+
+extension ProcessInfo
+{
+    func value(forArgument argument: String) -> String?
+    {
+        var lastTestArgument: String?
+
+        return arguments.compactMap
+        {
+            guard lastTestArgument == argument
+            else
+            {
+                lastTestArgument = $0
+                return nil
+            }
+            return $0
+        }.first
+    }
+}
