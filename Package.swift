@@ -20,8 +20,6 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-argument-parser", .upToNextMajor(from: "1.2.2")),
         .package(url: "https://github.com/apple/swift-nio.git", .upToNextMajor(from: "2.54.0")),
         .package(url: "https://github.com/swift-server-community/mqtt-nio", .upToNextMajor(from: "2.8.0")),
-//        .package(url: "https://github.com/crossroadlabs/Regex.git", .upToNextMajor(from: "1.2.0")),
-//        .package(url: "https://github.com/emqx/CocoaMQTT", .upToNextMajor(from: "1.0.8")),
         .package(url: "https://github.com/jollyjinx/BinaryCoder", from: "2.3.1"),
         .package(url: "https://github.com/jollyjinx/JLog", from: "0.0.4"),
     ],
@@ -34,7 +32,6 @@ let package = Package(
                 .product(name: "BinaryCoder", package: "BinaryCoder"),
                 .product(name: "NIO", package: "swift-nio"),
                 .product(name: "MQTTNIO", package: "mqtt-nio"),
-//                .product(name: "CocoaMQTT", package: "mqtt-nio"),
                 .product(name: "JLog", package: "JLog"),
             ]
         ),

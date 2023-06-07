@@ -15,7 +15,7 @@ actor MQTTPublisher
     let mqttClient: MQTTClient
     let emitInterval: Double
     let baseTopic: String
-    let dispatchQueue = DispatchQueue(label: "mqttQueue")
+    let mqttQueue = DispatchQueue(label: "mqttQueue")
     var lasttimeused = [String: Date]()
 
     init(hostname: String, port: Int, username: String? = nil, password _: String? = nil, emitInterval: Double = 1.0, baseTopic: String = "") async throws
@@ -25,10 +25,8 @@ actor MQTTPublisher
 
         mqttClient = MQTTClient(host: hostname, port: port, identifier: ProcessInfo().processName, eventLoopGroupProvider: .createNew, configuration: .init(userName: username, password: ""))
 
-        try await activateClient()
+        mqttQueue.async { _ = self.mqttClient.connect() }
     }
-
-    private func activateClient() async throws { if !mqttClient.isActive() { try await mqttClient.connect() } }
 
     func publish(to topic: String, payload: String, qos: MQTTQoS, retain: Bool) async throws
     {
@@ -40,16 +38,15 @@ actor MQTTPublisher
         guard timenow.timeIntervalSince(lasttime) > emitInterval else { return }
         lasttimeused[topic] = timenow
 
-        let byteBuffer = ByteBuffer(string: payload)
-
-//        try await activateClient()
-        dispatchQueue.async
+        mqttQueue.async
         {
+            let byteBuffer = ByteBuffer(string: payload)
+
             if !self.mqttClient.isActive()
             {
-                self.mqttClient.connect()
+                _ = self.mqttClient.connect()
             }
-            self.mqttClient.publish(to: topic, payload: byteBuffer, qos: qos, retain: retain)
+            _ = self.mqttClient.publish(to: topic, payload: byteBuffer, qos: qos, retain: retain)
         }
     }
 }
