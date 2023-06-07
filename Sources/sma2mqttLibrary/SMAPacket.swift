@@ -16,6 +16,12 @@ public struct SMAPacket: Encodable, Decodable
     public var obis: [ObisValue] { obisPackets.first?.obisvalues ?? [] }
 }
 
+enum SMAPacketType: UInt16
+{
+    case obisPacket = 0x6069
+    case netPacket = 0x6065
+}
+
 private struct SMATagPacket
 {
     let length: UInt16
@@ -110,25 +116,24 @@ extension SMAPacket: BinaryDecodable
                     group = groupnumber
 
                 case .net:
-                    if let protocolid = try? smaNetDecoder.decode(UInt16.self).bigEndian
+                    if let protocolid = try? smaNetDecoder.decode(UInt16.self).bigEndian,
+                       let packetType = SMAPacketType(rawValue: protocolid)
                     {
-                        JLog.debug("got protocol id:\(String(format: "0x%x", protocolid))")
+                        JLog.debug("got packetType:\(packetType)")
 
-                        switch protocolid
+                        switch packetType
                         {
-                            case 0x6069:
+                            case .obisPacket:
                                 JLog.debug("recognizing ObisPacket")
 
                                 let obisPacket = try ObisPacket(fromBinary: smaNetDecoder)
                                 obisPackets.append(obisPacket)
 
-                            case 0x6065:
+                            case .netPacket:
                                 JLog.debug("recognizing SMANetPacket")
 
                                 let smaNetPacket = try SMANetPacket(fromBinary: smaNetDecoder)
                                 smaNetPackets.append(smaNetPacket)
-
-                            default: JLog.error("protocol unknown.")
                         }
                     }
                     else
