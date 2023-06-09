@@ -29,13 +29,9 @@ import Logging
         @Option(name: .shortAndLong, help: "MQTT Server topic.") var basetopic: String = "sma/sunnymanager"
     #endif
 
-    #if DEBUG
-        @Option(name: .long, help: "Multicast Binding Listening Interface Address.") var bindAddress: String = "10.112.16.115"
-    #else
-        @Option(name: .long, help: "Multicast Binding Listening Interface Address.") var bindAddress: String = "0.0.0.0"
-    #endif
+    @Option(name: .long, help: "Multicast Binding Listening Interface Address.") var bindAddress: String = "0.0.0.0"
 
-    @Option(name: .long, help: "Multicast Binding Listening Port number.") var bindPort: UInt16 = 0
+    @Option(name: .long, help: "Multicast Binding Listening Port number.") var bindPort: UInt16 = 9522
 
     @Option(name: .long, help: "Multicast Group Address.") var mcastAddress: String = "239.12.255.254"
 
@@ -49,21 +45,20 @@ import Logging
         JLog.loglevel = Logger.Level(rawValue: debug) ?? Logger.Level.notice
         let mqttPublisher = try await MQTTPublisher(hostname: mqttServername, port: Int(mqttPort), username: mqttUsername, password: mqttPassword, emitInterval: interval, baseTopic: basetopic)
         let multicastGroups = [
-            "239.12.0.78",
-            "239.12.1.105", // 10.112.16.166
-            "239.12.1.153", // 10.112.16.127
-            "239.12.1.55", // 10.112.16.166
-            "239.12.1.87", // 10.112.16.107
+            //            "239.12.0.78",
+//            "239.12.1.105",
+//            "239.12.1.153",
+//            "239.12.1.55",
+//            "239.12.1.87",
 
-            "239.12.255.253",
+//            "239.12.255.252",
+//            "239.12.255.253",
             "239.12.255.254",
-            "239.12.255.255",
-
-            "239.192.0.0", //
-
-            "224.0.0.251", // 10.112.16.195
-
-            //                                    "239.192.0.0",      //
+//            "239.12.255.255",
+//
+//            "239.192.0.0", //
+//
+//            "224.0.0.251", // 10.112.16.195
         ]
 
         let sunnyHome = try await SunnyHomeManager(mqttPublisher: mqttPublisher,
@@ -71,19 +66,10 @@ import Logging
                                                    multicastPort: mcastPort,
                                                    bindAddress: bindAddress,
                                                    bindPort: bindPort,
-                                                   password: inverterPassword)
+                                                   password: inverterPassword,
+                                                   jsonOutput: json)
         sunnyHomeManagers.append(sunnyHome)
 
         while true { try await sunnyHome.receiveNext() }
-        //        for multicastGroup in multicastGroups
-        //        {
-        //            let sunnyHome = try SunnyHomeManager(mqttPublisher:mqttPublisher,multicastAddress:multicastGroup, multicastPort: Int(mcastPort), bindAddress:bindAddress,bindPort:Int(bindPort))
-        //            sunnyHomeManagers.append(sunnyHome)
-        //        }
-
-        //        dispatchMain()
-        try await Task.sleep(nanoseconds: UInt64(Int64.max - 10)) //        try await sunnyHome.shutdown()
-        //
-        //
     }
 }

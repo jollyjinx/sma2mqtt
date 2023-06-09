@@ -3,8 +3,10 @@ import JLog
 
 #if os(Linux)
     import Glibc
+    let SOCK_DGRAM_VALUE = Int32(SOCK_DGRAM.rawValue)
 #else
     import Darwin
+    let SOCK_DGRAM_VALUE = SOCK_DGRAM
 #endif
 
 struct Packet
@@ -16,7 +18,9 @@ struct Packet
 enum MulticastReceiverError: Error
 {
     case socketCreationFailed(Int32)
-    case socketOptionsSettingFailed(Int32)
+    case socketOptionReuseAddressFailed(Int32)
+    case socketOptionBroadcastFailed(Int32)
+    case socketOptionPreventMulticastLoopbackFailed(Int32)
     case socketBindingFailed(Int32)
     case multicastJoinFailed(Int32)
     case receiveError(Int32)
@@ -32,14 +36,12 @@ actor MulticastReceiver
     private var bufferSize: Int = 0
     private var isListening: Bool = true
 
-    init(groups: [String], listenAddress: String, listenPort: UInt16, bufferSize: Int = 65536) throws
+    init(groups: [String], bindAddress: String, listenPort: UInt16, bufferSize: Int = 65536) throws
     {
         self.bufferSize = bufferSize
         receiveBuffer = UnsafeMutablePointer<UInt8>.allocate(capacity: bufferSize)
 
-        JLog.debug("Started listening on \(listenAddress)")
-
-        let socketFileDescriptor = socket(AF_INET, SOCK_DGRAM, 0) // IPPROTO_UDP) // 0 , IPPROTO_MTP
+        let socketFileDescriptor = socket(AF_INET, SOCK_DGRAM_VALUE, 0) // IPPROTO_UDP) // 0 , IPPROTO_MTP
         self.socketFileDescriptor = socketFileDescriptor
         guard socketFileDescriptor != -1 else { throw MulticastReceiverError.socketCreationFailed(errno) }
 
@@ -47,20 +49,47 @@ actor MulticastReceiver
         guard setsockopt(socketFileDescriptor, SOL_SOCKET, SO_REUSEADDR, &reuseAddress, socklen_t(MemoryLayout<Int32>.size)) != -1
         else
         {
-            throw MulticastReceiverError.socketOptionsSettingFailed(errno)
+            throw MulticastReceiverError.socketOptionReuseAddressFailed(errno)
+        }
+
+        var enableBroadcast: Int32 = 1
+        guard setsockopt(socketFileDescriptor, SOL_SOCKET, SO_BROADCAST, &enableBroadcast, socklen_t(MemoryLayout<Int32>.size)) != -1
+        else
+        {
+            throw MulticastReceiverError.socketOptionBroadcastFailed(errno)
+        }
+
+        var preventReceivingOwnPacket: Int32 = 0
+        guard setsockopt(socketFileDescriptor, Int32(IPPROTO_IP), IP_MULTICAST_LOOP, &preventReceivingOwnPacket, socklen_t(MemoryLayout<Int32>.size)) != -1
+        else
+        {
+            throw MulticastReceiverError.socketOptionPreventMulticastLoopbackFailed(errno)
         }
 
         var socketAddress = sockaddr_in()
         socketAddress.sin_family = sa_family_t(AF_INET)
         socketAddress.sin_port = listenPort.bigEndian
-        socketAddress.sin_addr.s_addr = INADDR_ANY // inet_addr(listenAddress) // INADDR_ANY
+        socketAddress.sin_addr.s_addr = inet_addr(bindAddress) // INADDR_ANY
+//        socketAddress.sin_addr.s_addr = INADDR_ANY // INADDR_ANY
 
-        guard bind(socketFileDescriptor, sockaddr_cast(&socketAddress), socklen_t(MemoryLayout<sockaddr_in>.size)) != -1 else { throw MulticastReceiverError.socketBindingFailed(errno) }
+        guard bind(socketFileDescriptor, sockaddr_cast(&socketAddress), socklen_t(MemoryLayout<sockaddr_in>.size)) != -1
+        else
+        {
+            throw MulticastReceiverError.socketBindingFailed(errno)
+        }
+
+        JLog.debug("Started listening on \(bindAddress)")
 
         for group in groups
         {
-            var multicastRequest = ip_mreq(imr_multiaddr: in_addr(s_addr: inet_addr(group)), imr_interface: in_addr(s_addr: inet_addr(listenAddress))) // INADDR_ANY)) //
-            guard setsockopt(socketFileDescriptor, IPPROTO_IP, IP_ADD_MEMBERSHIP, &multicastRequest, socklen_t(MemoryLayout<ip_mreq>.size)) != -1
+            var multicastRequest = ip_mreq()
+            multicastRequest.imr_multiaddr.s_addr = inet_addr(group)
+            multicastRequest.imr_interface.s_addr = inet_addr(bindAddress)
+//            multicastRequest.imr_interface.s_addr = INADDR_ANY
+
+//            var multicastRequest = ip_mreq(imr_multiaddr: in_addr(s_addr: inet_addr(group)), imr_interface: in_addr(s_addr: INADDR_ANY)) // INADDR_ANY)) //
+//            var multicastRequest = ip_mreq(imr_multiaddr: in_addr(s_addr: inet_addr(group)), imr_interface: in_addr(s_addr: inet_addr(bindAddress))) // INADDR_ANY)) //
+            guard setsockopt(socketFileDescriptor, Int32(IPPROTO_IP), IP_ADD_MEMBERSHIP, &multicastRequest, socklen_t(MemoryLayout<ip_mreq>.size)) != -1
             else
             {
                 throw MulticastReceiverError.multicastJoinFailed(errno)
@@ -119,6 +148,31 @@ actor MulticastReceiver
         guard let addrString = inet_ntop(AF_INET, &addr, &addrBuffer, socklen_t(INET_ADDRSTRLEN)) else { throw MulticastReceiverError.addressStringConversionFailed(errno) }
 
         return Packet(data: Data(bytes: receiveBuffer!, count: bytesRead), sourceAddress: String(cString: addrString))
+    }
+
+    func sendPacket(data: [UInt8], address: String, port: UInt16)
+    {
+        var destinationAddress = sockaddr_in()
+
+        destinationAddress.sin_family = sa_family_t(AF_INET)
+        destinationAddress.sin_port = port.bigEndian
+        destinationAddress.sin_addr.s_addr = inet_addr(address)
+
+        let genericPointer = withUnsafePointer(to: &destinationAddress)
+        {
+            UnsafeRawPointer($0).assumingMemoryBound(to: sockaddr.self)
+        }
+
+        let sent = sendto(socketFileDescriptor, data, data.count, 0, genericPointer, socklen_t(MemoryLayout<sockaddr_in>.size))
+
+        if sent < 0
+        {
+            JLog.error("Could not sent Packet")
+        }
+        else
+        {
+            JLog.debug("Sent Packet successfull to:\(address):\(port) sent:\(sent) == \(data.count)")
+        }
     }
 }
 

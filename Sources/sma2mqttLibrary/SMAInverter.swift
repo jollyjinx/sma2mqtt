@@ -6,28 +6,9 @@
 //
 
 import Foundation
+import AsyncHTTPClient
 import JLog
-
-final class IgnoreCertificateDelegate: NSObject, URLSessionDelegate, @unchecked Sendable
-{
-    public func urlSession(_: URLSession, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void)
-    {
-        // Trust the certificate even if not valid
-        let urlCredential = URLCredential(trust: challenge.protectionSpace.serverTrust!)
-
-        completionHandler(.useCredential, urlCredential)
-    }
-}
-
-final class InverterURLSessionTaskDelegate: NSObject, URLSessionTaskDelegate, Sendable
-{
-    func urlSession(_: URLSession, didReceive challenge: URLAuthenticationChallenge) async -> (URLSession.AuthChallengeDisposition, URLCredential?)
-    {
-        let urlCredential = URLCredential(trust: challenge.protectionSpace.serverTrust!)
-
-        return (.useCredential, urlCredential)
-    }
-}
+import NIOSSL
 
 struct GetValuesResult: Decodable
 {
@@ -102,19 +83,10 @@ public actor SMAInverter
     let address: String
     let userright: UserRight
     let password: String
-    let bindAddress: String
+
     var loggedIn: Bool = false
     var scheme: String = "https"
-    let certificateDelegate = IgnoreCertificateDelegate()
-    let sessionTaskDelegate = InverterURLSessionTaskDelegate()
-    var session: URLSession
-    {
-        let config = URLSessionConfiguration.default
-        config.waitsForConnectivity = true
-        config.timeoutIntervalForResource = 1
-
-        return URLSession(configuration: config, delegate: certificateDelegate, delegateQueue: nil)
-    }
+    let httpClient: HTTPClient
 
     public enum UserRight: String
     {
@@ -122,12 +94,15 @@ public actor SMAInverter
         case installer = "istl"
     }
 
-    public init(address: String, userright: UserRight = .user, password: String = "00000", bindAddress: String = "0.0.0.0")
+    public init(address: String, userright: UserRight = .user, password: String = "00000")
     {
         self.address = address
         self.userright = userright
         self.password = password
-        self.bindAddress = bindAddress
+
+        var tlsConfiguration = TLSConfiguration.makeClientConfiguration()
+        tlsConfiguration.certificateVerification = .none
+        httpClient = HTTPClient(eventLoopGroupProvider: .createNew,configuration: .init(tlsConfiguration: tlsConfiguration))
     }
 
     public func setupConnection() async { await _setupConnection() }
@@ -149,10 +124,16 @@ public actor SMAInverter
 
         SCHEME_TEST: for scheme in ["https", "http"]
         {
-            if let url = URL(string: "\(scheme)://\(address)/"), let (_, response) = try? await session.data(for: URLRequest(url: url)), let httpResponse = response as? HTTPURLResponse,
-               httpResponse.statusCode == 200
+            if let url = URL(string: "\(scheme)://\(address)/")
             {
-                return scheme
+                let request = HTTPClientRequest(url: url.absoluteString)
+
+                if let response = try? await httpClient.execute(request,timeout: .seconds(10)),
+                response.status == .ok
+                {
+                    JLog.debug("url:\(url) got response: \(response)")
+                    return scheme
+                }
             }
         }
         JLog.error("no valid scheme found for \(address) - using http")
@@ -167,25 +148,38 @@ public actor SMAInverter
 
     func data(forPath path: String) async throws -> Data
     {
-        guard let url = URL(string: "\(scheme ?? "https")://\(address)\(path.hasPrefix("/") ? path : "/" + path)") else { throw InverterError.invalidURLError }
+        guard let url = URL(string: "\(scheme ?? "https")://\(address)\(path.hasPrefix("/") ? path : "/" + path)")
+        else { throw InverterError.invalidURLError }
+
+//        let request = HTTPClientRequest(url: "https://apple.com/")
+//        let response = try await httpClient.execute(request, timeout: .seconds(30))
+//        print("HTTP head", response)
+//        if response.status == .ok
+//        {
+//            let body = try await response.body.collect(upTo: 1024 * 1024) // 1 MB
+//            // handle body
+//        } else {
+//            // handle remote error
+//        }
+
 
         do
         {
-            var request = URLRequest(url: url)
-            request.httpMethod = "GET"
+            let request = HTTPClientRequest(url: url.absoluteString)
+            let response = try await httpClient.execute(request,timeout: .seconds(10))
+                JLog.debug("url:\(url) got response: \(response)")
 
-            //            let loginString = "\(self.userright.rawValue):\(self.password)"
-            //            if  let loginData = loginString.data(using: String.Encoding.utf8)
-            //            {
-            //                let base64LoginString = loginData.base64EncodedString()
-            //
-            //                request.setValue("Basic \(base64LoginString)", forHTTPHeaderField: "Authorization")
-            //            }
-            //
+            if response.status == .ok
+            {
+                let body = try await response.body.collect(upTo: 5 * 1024 * 1024) // 5 MB
+                let bytes = body.readableBytesView
 
-            let (data, response) = try await session.data(for: request)
+                return Data(bytes)
+            }
 
-            if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 { return data }
+//            let (data, response) = try await session.data(for: request)
+//
+//            if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 { return data }
             throw InverterError.invalidHTTPResponseError
         }
         catch
@@ -227,8 +221,7 @@ public actor SMAInverter
 
             if let jsonData = try? await data(forPath: "/data/l10n/en-US.json"), let translations = try? JSONDecoder().decode([String: String?].self, from: jsonData)
             {
-                _translations = Dictionary(
-                    uniqueKeysWithValues: translations.compactMap
+                _translations = Dictionary(uniqueKeysWithValues: translations.compactMap
                     {
                         guard let intvalue = Int($0) else { return nil }
                         guard let stringvalue = $1 else { return nil }
@@ -263,78 +256,78 @@ public actor SMAInverter
 
         // guard let scheme = self.scheme else { return }
 
-        let loginUrl = URL(string: "\(scheme)://\(address)/dyn/login.json")!
-
-        let params = ["right": userright.rawValue, "pass": password] as [String: String]
-
-        var request = URLRequest(url: loginUrl)
-        request.httpMethod = "POST"
-        request.httpBody = try? JSONSerialization.data(withJSONObject: params, options: [])
-        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-
-        let decoder = JSONDecoder()
-
-        if let (data, _) = try? await session.data(for: request, delegate: sessionTaskDelegate), let json = try? decoder.decode([String: [String: String]].self, from: data),
-           let sid = json["result"]?["sid"]
-        {
-            JLog.debug("\(json.description)")
-
-            let loginUrl2 = URL(string: "\(scheme)://\(address)/dyn/getAllOnlValues.json?sid=\(sid)")!
-            JLog.debug("\(loginUrl2)")
-            let params2 = ["destDev": [String]()] as [String: [String]]
-
-            var request2 = URLRequest(url: loginUrl2)
-            request2.httpMethod = "POST"
-            request2.httpBody = try! JSONSerialization.data(withJSONObject: params2, options: [])
-            //                request2.httpBody = """
-            // {"destDev":[],"keys":["6400_00260100","6400_00262200","6100_40263F00","7142_40495B00","6102_40433600","6100_40495B00","6800_088F2000","6102_40433800","6102_40633400","6100_402F2000","6100_402F1E00","7162_40495B00","6102_40633E00"]}
-            // """.data(using: .utf8)
-            request2.addValue("application/json", forHTTPHeaderField: "Content-Type")
-
-            if let (data, _) = try? await session.data(for: request2)
-            {
-                let string = String(data: data, encoding: .utf8)
-                JLog.debug("Got:\(string)")
-                JLog.debug("data:\(data.toHexString())")
-
-                let decoder = JSONDecoder()
-                if let getValuesResult = try? decoder.decode(GetValuesResult.self, from: data)
-                {
-                    JLog.debug("values:\(getValuesResult)")
-
-                    for inverter in getValuesResult.result
-                    {
-                        JLog.debug("inverter:\(inverter.key)")
-
-                        for value in inverter.value
-                        {
-                            JLog.debug("objectid:\(value.key)")
-                            let smaDataObjects = await smaDataObjects
-                            let translations = await translations
-
-                            let scale = smaDataObjects[value.key]?.Scale ?? Decimal(1.0)
-
-                            //                            if let smaobject = smaDataObjects[value.key]
-                            //                            {
-                            //                                JLog.debug("path:\( translate(translations:translations,tag:smaobject.TagHier) )/\( translate([smaobject.TagId]) ) unit:\( translate([smaobject.Unit]) ) scale: \( smaobject.Scale ?? Decimal.nan )")
-                            //                            }
-                            let values = value.value.values
-                            for (number, singlevalue) in values.enumerated()
-                            {
-                                switch singlevalue
-                                {
-                                    case let .intValue(value): JLog.debug("\(number).intValue:\(value == nil ? Decimal.nan : Decimal(value!) * scale)")
-                                    case let .stringValue(value): JLog.debug("\(number).stringValue:\(value)")
-                                    case let .tagValues(values): JLog.debug("\(number).tags:\(translate(translations: translations, tags: values))")
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            if let logoutURL = URL(string: "\(scheme)://\(address)/dyn/logout.json.json?sid=\(sid)") { _ = try? await session.data(from: logoutURL) }
-        }
+//        let loginUrl = URL(string: "\(scheme)://\(address)/dyn/login.json")!
+//
+//        let params = ["right": userright.rawValue, "pass": password] as [String: String]
+//
+//        var request = URLRequest(url: loginUrl)
+//        request.httpMethod = "POST"
+//        request.httpBody = try? JSONSerialization.data(withJSONObject: params, options: [])
+//        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+//
+//        let decoder = JSONDecoder()
+//
+//        if let (data, _) = try? await session.data(for: request, delegate: sessionTaskDelegate), let json = try? decoder.decode([String: [String: String]].self, from: data),
+//           let sid = json["result"]?["sid"]
+//        {
+//            JLog.debug("\(json.description)")
+//
+//            let loginUrl2 = URL(string: "\(scheme)://\(address)/dyn/getAllOnlValues.json?sid=\(sid)")!
+//            JLog.debug("\(loginUrl2)")
+//            let params2 = ["destDev": [String]()] as [String: [String]]
+//
+//            var request2 = URLRequest(url: loginUrl2)
+//            request2.httpMethod = "POST"
+//            request2.httpBody = try! JSONSerialization.data(withJSONObject: params2, options: [])
+//            //                request2.httpBody = """
+//            // {"destDev":[],"keys":["6400_00260100","6400_00262200","6100_40263F00","7142_40495B00","6102_40433600","6100_40495B00","6800_088F2000","6102_40433800","6102_40633400","6100_402F2000","6100_402F1E00","7162_40495B00","6102_40633E00"]}
+//            // """.data(using: .utf8)
+//            request2.addValue("application/json", forHTTPHeaderField: "Content-Type")
+//
+//            if let (data, _) = try? await session.data(for: request2)
+//            {
+//                let string = String(data: data, encoding: .utf8)
+//                JLog.debug("Got:\(string)")
+//                JLog.debug("data:\(data.toHexString())")
+//
+//                let decoder = JSONDecoder()
+//                if let getValuesResult = try? decoder.decode(GetValuesResult.self, from: data)
+//                {
+//                    JLog.debug("values:\(getValuesResult)")
+//
+//                    for inverter in getValuesResult.result
+//                    {
+//                        JLog.debug("inverter:\(inverter.key)")
+//
+//                        for value in inverter.value
+//                        {
+//                            JLog.debug("objectid:\(value.key)")
+//                            let smaDataObjects = await smaDataObjects
+//                            let translations = await translations
+//
+//                            let scale = smaDataObjects[value.key]?.Scale ?? Decimal(1.0)
+//
+//                            //                            if let smaobject = smaDataObjects[value.key]
+//                            //                            {
+//                            //                                JLog.debug("path:\( translate(translations:translations,tag:smaobject.TagHier) )/\( translate([smaobject.TagId]) ) unit:\( translate([smaobject.Unit]) ) scale: \( smaobject.Scale ?? Decimal.nan )")
+//                            //                            }
+//                            let values = value.value.values
+//                            for (number, singlevalue) in values.enumerated()
+//                            {
+//                                switch singlevalue
+//                                {
+//                                    case let .intValue(value): JLog.debug("\(number).intValue:\(value == nil ? Decimal.nan : Decimal(value!) * scale)")
+//                                    case let .stringValue(value): JLog.debug("\(number).stringValue:\(value)")
+//                                    case let .tagValues(values): JLog.debug("\(number).tags:\(translate(translations: translations, tags: values))")
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//
+//            if let logoutURL = URL(string: "\(scheme)://\(address)/dyn/logout.json.json?sid=\(sid)") { _ = try? await session.data(from: logoutURL) }
+//        }
     }
 
     var description: String

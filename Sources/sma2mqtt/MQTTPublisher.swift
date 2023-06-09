@@ -23,7 +23,7 @@ actor MQTTPublisher
         self.emitInterval = emitInterval
         self.baseTopic = baseTopic
 
-        mqttClient = MQTTClient(host: hostname, port: port, identifier: ProcessInfo().processName, eventLoopGroupProvider: .createNew, configuration: .init(userName: username, password: ""))
+        mqttClient = MQTTClient(host: hostname, port: port, identifier: ProcessInfo.processInfo.processName, eventLoopGroupProvider: .createNew, configuration: .init(userName: username, password: ""))
 
         mqttQueue.async { _ = self.mqttClient.connect() }
     }

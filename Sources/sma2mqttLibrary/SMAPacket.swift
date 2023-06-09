@@ -141,7 +141,8 @@ extension SMAPacket: BinaryDecodable
                         JLog.error("Could not decode protocolid of smaTagType:\(smaTagPacket.type) length:\(smaTagPacket.data.count) data:\(smaTagPacket.data.hexDump)")
                     }
 
-                case .unknown: JLog.warning("smaTagPacketType unknown:\(smaTagPacket.tag) length:\(smaTagPacket.data.count) data:\(smaTagPacket.data.hexDump)")
+                case .unknown:
+                    JLog.warning("smaTagPacketType unknown:\(smaTagPacket.tag) length:\(smaTagPacket.data.count) data:\(smaTagPacket.data.hexDump)")
             }
         }
         while !decoder.isAtEnd && !endPacketRead

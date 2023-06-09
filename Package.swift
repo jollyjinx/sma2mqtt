@@ -19,6 +19,8 @@ let package = Package(
         .package(url: "https://github.com/nicklockwood/SwiftFormat", from: "0.51.11"),
         .package(url: "https://github.com/apple/swift-argument-parser", .upToNextMajor(from: "1.2.2")),
         .package(url: "https://github.com/apple/swift-nio.git", .upToNextMajor(from: "2.54.0")),
+        .package(url: "https://github.com/apple/swift-nio-ssl.git", from: "2.14.1"),
+.package(url: "https://github.com/swift-server/async-http-client.git", from: "1.18.0"),
         .package(url: "https://github.com/swift-server-community/mqtt-nio", .upToNextMajor(from: "2.8.0")),
         .package(url: "https://github.com/jollyjinx/BinaryCoder", from: "2.3.1"),
         .package(url: "https://github.com/jollyjinx/JLog", from: "0.0.4"),
@@ -39,6 +41,8 @@ let package = Package(
             name: "sma2mqttLibrary",
             dependencies: [
                 .product(name: "BinaryCoder", package: "BinaryCoder"),
+                .product(name: "NIOSSL", package: "swift-nio-ssl"),
+                .product(name: "AsyncHTTPClient", package: "async-http-client"),
                 .product(name: "JLog", package: "JLog"),
             ],
             resources: [

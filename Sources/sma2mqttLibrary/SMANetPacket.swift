@@ -4,7 +4,6 @@
 //
 //  Created by Patrick Stein on 01.06.2022.
 //
-import AppKit
 import BinaryCoder
 import Foundation
 import JLog
