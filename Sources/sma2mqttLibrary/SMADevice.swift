@@ -5,8 +5,8 @@
 //  Created by Patrick Stein on 27.06.22.
 //
 
-import Foundation
 import AsyncHTTPClient
+import Foundation
 import JLog
 import NIOSSL
 
@@ -78,11 +78,14 @@ struct GetValuesResult: Decodable
     let result: [InverterName: [SMAObjectID: Result]]
 }
 
-public actor SMAInverter
+public actor SMADevice
 {
     let address: String
     let userright: UserRight
     let password: String
+
+    public var name: String
+    public var lastSeen = Date()
 
     var loggedIn: Bool = false
     var scheme: String = "https"
@@ -99,10 +102,15 @@ public actor SMAInverter
         self.address = address
         self.userright = userright
         self.password = password
-
+        name = address
         var tlsConfiguration = TLSConfiguration.makeClientConfiguration()
         tlsConfiguration.certificateVerification = .none
-        httpClient = HTTPClient(eventLoopGroupProvider: .createNew,configuration: .init(tlsConfiguration: tlsConfiguration))
+        httpClient = HTTPClient(eventLoopGroupProvider: .createNew, configuration: .init(tlsConfiguration: tlsConfiguration))
+    }
+
+    deinit
+    {
+        try? httpClient.syncShutdown()
     }
 
     public func setupConnection() async { await _setupConnection() }
@@ -112,6 +120,26 @@ public actor SMAInverter
         scheme = await schemeTest()
         _ = await smaDataObjects
         _ = await translations
+    }
+
+    public func receivedData(_ data: Data) -> SMAPacket?
+    {
+        lastSeen = Date()
+
+        guard !data.isEmpty
+        else
+        {
+            JLog.error("received empty packet")
+            return nil
+        }
+
+        guard let smaPacket = try? SMAPacket(data: data)
+        else
+        {
+            JLog.error("did not decode")
+            return nil
+        }
+        return smaPacket
     }
 
     private nonisolated func schemeTest() async -> String
@@ -128,8 +156,8 @@ public actor SMAInverter
             {
                 let request = HTTPClientRequest(url: url.absoluteString)
 
-                if let response = try? await httpClient.execute(request,timeout: .seconds(10)),
-                response.status == .ok
+                if let response = try? await httpClient.execute(request, timeout: .seconds(10)),
+                   response.status == .ok
                 {
                     JLog.debug("url:\(url) got response: \(response)")
                     return scheme
@@ -162,12 +190,11 @@ public actor SMAInverter
 //            // handle remote error
 //        }
 
-
         do
         {
             let request = HTTPClientRequest(url: url.absoluteString)
-            let response = try await httpClient.execute(request,timeout: .seconds(10))
-                JLog.debug("url:\(url) got response: \(response)")
+            let response = try await httpClient.execute(request, timeout: .seconds(10))
+            JLog.debug("url:\(url) got response: \(response)")
 
             if response.status == .ok
             {
@@ -222,11 +249,11 @@ public actor SMAInverter
             if let jsonData = try? await data(forPath: "/data/l10n/en-US.json"), let translations = try? JSONDecoder().decode([String: String?].self, from: jsonData)
             {
                 _translations = Dictionary(uniqueKeysWithValues: translations.compactMap
-                    {
-                        guard let intvalue = Int($0) else { return nil }
-                        guard let stringvalue = $1 else { return nil }
-                        return (intvalue, stringvalue)
-                    }
+                {
+                    guard let intvalue = Int($0) else { return nil }
+                    guard let stringvalue = $1 else { return nil }
+                    return (intvalue, stringvalue)
+                }
                 )
             }
             else
@@ -347,7 +374,7 @@ public actor SMAInverter
     }
 }
 
-extension SMAInverter
+extension SMADevice
 {
     func value(forObject _: String)
     {

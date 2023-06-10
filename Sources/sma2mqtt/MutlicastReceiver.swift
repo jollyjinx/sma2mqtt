@@ -31,18 +31,17 @@ enum MulticastReceiverError: Error
 
 actor MulticastReceiver
 {
-    private var socketFileDescriptor: Int32 = -1
-    private var receiveBuffer: UnsafeMutablePointer<UInt8>?
-    private var bufferSize: Int = 0
+    private let socketFileDescriptor: Int32
+//    private var receiveBuffer: UnsafeMutablePointer<UInt8>?
+    private let bufferSize: Int
     private var isListening: Bool = true
 
     init(groups: [String], bindAddress: String, listenPort: UInt16, bufferSize: Int = 65536) throws
     {
         self.bufferSize = bufferSize
-        receiveBuffer = UnsafeMutablePointer<UInt8>.allocate(capacity: bufferSize)
+//        receiveBuffer = UnsafeMutablePointer<UInt8>.allocate(capacity: bufferSize)
 
-        let socketFileDescriptor = socket(AF_INET, SOCK_DGRAM_VALUE, 0) // IPPROTO_UDP) // 0 , IPPROTO_MTP
-        self.socketFileDescriptor = socketFileDescriptor
+        socketFileDescriptor = socket(AF_INET, SOCK_DGRAM_VALUE, 0) // IPPROTO_UDP) // 0 , IPPROTO_MTP
         guard socketFileDescriptor != -1 else { throw MulticastReceiverError.socketCreationFailed(errno) }
 
         var reuseAddress: Int32 = 1
@@ -103,7 +102,7 @@ actor MulticastReceiver
     deinit
     {
         if socketFileDescriptor != -1 { close(socketFileDescriptor) }
-        receiveBuffer?.deallocate()
+//        receiveBuffer?.deallocate()
     }
 
     func startListening()
@@ -124,30 +123,28 @@ actor MulticastReceiver
     {
         try await withUnsafeThrowingContinuation
         { continuation in
-            do
+            DispatchQueue.global().async
             {
-                let receiveNext = try receiveNext()
+                func sockaddr_cast(_ ptr: UnsafeMutablePointer<some Any>) -> UnsafeMutablePointer<sockaddr> { UnsafeMutableRawPointer(ptr).assumingMemoryBound(to: sockaddr.self) }
+                var socketAddress = sockaddr_in()
+                var socketAddressLength = socklen_t(MemoryLayout<sockaddr_in>.size)
+                JLog.debug("recvfrom")
 
-                continuation.resume(returning: receiveNext)
+                let receiveBuffer = UnsafeMutablePointer<UInt8>.allocate(capacity: self.bufferSize)
+
+                let bytesRead = recvfrom(self.socketFileDescriptor, receiveBuffer, self.bufferSize, 0, sockaddr_cast(&socketAddress), &socketAddressLength)
+                guard bytesRead != -1 else { continuation.resume(throwing: MulticastReceiverError.receiveError(errno)); return }
+
+                var addr = socketAddress.sin_addr // sa.sin_addr
+                var addrBuffer = [CChar](repeating: 0, count: Int(INET_ADDRSTRLEN))
+                guard let addrString = inet_ntop(AF_INET, &addr, &addrBuffer, socklen_t(INET_ADDRSTRLEN)) else { continuation.resume(throwing: MulticastReceiverError.addressStringConversionFailed(errno)); return }
+
+                let packet = Packet(data: Data(bytes: receiveBuffer, count: bytesRead), sourceAddress: String(cString: addrString))
+                receiveBuffer.deallocate()
+
+                continuation.resume(returning: packet)
             }
-            catch { continuation.resume(throwing: error) }
         }
-    }
-
-    private func receiveNext() throws -> Packet
-    {
-        var socketAddress = sockaddr_in()
-        var socketAddressLength = socklen_t(MemoryLayout<sockaddr_in>.size)
-        JLog.debug("recvfrom")
-
-        let bytesRead = recvfrom(socketFileDescriptor, receiveBuffer, bufferSize, 0, sockaddr_cast(&socketAddress), &socketAddressLength)
-        guard bytesRead != -1 else { throw MulticastReceiverError.receiveError(errno) }
-
-        var addr = socketAddress.sin_addr // sa.sin_addr
-        var addrBuffer = [CChar](repeating: 0, count: Int(INET_ADDRSTRLEN))
-        guard let addrString = inet_ntop(AF_INET, &addr, &addrBuffer, socklen_t(INET_ADDRSTRLEN)) else { throw MulticastReceiverError.addressStringConversionFailed(errno) }
-
-        return Packet(data: Data(bytes: receiveBuffer!, count: bytesRead), sourceAddress: String(cString: addrString))
     }
 
     func sendPacket(data: [UInt8], address: String, port: UInt16)

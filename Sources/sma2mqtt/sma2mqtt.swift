@@ -41,7 +41,7 @@ import Logging
 
     func run() async throws
     {
-        var sunnyHomeManagers = [SunnyHomeManager]()
+        var sunnyHomeManagers = [SMALighthouse]()
         JLog.loglevel = Logger.Level(rawValue: debug) ?? Logger.Level.notice
         let mqttPublisher = try await MQTTPublisher(hostname: mqttServername, port: Int(mqttPort), username: mqttUsername, password: mqttPassword, emitInterval: interval, baseTopic: basetopic)
         let multicastGroups = [
@@ -61,13 +61,13 @@ import Logging
 //            "224.0.0.251", // 10.112.16.195
         ]
 
-        let sunnyHome = try await SunnyHomeManager(mqttPublisher: mqttPublisher,
-                                                   multicastAddresses: multicastGroups,
-                                                   multicastPort: mcastPort,
-                                                   bindAddress: bindAddress,
-                                                   bindPort: bindPort,
-                                                   password: inverterPassword,
-                                                   jsonOutput: json)
+        let sunnyHome = try await SMALighthouse(mqttPublisher: mqttPublisher,
+                                                multicastAddresses: multicastGroups,
+                                                multicastPort: mcastPort,
+                                                bindAddress: bindAddress,
+                                                bindPort: bindPort,
+                                                password: inverterPassword,
+                                                jsonOutput: json)
         sunnyHomeManagers.append(sunnyHome)
 
         while true { try await sunnyHome.receiveNext() }
