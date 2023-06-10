@@ -9,6 +9,10 @@ import AsyncHTTPClient
 import Foundation
 import JLog
 import NIOSSL
+import NIOCore
+import RegexBuilder
+
+
 
 struct GetValuesResult: Decodable
 {
@@ -78,23 +82,57 @@ struct GetValuesResult: Decodable
     let result: [InverterName: [SMAObjectID: Result]]
 }
 
+
+class HTTPClientProvider
+{
+static var sharedHttpClient:HTTPClient = {      var tlsConfiguration = TLSConfiguration.makeClientConfiguration()
+                                        tlsConfiguration.certificateVerification = .none
+
+                                return HTTPClient(eventLoopGroupProvider: .createNew, configuration: .init(tlsConfiguration: tlsConfiguration,
+                                                                                                                 timeout: .init(connect: .seconds(5), read: .seconds(10)),
+                                                                                                                 decompression: .enabled(limit: .none)))
+                            }()
+}
+
 public actor SMADevice
 {
     let address: String
     let userright: UserRight
     let password: String
 
-    public var name: String
     public var lastSeen = Date()
 
-    var loggedIn: Bool = false
-    var scheme: String = "https"
+    var loggedIn = false
+    var scheme = "https"
     let httpClient: HTTPClient
+
+    public var name: String
+    public var type: DeviceType = .unknown
+    private var _smaDataObjects: [String: SMADataObject]!
+    private var _translations: [Int: String]!
+
+    public enum HTTPScheme
+    {
+        case unknown
+        case http
+        case https
+    }
 
     public enum UserRight: String
     {
         case user = "usr"
         case installer = "istl"
+        case servicce = "svc"
+        case developer = "dvlp"
+    }
+
+    public enum DeviceType
+    {
+        case unknown
+        case sunnyhomemanager
+        case inverter
+        case batteryinverter
+        case hybridinverter
     }
 
     public init(address: String, userright: UserRight = .user, password: String = "00000")
@@ -103,21 +141,99 @@ public actor SMADevice
         self.userright = userright
         self.password = password
         name = address
-        var tlsConfiguration = TLSConfiguration.makeClientConfiguration()
-        tlsConfiguration.certificateVerification = .none
-        httpClient = HTTPClient(eventLoopGroupProvider: .createNew, configuration: .init(tlsConfiguration: tlsConfiguration))
+        httpClient = HTTPClientProvider.sharedHttpClient
+        Task
+        {
+            await findOutDeviceNameAndType()
+        }
     }
 
     deinit
     {
         try? httpClient.syncShutdown()
     }
+}
+
+extension SMADevice
+{
+    func findOutDeviceNameAndType() async
+    {
+        JLog.debug("findOut:\(address)")
+        // find out scheme
+        if let data = try? await data(forPath: "/"), !data.isEmpty
+        {
+            scheme = "https"
+        }
+        else
+        {
+            scheme = "http"
+        }
+
+        // SunnyHomeManager has 'Sunny Home Manager \d.\d' in http://address/legal_notices.txt
+        if let string = try? await string(forPath: "legal_notices.txt")
+        {
+            JLog.debug("\(address):got legal notice")
+            if let (_,version) = try? #/Sunny Home Manager (\d+\.\d+)/#.firstMatch(in: string)?.output
+            {
+                JLog.debug("\(address):got legal notice with match")
+
+                JLog.debug("\(address):SMA device found: Sunny Home Manager, version:\(version)")
+                name = "sunnymanager"
+                type = .sunnyhomemanager
+                return
+            }
+            JLog.debug("\(address):legal no match")
+        }
+        JLog.debug("\(address):not homemanager")
+
+        do
+        {
+            let jsonData = try await data(forPath: "/data/ObjectMetadata_Istl.json")
+
+            if let jsonString = String(data: jsonData, encoding: .utf8)
+            {
+                let smaDataObjects = try SMADataObject.dataObjects(from: jsonString)
+                _smaDataObjects = smaDataObjects
+            }
+            else
+            {
+                JLog.debug("\(address):unknown device - no objectmetadata found")
+                return
+            }
+        }
+        catch
+        {
+            JLog.error("error:\(error)")
+            return
+        }
+
+
+        if let jsonData = try? await data(forPath: "/data/l10n/en-US.json"),
+           let translations = try? JSONDecoder().decode([String: String?].self, from: jsonData)
+        {
+            _translations = Dictionary(uniqueKeysWithValues: translations.compactMap
+            {
+                guard let intvalue = Int($0) else { return nil }
+                guard let stringvalue = $1 else { return nil }
+                return (intvalue, stringvalue)
+            }
+            )
+        }
+        else
+        {
+            JLog.debug("\(address):unknown device - no translations found")
+            return
+        }
+
+        // now it's a device
+
+        JLog.debug("\(address):SMA device found:")
+    }
 
     public func setupConnection() async { await _setupConnection() }
 
     private func _setupConnection() async
     {
-        scheme = await schemeTest()
         _ = await smaDataObjects
         _ = await translations
     }
@@ -142,82 +258,55 @@ public actor SMADevice
         return smaPacket
     }
 
-    private nonisolated func schemeTest() async -> String
-    {
-        //        if address == "10.112.16.13"
-        //        {
-        //            scheme = "http"
-        //        }
-        //        return "https"
-
-        SCHEME_TEST: for scheme in ["https", "http"]
-        {
-            if let url = URL(string: "\(scheme)://\(address)/")
-            {
-                let request = HTTPClientRequest(url: url.absoluteString)
-
-                if let response = try? await httpClient.execute(request, timeout: .seconds(10)),
-                   response.status == .ok
-                {
-                    JLog.debug("url:\(url) got response: \(response)")
-                    return scheme
-                }
-            }
-        }
-        JLog.error("no valid scheme found for \(address) - using http")
-        return "http"
-    }
-
     enum InverterError: Error
     {
         case invalidURLError
         case invalidHTTPResponseError
     }
 
-    func data(forPath path: String) async throws -> Data
+    func string(forPath path: String, headers: [String: String] = [:]) async throws -> String
     {
-        guard let url = URL(string: "\(scheme ?? "https")://\(address)\(path.hasPrefix("/") ? path : "/" + path)")
-        else { throw InverterError.invalidURLError }
-
-//        let request = HTTPClientRequest(url: "https://apple.com/")
-//        let response = try await httpClient.execute(request, timeout: .seconds(30))
-//        print("HTTP head", response)
-//        if response.status == .ok
-//        {
-//            let body = try await response.body.collect(upTo: 1024 * 1024) // 1 MB
-//            // handle body
-//        } else {
-//            // handle remote error
-//        }
-
-        do
+        let data = try await data(forPath: path, headers: headers)
+        guard let string = String(data: data, encoding: .utf8) ?? String(data: data, encoding: .ascii)
+        else
         {
-            let request = HTTPClientRequest(url: url.absoluteString)
-            let response = try await httpClient.execute(request, timeout: .seconds(10))
-            JLog.debug("url:\(url) got response: \(response)")
-
-            if response.status == .ok
-            {
-                let body = try await response.body.collect(upTo: 5 * 1024 * 1024) // 5 MB
-                let bytes = body.readableBytesView
-
-                return Data(bytes)
-            }
-
-//            let (data, response) = try await session.data(for: request)
-//
-//            if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 { return data }
             throw InverterError.invalidHTTPResponseError
         }
-        catch
-        {
-            guard scheme == nil else { throw InverterError.invalidHTTPResponseError }
-            scheme = "http"
-        }
-        return try await data(forPath: path)
+        return string
     }
 
-    var _smaDataObjects: [String: SMADataObject]!
+    func data(forPath path: String, headers _: [String: String] = [:]) async throws -> Data
+    {
+        guard let url = URL(string: "\(scheme)://\(address)\(path.hasPrefix("/") ? path : "/" + path)")
+        else { throw InverterError.invalidURLError }
+
+        JLog.debug("requesting: \(url) for \(address)")
+        let request = HTTPClientRequest(url: url.absoluteString)
+        let response = try await httpClient.execute(request, timeout:.seconds(5))
+
+        JLog.debug("url:\(url) got response: \(response)")
+
+        if response.status == .ok
+        {
+            var receivedData = Data()
+
+            do
+            {
+                for try await buffer in response.body
+                {
+                    receivedData.append(Data(buffer:buffer))
+                }
+                print("url:\(url) receivedData:\(receivedData.count)")
+            }
+            catch
+            {
+                print("url:\(url) Error: \(error) receivedData:\(receivedData.count)")
+            }
+            return receivedData
+        }
+        throw InverterError.invalidURLError
+    }
+
     var smaDataObjects: [String: SMADataObject]
     {
         get async
@@ -239,7 +328,6 @@ public actor SMADevice
         }
     }
 
-    var _translations: [Int: String]!
     var translations: [Int: String]
     {
         get async
