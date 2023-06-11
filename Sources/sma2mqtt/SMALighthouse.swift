@@ -45,8 +45,8 @@ actor SMALighthouse
             while !Task.isCancelled
             {
                 try? await Task.sleep(for: .seconds(5))
-                guard !Task.isCancelled else { return }
                 JLog.debug("waited")
+                guard !Task.isCancelled else { return }
                 JLog.debug("sending discovery packet")
                 await sendDiscoveryPacketIfNeeded()
             }

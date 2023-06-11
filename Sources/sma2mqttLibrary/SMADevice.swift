@@ -30,21 +30,21 @@ struct GetValuesResult: Decodable
             if let intValue = try? container.decode(Int.self, forKey: CodingKeys.val)
             {
                 self = Value.intValue(intValue)
-                JLog.debug("int:\(intValue)")
+                JLog.trace("int:\(intValue)")
                 return
             }
             if let stringValue = try? container.decode(String.self, forKey: CodingKeys.val)
             {
                 self = Value.stringValue(stringValue)
-                JLog.debug("str:\(stringValue)")
+                JLog.trace("str:\(stringValue)")
                 return
             }
             if let tagArray = try? container.decode([[String: Int?]].self, forKey: CodingKeys.val)
             {
-                JLog.debug("tagArray:\(tagArray)")
+                JLog.trace("tagArray:\(tagArray)")
                 let tags = tagArray.map { $0["tag"] ?? nil }
                 self = Value.tagValues(tags)
-                JLog.debug("tags:\(tags)")
+                JLog.trace("tags:\(tags)")
                 return
             }
             _ = try container.decodeNil(forKey: CodingKeys.val)
@@ -106,7 +106,7 @@ public actor SMADevice
 
     public var name: String
     public var type: DeviceType = .unknown
-    private var smaDataObjects: [String: SMADataObject]!
+    private var smaObjectDefinitions: [String: SMADataObject]!
     private var translations: [Int: String]!
     private var sessionid: String?
 
@@ -209,15 +209,15 @@ extension SMADevice
         do
         {
             let response = try await string(forPath: "/data/ObjectMetadata_Istl.json")
-            let smaDataObjects = try SMADataObject.dataObjects(from: response.bodyString)
+            let smaObjectDefinitions = try SMADataObject.dataObjects(from: response.bodyString)
 
-            self.smaDataObjects = smaDataObjects
+            self.smaObjectDefinitions = smaObjectDefinitions
         }
         catch
         {
             JLog.error("\(address): no sma data object found \(error)- using default")
 
-            smaDataObjects = SMADataObject.defaultDataObjects
+            smaObjectDefinitions = SMADataObject.defaultDataObjects
         }
 
         do
@@ -266,42 +266,80 @@ extension SMADevice
         {
             let headers = [("Content-Type", "application/json")]
             let loginBody = try JSONSerialization.data(withJSONObject: ["destDev": [String]()], options: [])
-//            let response = try await data(forPath: "/dyn/getAllOnlValues.json",headers: .init(headers),httpMethod: .POST,requestBody: loginBody)
-            let response = try await data(forPath: "/dyn/getDashValues.json", headers: .init(headers), httpMethod: .POST, requestBody: loginBody)
+            let response = try await data(forPath: "/dyn/getAllOnlValues.json", headers: .init(headers), httpMethod: .POST, requestBody: loginBody)
+//            let response = try await data(forPath: "/dyn/getDashValues.json", headers: .init(headers), httpMethod: .POST, requestBody: loginBody)
+//            // {"destDev":[],"keys":["6400_00260100","6400_00262200","6100_40263F00","7142_40495B00","6102_40433600","6100_40495B00","6800_088F2000","6102_40433800","6102_40633400","6100_402F2000","6100_402F1E00","7162_40495B00","6102_40633E00"]}
 
+            JLog.trace("body:\(String(data: response.bodyData, encoding: .utf8) ?? response.bodyData.hexDump)")
             let decoder = JSONDecoder()
             let getValuesResult = try decoder.decode(GetValuesResult.self, from: response.bodyData)
 
             JLog.trace("values:\(getValuesResult)")
 
+            var retrievedInformation = [String: [String: Codable]]()
+
             for inverter in getValuesResult.result
             {
-                JLog.debug("inverter:\(inverter.key)")
+                JLog.trace("inverter:\(inverter.key)")
 
-                for value in inverter.value
+                for objectId in inverter.value
                 {
-                    JLog.debug("objectid:\(value.key)")
+                    JLog.trace("objectId:\(objectId.key)")
 
-                    let scale = smaDataObjects[value.key]?.Scale ?? Decimal(1.0)
+                    if let objectDefinition = smaObjectDefinitions[objectId.key]
+                    {
+                        var dictionary = [String: Codable]()
 
-                    if let smaobject = smaDataObjects[value.key]
-                    {
-                        JLog.debug("path:\(translate(translations: translations, tag: smaobject.TagHier))/\(translate([smaobject.TagId])) unit:\(translate([smaobject.Unit])) scale: \(smaobject.Scale ?? Decimal.nan)")
-                    }
-                    let values = value.value.values
-                    for (number, singlevalue) in values.enumerated()
-                    {
-                        switch singlevalue
+                        dictionary["object"] = objectId.key
+//                        dictionary["scale"] = objectDefinition.Scale ?? Decimal(1.0)
+                        dictionary["unit"] = translate(tag: objectDefinition.Unit)
+                        let path = "\(inverter.key)" + "/" + (translate(tags: objectDefinition.TagHier) + "/" + translate(tag: objectDefinition.TagId)).lowercased().replacing(#/ /#) { _ in "-" }
+                        if let eventID = objectDefinition.TagIdEventMsg
                         {
-                            case let .intValue(value): JLog.debug("\(number).intValue:\(value == nil ? Decimal.nan : Decimal(value!) * scale)")
-                            case let .stringValue(value): JLog.debug("\(number).stringValue:\(value)")
-                            case let .tagValues(values): JLog.debug("\(number).tags:\(translate(translations: translations, tags: values))")
+                            dictionary["event"] = translate(tag: eventID)
                         }
+
+                        var decimalValues = [Decimal?]()
+                        var stringValues = [String]()
+
+                        for (number, singlevalue) in objectId.value.values.enumerated()
+                        {
+                            switch singlevalue
+                            {
+                                case let .intValue(value): decimalValues.append(value == nil ? nil : Decimal(value!) * (objectDefinition.Scale ?? Decimal(1.0)))
+                                case let .stringValue(value): stringValues.append(value)
+                                case let .tagValues(values): stringValues.append("\(translate(tags: values))")
+                            }
+                        }
+
+                        if !decimalValues.isEmpty
+                        {
+                            dictionary["value"] = decimalValues.count == 1 ? decimalValues.first : decimalValues
+                        }
+                        else if !stringValues.isEmpty
+                        {
+                            dictionary["value"] = stringValues.count == 1 ? stringValues.first : stringValues
+                        }
+                        else
+                        {
+                            JLog.error("\(address):neiter number nor string Values in \(objectId.value)")
+                        }
+                        JLog.trace("\(dictionary)")
+
+                        retrievedInformation[path] = dictionary
+                    }
+                    else
+                    {
+                        JLog.error("cant find objectDefinition for \(objectId.key)")
                     }
                 }
             }
+            let data = try! JSONSerialization.data(withJSONObject: retrievedInformation, options: [])
+
+            JLog.debug("retrieved:\(String(data: data, encoding: .utf8) ?? "")")
         }
         JLog.debug("\(address):Successfull login")
+//            if let logoutURL = URL(string: "\(scheme)://\(address)/dyn/logout.json.json?sid=\(sid)") { _ = try? await session.data(from: logoutURL) }
     }
 
     func string(forPath path: String, headers: HTTPHeaders = .init(), httpMethod: HTTPMethod = .GET, requestBody: Data? = nil) async throws -> (headers: HTTPHeaders, bodyString: String)
@@ -362,11 +400,12 @@ extension SMADevice
         throw DeviceError.invalidURLError
     }
 
-    func translate(translations: [Int: String], tags: [Int?]) -> String
+    func translate(tag: Int?) -> String { translate(tags: [tag]) }
+    func translate(tags: [Int?]) -> String
     {
         if let tags = tags as? [Int]
         {
-            let string = tags.map { translations[$0] ?? "unknowntag" }.joined(separator: "/").lowercased().replacing(#/ /#) { _ in "_" }
+            let string = tags.map { translations[$0] ?? "unknown(\(String($0, radix: 16)))" }.joined(separator: "/")
             return string
         }
         else
@@ -376,82 +415,7 @@ extension SMADevice
     }
 
     public func values() async
-    {
-        // guard let scheme = self.scheme else { return }
-
-//        let loginUrl = URL(string: "\(scheme)://\(address)/dyn/login.json")!
-//
-//        let params = ["right": userright.rawValue, "pass": password] as [String: String]
-//
-//        var request = URLRequest(url: loginUrl)
-//        request.httpMethod = "POST"
-//        request.httpBody = try? JSONSerialization.data(withJSONObject: params, options: [])
-//        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-//
-//        let decoder = JSONDecoder()
-//
-//        if let (data, _) = try? await session.data(for: request, delegate: sessionTaskDelegate), let json = try? decoder.decode([String: [String: String]].self, from: data),
-//           let sid = json["result"]?["sid"]
-//        {
-//            JLog.debug("\(json.description)")
-//
-//            let loginUrl2 = URL(string: "\(scheme)://\(address)/dyn/getAllOnlValues.json?sid=\(sid)")!
-//            JLog.debug("\(loginUrl2)")
-//            let params2 = ["destDev": [String]()] as [String: [String]]
-//
-//            var request2 = URLRequest(url: loginUrl2)
-//            request2.httpMethod = "POST"
-//            request2.httpBody = try! JSONSerialization.data(withJSONObject: params2, options: [])
-//            //                request2.httpBody = """
-//            // {"destDev":[],"keys":["6400_00260100","6400_00262200","6100_40263F00","7142_40495B00","6102_40433600","6100_40495B00","6800_088F2000","6102_40433800","6102_40633400","6100_402F2000","6100_402F1E00","7162_40495B00","6102_40633E00"]}
-//            // """.data(using: .utf8)
-//            request2.addValue("application/json", forHTTPHeaderField: "Content-Type")
-//
-//            if let (data, _) = try? await session.data(for: request2)
-//            {
-//                let string = String(data: data, encoding: .utf8)
-//                JLog.debug("Got:\(string)")
-//                JLog.debug("data:\(data.toHexString())")
-//
-//                let decoder = JSONDecoder()
-//                if let getValuesResult = try? decoder.decode(GetValuesResult.self, from: data)
-//                {
-//                    JLog.debug("values:\(getValuesResult)")
-//
-//                    for inverter in getValuesResult.result
-//                    {
-//                        JLog.debug("inverter:\(inverter.key)")
-//
-//                        for value in inverter.value
-//                        {
-//                            JLog.debug("objectid:\(value.key)")
-//                            let smaDataObjects = await smaDataObjects
-//                            let translations = await translations
-//
-//                            let scale = smaDataObjects[value.key]?.Scale ?? Decimal(1.0)
-//
-//                            //                            if let smaobject = smaDataObjects[value.key]
-//                            //                            {
-//                            //                                JLog.debug("path:\( translate(translations:translations,tag:smaobject.TagHier) )/\( translate([smaobject.TagId]) ) unit:\( translate([smaobject.Unit]) ) scale: \( smaobject.Scale ?? Decimal.nan )")
-//                            //                            }
-//                            let values = value.value.values
-//                            for (number, singlevalue) in values.enumerated()
-//                            {
-//                                switch singlevalue
-//                                {
-//                                    case let .intValue(value): JLog.debug("\(number).intValue:\(value == nil ? Decimal.nan : Decimal(value!) * scale)")
-//                                    case let .stringValue(value): JLog.debug("\(number).stringValue:\(value)")
-//                                    case let .tagValues(values): JLog.debug("\(number).tags:\(translate(translations: translations, tags: values))")
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//
-//            if let logoutURL = URL(string: "\(scheme)://\(address)/dyn/logout.json.json?sid=\(sid)") { _ = try? await session.data(from: logoutURL) }
-//        }
-    }
+    {}
 
     var description: String
     {
