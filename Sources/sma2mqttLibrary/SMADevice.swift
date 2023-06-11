@@ -10,6 +10,7 @@ import Foundation
 import JLog
 import NIOCore
 import NIOSSL
+import NIOHTTP1
 import RegexBuilder
 
 struct GetValuesResult: Decodable
@@ -97,7 +98,7 @@ public actor SMADevice
     let userright: UserRight
     let password: String
 
-    public var lastSeen = Date()
+    public var lastSeen = Date.distantPast
 
     var loggedIn = false
     var scheme = "https"
@@ -107,13 +108,6 @@ public actor SMADevice
     public var type: DeviceType = .unknown
     private var _smaDataObjects: [String: SMADataObject]!
     private var _translations: [Int: String]!
-
-    public enum HTTPScheme
-    {
-        case unknown
-        case http
-        case https
-    }
 
     public enum UserRight: String
     {
@@ -162,7 +156,7 @@ extension SMADevice
     {
         JLog.debug("findOut:\(address)")
         // find out scheme
-        if let data = try? await data(forPath: "/"), !data.isEmpty
+        if let response = try? await data(forPath: "/"), !response.bodyData.isEmpty
         {
             scheme = "https"
         }
@@ -172,10 +166,10 @@ extension SMADevice
         }
 
         // SunnyHomeManager has 'Sunny Home Manager \d.\d' in http://address/legal_notices.txt
-        if let string = try? await string(forPath: "legal_notices.txt")
+        if let response = try? await string(forPath: "legal_notices.txt")
         {
             JLog.debug("\(address):got legal notice")
-            if let (_, version) = try? #/Sunny Home Manager (\d+\.\d+)/#.firstMatch(in: string)?.output
+            if let (_, version) = try? #/Sunny Home Manager (\d+\.\d+)/#.firstMatch(in: response.bodyString)?.output
             {
                 JLog.debug("\(address):got legal notice with match")
 
@@ -190,23 +184,22 @@ extension SMADevice
 
         do
         {
-            let jsonString = try await string(forPath: "/data/ObjectMetadata_Istl.json")
-            let smaDataObjects = try SMADataObject.dataObjects(from: jsonString)
+            let response = try await string(forPath: "/data/ObjectMetadata_Istl.json")
+            let smaDataObjects = try SMADataObject.dataObjects(from: response.bodyString)
 
             _smaDataObjects = smaDataObjects
         }
         catch
         {
-            JLog.error("error:\(error)")
-            JLog.error("no sma data object for \(address) - using default")
+            JLog.error("\(address): no sma data object found \(error)- using default")
 
             _smaDataObjects = SMADataObject.defaultDataObjects
         }
 
         do
         {
-            let jsonData = try await data(forPath: "/data/l10n/en-US.json")
-            let translations = try JSONDecoder().decode([String: String?].self, from: jsonData)
+            let response = try await data(forPath: "/data/l10n/en-US.json")
+            let translations = try JSONDecoder().decode([String: String?].self, from: response.bodyData)
 
             _translations = Dictionary(uniqueKeysWithValues: translations.compactMap
             {
@@ -217,8 +210,7 @@ extension SMADevice
         }
         catch
         {
-            JLog.error("error:\(error)")
-            JLog.error("no sma translations for \(address) - using default")
+            JLog.error("\(address): no translations found \(error)- using default")
 
             _translations = SMADataObject.defaultTranslations
         }
@@ -246,45 +238,49 @@ extension SMADevice
     }
 
 
-    func string(forPath path: String, headers: [String: String] = [:]) async throws -> String
+    func string(forPath path: String, headers: HTTPHeaders = .init() ,httpMethod: HTTPMethod = .GET) async throws -> (headers:HTTPHeaders,bodyString:String)
     {
-        let data = try await data(forPath: path, headers: headers)
+        let (headers,data) = try await data(forPath: path, headers: headers,httpMethod:httpMethod)
         guard let string = String(data: data, encoding: .utf8) ?? String(data: data, encoding: .ascii)
         else
         {
             throw DeviceError.invalidDataError("Could not decode webpage content to String \(#file)\(#line)")
         }
-        return string
+        return (headers:headers,bodyString:string)
     }
 
-    func data(forPath path: String, headers _: [String: String] = [:]) async throws -> Data
+    func data(forPath path: String, headers: HTTPHeaders = .init() , httpMethod: HTTPMethod = .GET) async throws -> (headers:HTTPHeaders,bodyData:Data)
     {
         guard let url = URL(string: "\(scheme)://\(address)\(path.hasPrefix("/") ? path : "/" + path)")
         else { throw DeviceError.invalidURLError }
 
         JLog.debug("requesting: \(url) for \(address)")
-        let request = HTTPClientRequest(url: url.absoluteString)
+        var request = HTTPClientRequest(url: url.absoluteString)
+        request.method = httpMethod
+        request.headers.add(contentsOf: headers)
+
         let response = try await httpClient.execute(request, timeout: .seconds(5))
 
         JLog.debug("url:\(url) got response: \(response)")
+        lastSeen = Date()
 
         if response.status == .ok
         {
-            var receivedData = Data()
+            var bodyData = Data()
 
             do
             {
                 for try await buffer in response.body
                 {
-                    receivedData.append(Data(buffer: buffer))
+                    bodyData.append(Data(buffer: buffer))
                 }
-                print("url:\(url) receivedData:\(receivedData.count)")
+                print("url:\(url) receivedData:\(bodyData.count)")
             }
             catch
             {
-                print("url:\(url) Error: \(error) receivedData:\(receivedData.count)")
+                print("url:\(url) Error: \(error) receivedData:\(bodyData.count)")
             }
-            return receivedData
+            return (headers:response.headers,bodyData:bodyData)
         }
         throw DeviceError.invalidURLError
     }
