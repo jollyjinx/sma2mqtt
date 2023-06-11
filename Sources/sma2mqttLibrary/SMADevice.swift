@@ -292,8 +292,18 @@ extension SMADevice
 
                         dictionary["object"] = objectId.key
 //                        dictionary["scale"] = objectDefinition.Scale ?? Decimal(1.0)
-                        dictionary["unit"] = translate(tag: objectDefinition.Unit)
-                        let path = "\(inverter.key)" + "/" + (translate(tags: objectDefinition.TagHier) + "/" + translate(tag: objectDefinition.TagId)).lowercased().replacing(#/ /#) { _ in "-" }
+                        let units = translate(tag: objectDefinition.Unit)
+
+                        if !units.isEmpty
+                        {
+                            dictionary["unit"] = units.count == 1 ? units.first : units
+                        }
+
+                        var pathComponents: [String] = [inverter.key]
+                        pathComponents.append(contentsOf: translate(tags: objectDefinition.TagHier))
+                        pathComponents.append(contentsOf: translate(tag: objectDefinition.TagId))
+                        let path = pathComponents.joined(separator: "/").lowercased().replacing(#/ /#) { _ in "-" }
+
                         if let eventID = objectDefinition.TagIdEventMsg
                         {
                             dictionary["event"] = translate(tag: eventID)
@@ -301,6 +311,7 @@ extension SMADevice
 
                         var decimalValues = [Decimal?]()
                         var stringValues = [String]()
+                        var tagValues = [String]()
 
                         for (number, singlevalue) in objectId.value.values.enumerated()
                         {
@@ -308,7 +319,7 @@ extension SMADevice
                             {
                                 case let .intValue(value): decimalValues.append(value == nil ? nil : Decimal(value!) * (objectDefinition.Scale ?? Decimal(1.0)))
                                 case let .stringValue(value): stringValues.append(value)
-                                case let .tagValues(values): stringValues.append("\(translate(tags: values))")
+                                case let .tagValues(values): tagValues.append(contentsOf: translate(tags: values))
                             }
                         }
 
@@ -319,6 +330,10 @@ extension SMADevice
                         else if !stringValues.isEmpty
                         {
                             dictionary["value"] = stringValues.count == 1 ? stringValues.first : stringValues
+                        }
+                        else if !tagValues.isEmpty
+                        {
+                            dictionary["value"] = tagValues.count == 1 ? tagValues.first : tagValues
                         }
                         else
                         {
@@ -400,18 +415,14 @@ extension SMADevice
         throw DeviceError.invalidURLError
     }
 
-    func translate(tag: Int?) -> String { translate(tags: [tag]) }
-    func translate(tags: [Int?]) -> String
+    func translate(tag: Int?) -> [String] { translate(tags: [tag]) }
+    func translate(tags: [Int?]) -> [String]
     {
         if let tags = tags as? [Int]
         {
-            let string = tags.map { translations[$0] ?? "unknown(\(String($0, radix: 16)))" }.joined(separator: "/")
-            return string
+            return tags.map { translations[$0] ?? "tag(\(String($0, radix: 16)))" }
         }
-        else
-        {
-            return "notags"
-        }
+        return [String]()
     }
 
     public func values() async
