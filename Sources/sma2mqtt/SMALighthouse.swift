@@ -17,26 +17,17 @@ actor SMALighthouse
     let jsonOutput: Bool
 
     let mcastReceiver: MulticastReceiver
-    var knownDevices = [String: SMADevice]()
+
+    private enum SMADeviceCacheEntry
+    {
+        case inProgress(Task<SMADevice, Never>)
+        case ready(SMADevice)
+    }
+
+    private var smaDeviceCache = [String: SMADeviceCacheEntry]()
 
     var lastDiscoveryRequestDate = Date.distantPast
     let disoveryRequestInterval = 10.0
-
-//    struct SMADeviceCache
-//    {
-//        let address: String
-//        var lastSeen = Date()
-//        var inverter: SMADevice
-//
-//        init(address: String, userright: SMADevice.UserRight = .user, password: String = "00000", bindAddress: String = "0.0.0.0")
-//        {
-//            self.address = address
-//            let inverter = SMADevice(address: address, userright: userright, password: password)
-//            self.inverter = inverter
-//
-//            Task { await inverter.values() }
-//        }
-//    }
 
     init(mqttPublisher: MQTTPublisher, multicastAddresses: [String], multicastPort: UInt16, bindAddress: String = "0.0.0.0", bindPort _: UInt16 = 0, password: String = "0000", jsonOutput: Bool) async throws
     {
@@ -44,8 +35,10 @@ actor SMALighthouse
         self.bindAddress = bindAddress
         self.mqttPublisher = mqttPublisher
         self.jsonOutput = jsonOutput
+
         mcastReceiver = try MulticastReceiver(groups: multicastAddresses, bindAddress: bindAddress, listenPort: multicastPort)
         await mcastReceiver.startListening()
+
         Task
         {
             while !Task.isCancelled
@@ -59,15 +52,26 @@ actor SMALighthouse
         }
     }
 
-    func remote(for remoteAddress: String) -> SMADevice
+    func remote(for remoteAddress: String) async -> SMADevice
     {
-        if let smaDevice = knownDevices[remoteAddress]
+        if let cacheEntry = smaDeviceCache[remoteAddress]
         {
-            return smaDevice
+            switch cacheEntry
+            {
+                case let .ready(smaDevice):
+                    return smaDevice
+                case let .inProgress(task):
+                    return await task.value
+            }
         }
+
         JLog.debug("Got new SMA Device with remoteAddress:\(remoteAddress)")
-        let smaDevice = SMADevice(address: remoteAddress, userright: .user, password: password)
-        knownDevices[remoteAddress] = smaDevice
+
+        let task = Task { await SMADevice(address: remoteAddress, userright: .user, password: password) }
+        smaDeviceCache[remoteAddress] = .inProgress(task)
+
+        let smaDevice = await task.value
+        smaDeviceCache[remoteAddress] = .ready(smaDevice)
         return smaDevice
     }
 
@@ -94,7 +98,7 @@ actor SMALighthouse
         JLog.debug("Received packet from \(packet.sourceAddress)")
 //        JLog.debug("Received packet from \(packet.sourceAddress): \(packet.data.hexDump)")
 
-        let smaDevice = remote(for: packet.sourceAddress)
+        let smaDevice = await remote(for: packet.sourceAddress)
 
         Task.detached
         {

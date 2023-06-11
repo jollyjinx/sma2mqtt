@@ -8,11 +8,9 @@
 import AsyncHTTPClient
 import Foundation
 import JLog
-import NIOSSL
 import NIOCore
+import NIOSSL
 import RegexBuilder
-
-
 
 struct GetValuesResult: Decodable
 {
@@ -82,16 +80,15 @@ struct GetValuesResult: Decodable
     let result: [InverterName: [SMAObjectID: Result]]
 }
 
-
-class HTTPClientProvider
+enum HTTPClientProvider
 {
-static var sharedHttpClient:HTTPClient = {      var tlsConfiguration = TLSConfiguration.makeClientConfiguration()
-                                        tlsConfiguration.certificateVerification = .none
+    static var sharedHttpClient: HTTPClient = { var tlsConfiguration = TLSConfiguration.makeClientConfiguration()
+        tlsConfiguration.certificateVerification = .none
 
-                                return HTTPClient(eventLoopGroupProvider: .createNew, configuration: .init(tlsConfiguration: tlsConfiguration,
-                                                                                                                 timeout: .init(connect: .seconds(5), read: .seconds(10)),
-                                                                                                                 decompression: .enabled(limit: .none)))
-                            }()
+        return HTTPClient(eventLoopGroupProvider: .createNew, configuration: .init(tlsConfiguration: tlsConfiguration,
+                                                                                   timeout: .init(connect: .seconds(5), read: .seconds(10)),
+                                                                                   decompression: .enabled(limit: .none)))
+    }()
 }
 
 public actor SMADevice
@@ -135,27 +132,32 @@ public actor SMADevice
         case hybridinverter
     }
 
-    public init(address: String, userright: UserRight = .user, password: String = "00000")
+    public init(address: String, userright: UserRight = .user, password: String = "00000") async
     {
         self.address = address
         self.userright = userright
         self.password = password
         name = address
         httpClient = HTTPClientProvider.sharedHttpClient
-        Task
-        {
-            await findOutDeviceNameAndType()
-        }
+        await findOutDeviceNameAndType()
     }
 
-    deinit
-    {
-        try? httpClient.syncShutdown()
-    }
+//    deinit
+//    {
+//        try? httpClient.syncShutdown()
+//    }
 }
 
 extension SMADevice
 {
+    enum DeviceError: Error
+    {
+        case invalidURLError
+        case invalidDataError(String)
+        case invalidHTTPResponseError
+    }
+
+
     func findOutDeviceNameAndType() async
     {
         JLog.debug("findOut:\(address)")
@@ -173,7 +175,7 @@ extension SMADevice
         if let string = try? await string(forPath: "legal_notices.txt")
         {
             JLog.debug("\(address):got legal notice")
-            if let (_,version) = try? #/Sunny Home Manager (\d+\.\d+)/#.firstMatch(in: string)?.output
+            if let (_, version) = try? #/Sunny Home Manager (\d+\.\d+)/#.firstMatch(in: string)?.output
             {
                 JLog.debug("\(address):got legal notice with match")
 
@@ -188,54 +190,39 @@ extension SMADevice
 
         do
         {
-            let jsonData = try await data(forPath: "/data/ObjectMetadata_Istl.json")
+            let jsonString = try await string(forPath: "/data/ObjectMetadata_Istl.json")
+            let smaDataObjects = try SMADataObject.dataObjects(from: jsonString)
 
-            if let jsonString = String(data: jsonData, encoding: .utf8)
-            {
-                let smaDataObjects = try SMADataObject.dataObjects(from: jsonString)
-                _smaDataObjects = smaDataObjects
-            }
-            else
-            {
-                JLog.debug("\(address):unknown device - no objectmetadata found")
-                return
-            }
+            _smaDataObjects = smaDataObjects
         }
         catch
         {
             JLog.error("error:\(error)")
-            return
+            JLog.error("no sma data object for \(address) - using default")
+
+            _smaDataObjects = SMADataObject.defaultDataObjects
         }
 
-
-        if let jsonData = try? await data(forPath: "/data/l10n/en-US.json"),
-           let translations = try? JSONDecoder().decode([String: String?].self, from: jsonData)
+        do
         {
+            let jsonData = try await data(forPath: "/data/l10n/en-US.json")
+            let translations = try JSONDecoder().decode([String: String?].self, from: jsonData)
+
             _translations = Dictionary(uniqueKeysWithValues: translations.compactMap
             {
                 guard let intvalue = Int($0) else { return nil }
                 guard let stringvalue = $1 else { return nil }
                 return (intvalue, stringvalue)
-            }
-            )
+            })
         }
-        else
+        catch
         {
-            JLog.debug("\(address):unknown device - no translations found")
-            return
+            JLog.error("error:\(error)")
+            JLog.error("no sma translations for \(address) - using default")
+
+            _translations = SMADataObject.defaultTranslations
         }
-
-        // now it's a device
-
         JLog.debug("\(address):SMA device found:")
-    }
-
-    public func setupConnection() async { await _setupConnection() }
-
-    private func _setupConnection() async
-    {
-        _ = await smaDataObjects
-        _ = await translations
     }
 
     public func receivedData(_ data: Data) -> SMAPacket?
@@ -258,11 +245,6 @@ extension SMADevice
         return smaPacket
     }
 
-    enum InverterError: Error
-    {
-        case invalidURLError
-        case invalidHTTPResponseError
-    }
 
     func string(forPath path: String, headers: [String: String] = [:]) async throws -> String
     {
@@ -270,7 +252,7 @@ extension SMADevice
         guard let string = String(data: data, encoding: .utf8) ?? String(data: data, encoding: .ascii)
         else
         {
-            throw InverterError.invalidHTTPResponseError
+            throw DeviceError.invalidDataError("Could not decode webpage content to String \(#file)\(#line)")
         }
         return string
     }
@@ -278,11 +260,11 @@ extension SMADevice
     func data(forPath path: String, headers _: [String: String] = [:]) async throws -> Data
     {
         guard let url = URL(string: "\(scheme)://\(address)\(path.hasPrefix("/") ? path : "/" + path)")
-        else { throw InverterError.invalidURLError }
+        else { throw DeviceError.invalidURLError }
 
         JLog.debug("requesting: \(url) for \(address)")
         let request = HTTPClientRequest(url: url.absoluteString)
-        let response = try await httpClient.execute(request, timeout:.seconds(5))
+        let response = try await httpClient.execute(request, timeout: .seconds(5))
 
         JLog.debug("url:\(url) got response: \(response)")
 
@@ -294,7 +276,7 @@ extension SMADevice
             {
                 for try await buffer in response.body
                 {
-                    receivedData.append(Data(buffer:buffer))
+                    receivedData.append(Data(buffer: buffer))
                 }
                 print("url:\(url) receivedData:\(receivedData.count)")
             }
@@ -304,52 +286,7 @@ extension SMADevice
             }
             return receivedData
         }
-        throw InverterError.invalidURLError
-    }
-
-    var smaDataObjects: [String: SMADataObject]
-    {
-        get async
-        {
-            if let _smaDataObjects { return _smaDataObjects }
-
-            if let data = try? await data(forPath: "/data/ObjectMetadata_Istl.json"), let jsonString = String(data: data, encoding: .utf8),
-               let smaDataObjects = try? SMADataObject.dataObjects(from: jsonString)
-            {
-                _smaDataObjects = smaDataObjects
-            }
-            else
-            {
-                JLog.error("no sma data object for \(address) - using default")
-                _smaDataObjects = SMADataObject.defaultDataObjects
-            }
-
-            return _smaDataObjects
-        }
-    }
-
-    var translations: [Int: String]
-    {
-        get async
-        {
-            if let _translations { return _translations }
-
-            if let jsonData = try? await data(forPath: "/data/l10n/en-US.json"), let translations = try? JSONDecoder().decode([String: String?].self, from: jsonData)
-            {
-                _translations = Dictionary(uniqueKeysWithValues: translations.compactMap
-                {
-                    guard let intvalue = Int($0) else { return nil }
-                    guard let stringvalue = $1 else { return nil }
-                    return (intvalue, stringvalue)
-                }
-                )
-            }
-            else
-            {
-                _translations = SMADataObject.defaultTranslations
-            }
-            return _translations
-        }
+        throw DeviceError.invalidURLError
     }
 
     func translate(translations: [Int: String], tags: [Int?]) -> String
@@ -367,8 +304,6 @@ extension SMADevice
 
     public func values() async
     {
-        await setupConnection()
-
         // guard let scheme = self.scheme else { return }
 
 //        let loginUrl = URL(string: "\(scheme)://\(address)/dyn/login.json")!
