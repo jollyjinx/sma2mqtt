@@ -9,8 +9,8 @@ import AsyncHTTPClient
 import Foundation
 import JLog
 import NIOCore
-import NIOSSL
 import NIOHTTP1
+import NIOSSL
 import RegexBuilder
 
 struct GetValuesResult: Decodable
@@ -106,8 +106,9 @@ public actor SMADevice
 
     public var name: String
     public var type: DeviceType = .unknown
-    private var _smaDataObjects: [String: SMADataObject]!
-    private var _translations: [Int: String]!
+    private var smaDataObjects: [String: SMADataObject]!
+    private var translations: [Int: String]!
+    private var sessionid: String?
 
     public enum UserRight: String
     {
@@ -126,20 +127,43 @@ public actor SMADevice
         case hybridinverter
     }
 
-    public init(address: String, userright: UserRight = .user, password: String = "00000") async
+    public init(address: String, userright: UserRight = .user, password: String = "00000") async throws
     {
         self.address = address
         self.userright = userright
         self.password = password
         name = address
         httpClient = HTTPClientProvider.sharedHttpClient
-        await findOutDeviceNameAndType()
+        try await findOutDeviceNameAndType()
     }
 
 //    deinit
 //    {
 //        try? httpClient.syncShutdown()
 //    }
+}
+
+public extension SMADevice
+{
+    func receivedData(_ data: Data) -> SMAPacket?
+    {
+        lastSeen = Date()
+
+        guard !data.isEmpty
+        else
+        {
+            JLog.error("received empty packet")
+            return nil
+        }
+
+        guard let smaPacket = try? SMAPacket(data: data)
+        else
+        {
+            JLog.error("did not decode")
+            return nil
+        }
+        return smaPacket
+    }
 }
 
 extension SMADevice
@@ -149,10 +173,10 @@ extension SMADevice
         case invalidURLError
         case invalidDataError(String)
         case invalidHTTPResponseError
+        case loginFailed
     }
 
-
-    func findOutDeviceNameAndType() async
+    func findOutDeviceNameAndType() async throws
     {
         JLog.debug("findOut:\(address)")
         // find out scheme
@@ -187,13 +211,13 @@ extension SMADevice
             let response = try await string(forPath: "/data/ObjectMetadata_Istl.json")
             let smaDataObjects = try SMADataObject.dataObjects(from: response.bodyString)
 
-            _smaDataObjects = smaDataObjects
+            self.smaDataObjects = smaDataObjects
         }
         catch
         {
             JLog.error("\(address): no sma data object found \(error)- using default")
 
-            _smaDataObjects = SMADataObject.defaultDataObjects
+            smaDataObjects = SMADataObject.defaultDataObjects
         }
 
         do
@@ -201,7 +225,7 @@ extension SMADevice
             let response = try await data(forPath: "/data/l10n/en-US.json")
             let translations = try JSONDecoder().decode([String: String?].self, from: response.bodyData)
 
-            _translations = Dictionary(uniqueKeysWithValues: translations.compactMap
+            self.translations = Dictionary(uniqueKeysWithValues: translations.compactMap
             {
                 guard let intvalue = Int($0) else { return nil }
                 guard let stringvalue = $1 else { return nil }
@@ -212,52 +236,105 @@ extension SMADevice
         {
             JLog.error("\(address): no translations found \(error)- using default")
 
-            _translations = SMADataObject.defaultTranslations
+            translations = SMADataObject.defaultTranslations
         }
-        JLog.debug("\(address):SMA device found:")
+
+        JLog.debug("\(address):SMA device found - logging in now")
+
+        // login now
+        if true
+        {
+            let headers = [("Content-Type", "application/json")]
+            let loginBody = try JSONSerialization.data(withJSONObject: ["right": userright.rawValue, "pass": password], options: [])
+            let response = try await data(forPath: "/dyn/login.json", headers: .init(headers), httpMethod: .POST, requestBody: loginBody)
+
+            let decoder = JSONDecoder()
+            let loginResult = try decoder.decode([String: [String: String]].self, from: response.bodyData)
+
+            guard let sid = loginResult["result"]?["sid"]
+            else
+            {
+                JLog.debug("\(address):Login failed: \(response)")
+
+                throw DeviceError.loginFailed
+            }
+            sessionid = sid
+        }
+
+        // get first time data
+        if true
+        {
+            let headers = [("Content-Type", "application/json")]
+            let loginBody = try JSONSerialization.data(withJSONObject: ["destDev": [String]()], options: [])
+//            let response = try await data(forPath: "/dyn/getAllOnlValues.json",headers: .init(headers),httpMethod: .POST,requestBody: loginBody)
+            let response = try await data(forPath: "/dyn/getDashValues.json", headers: .init(headers), httpMethod: .POST, requestBody: loginBody)
+
+            let decoder = JSONDecoder()
+            let getValuesResult = try decoder.decode(GetValuesResult.self, from: response.bodyData)
+
+            JLog.trace("values:\(getValuesResult)")
+
+            for inverter in getValuesResult.result
+            {
+                JLog.debug("inverter:\(inverter.key)")
+
+                for value in inverter.value
+                {
+                    JLog.debug("objectid:\(value.key)")
+
+                    let scale = smaDataObjects[value.key]?.Scale ?? Decimal(1.0)
+
+                    if let smaobject = smaDataObjects[value.key]
+                    {
+                        JLog.debug("path:\(translate(translations: translations, tag: smaobject.TagHier))/\(translate([smaobject.TagId])) unit:\(translate([smaobject.Unit])) scale: \(smaobject.Scale ?? Decimal.nan)")
+                    }
+                    let values = value.value.values
+                    for (number, singlevalue) in values.enumerated()
+                    {
+                        switch singlevalue
+                        {
+                            case let .intValue(value): JLog.debug("\(number).intValue:\(value == nil ? Decimal.nan : Decimal(value!) * scale)")
+                            case let .stringValue(value): JLog.debug("\(number).stringValue:\(value)")
+                            case let .tagValues(values): JLog.debug("\(number).tags:\(translate(translations: translations, tags: values))")
+                        }
+                    }
+                }
+            }
+        }
+        JLog.debug("\(address):Successfull login")
     }
 
-    public func receivedData(_ data: Data) -> SMAPacket?
+    func string(forPath path: String, headers: HTTPHeaders = .init(), httpMethod: HTTPMethod = .GET, requestBody: Data? = nil) async throws -> (headers: HTTPHeaders, bodyString: String)
     {
-        lastSeen = Date()
-
-        guard !data.isEmpty
-        else
-        {
-            JLog.error("received empty packet")
-            return nil
-        }
-
-        guard let smaPacket = try? SMAPacket(data: data)
-        else
-        {
-            JLog.error("did not decode")
-            return nil
-        }
-        return smaPacket
-    }
-
-
-    func string(forPath path: String, headers: HTTPHeaders = .init() ,httpMethod: HTTPMethod = .GET) async throws -> (headers:HTTPHeaders,bodyString:String)
-    {
-        let (headers,data) = try await data(forPath: path, headers: headers,httpMethod:httpMethod)
+        let (headers, data) = try await data(forPath: path, headers: headers, httpMethod: httpMethod, requestBody: requestBody)
         guard let string = String(data: data, encoding: .utf8) ?? String(data: data, encoding: .ascii)
         else
         {
             throw DeviceError.invalidDataError("Could not decode webpage content to String \(#file)\(#line)")
         }
-        return (headers:headers,bodyString:string)
+        return (headers: headers, bodyString: string)
     }
 
-    func data(forPath path: String, headers: HTTPHeaders = .init() , httpMethod: HTTPMethod = .GET) async throws -> (headers:HTTPHeaders,bodyData:Data)
+    func data(forPath path: String, headers: HTTPHeaders = .init(), httpMethod: HTTPMethod = .GET, requestBody: Data? = nil) async throws -> (headers: HTTPHeaders, bodyData: Data)
     {
-        guard let url = URL(string: "\(scheme)://\(address)\(path.hasPrefix("/") ? path : "/" + path)")
+        guard var url = URL(string: "\(scheme)://\(address)\(path.hasPrefix("/") ? path : "/" + path)")
         else { throw DeviceError.invalidURLError }
+
+        if let sessionid
+        {
+            url.append(queryItems: [URLQueryItem(name: "sid", value: sessionid)])
+        }
 
         JLog.debug("requesting: \(url) for \(address)")
         var request = HTTPClientRequest(url: url.absoluteString)
         request.method = httpMethod
+
         request.headers.add(contentsOf: headers)
+
+        if let requestBody
+        {
+            request.body = .bytes(requestBody)
+        }
 
         let response = try await httpClient.execute(request, timeout: .seconds(5))
 
@@ -280,7 +357,7 @@ extension SMADevice
             {
                 print("url:\(url) Error: \(error) receivedData:\(bodyData.count)")
             }
-            return (headers:response.headers,bodyData:bodyData)
+            return (headers: response.headers, bodyData: bodyData)
         }
         throw DeviceError.invalidURLError
     }

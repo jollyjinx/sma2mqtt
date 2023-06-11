@@ -20,8 +20,9 @@ actor SMALighthouse
 
     private enum SMADeviceCacheEntry
     {
-        case inProgress(Task<SMADevice, Never>)
+        case inProgress(Task<SMADevice, Error>)
         case ready(SMADevice)
+        case failed
     }
 
     private var smaDeviceCache = [String: SMADeviceCacheEntry]()
@@ -52,7 +53,7 @@ actor SMALighthouse
         }
     }
 
-    func remote(for remoteAddress: String) async -> SMADevice
+    func remote(for remoteAddress: String) async -> SMADevice?
     {
         if let cacheEntry = smaDeviceCache[remoteAddress]
         {
@@ -61,16 +62,24 @@ actor SMALighthouse
                 case let .ready(smaDevice):
                     return smaDevice
                 case let .inProgress(task):
-                    return await task.value
+                    return try? await task.value
+                case .failed:
+                    return nil
             }
         }
 
         JLog.debug("Got new SMA Device with remoteAddress:\(remoteAddress)")
 
-        let task = Task { await SMADevice(address: remoteAddress, userright: .user, password: password) }
+        let task = Task { try await SMADevice(address: remoteAddress, userright: .user, password: password) }
         smaDeviceCache[remoteAddress] = .inProgress(task)
 
-        let smaDevice = await task.value
+        guard let smaDevice = try? await task.value
+        else
+        {
+            JLog.error("\(remoteAddress): was not able to initialize - ignoring address")
+            smaDeviceCache[remoteAddress] = .failed
+            return nil
+        }
         smaDeviceCache[remoteAddress] = .ready(smaDevice)
         return smaDevice
     }
@@ -98,7 +107,12 @@ actor SMALighthouse
         JLog.debug("Received packet from \(packet.sourceAddress)")
 //        JLog.debug("Received packet from \(packet.sourceAddress): \(packet.data.hexDump)")
 
-        let smaDevice = await remote(for: packet.sourceAddress)
+        guard let smaDevice = await remote(for: packet.sourceAddress)
+        else
+        {
+            JLog.debug("\(packet.sourceAddress) ignoring as failed to initialize device")
+            return
+        }
 
         Task.detached
         {
