@@ -12,6 +12,7 @@ import NIOCore
 import NIOHTTP1
 import NIOSSL
 import RegexBuilder
+import NIOFoundationCompat
 
 struct GetValuesResult: Decodable
 {
@@ -325,7 +326,7 @@ extension SMADevice
                     var stringValues = [String]()
                     var tagValues = [String]()
 
-                    for (number, singlevalue) in objectId.value.values.enumerated()
+                    for (_, singlevalue) in objectId.value.values.enumerated()
                     {
                         switch singlevalue
                         {
@@ -382,11 +383,13 @@ extension SMADevice
     func data(forPath path: String, headers: HTTPHeaders = .init(), httpMethod: HTTPMethod = .GET, requestBody: Data? = nil) async throws -> (headers: HTTPHeaders, bodyData: Data)
     {
         guard var url = URL(string: "\(scheme)://\(address)\(path.hasPrefix("/") ? path : "/" + path)")
-        else { throw DeviceError.invalidURLError }
+        else {
+        throw DeviceError.invalidURLError
+        }
 
         if let sessionid
         {
-            url.append(queryItems: [URLQueryItem(name: "sid", value: sessionid)])
+            url = url.byAppendingQueryItems([URLQueryItem(name: "sid", value: sessionid)]) ?? url
         }
 
         JLog.debug("requesting: \(url) for \(address)")

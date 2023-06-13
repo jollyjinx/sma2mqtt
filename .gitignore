@@ -1,4 +1,5 @@
 .build/
+.build-linux/
 .swiftpm/
 Package.resolved
 Reverseengineering/

@@ -52,3 +52,22 @@ public extension Encodable
         return jsonData != nil ? String(data: jsonData!, encoding: .utf8) ?? "" : ""
     }
 }
+
+public extension URL
+{
+    func byAppendingQueryItems(_ queryItems: [URLQueryItem]) -> URL?
+    {
+        guard var urlComponents = URLComponents(url: self, resolvingAgainstBaseURL: false)
+        else
+        {
+            return nil
+        }
+
+        var items: [URLQueryItem] = urlComponents.queryItems ?? []
+        items.append(contentsOf: queryItems)
+
+        urlComponents.queryItems = items
+
+        return urlComponents.url
+    }
+}
