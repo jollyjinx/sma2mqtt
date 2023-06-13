@@ -9,10 +9,10 @@ import AsyncHTTPClient
 import Foundation
 import JLog
 import NIOCore
+import NIOFoundationCompat
 import NIOHTTP1
 import NIOSSL
 import RegexBuilder
-import NIOFoundationCompat
 
 struct GetValuesResult: Decodable
 {
@@ -171,6 +171,7 @@ extension SMADevice
 {
     enum DeviceError: Error
     {
+        case connectionError
         case invalidURLError
         case invalidDataError(String)
         case invalidHTTPResponseError
@@ -179,15 +180,17 @@ extension SMADevice
 
     func findOutDeviceNameAndType() async throws
     {
-        JLog.debug("findOut:\(address)")
+        JLog.debug("\(address):find out device type")
         // find out scheme
-        if let response = try? await data(forPath: "/"), !response.bodyData.isEmpty
+        if let response = try? await data(forPath: "/")
         {
             scheme = "https"
         }
         else
         {
             scheme = "http"
+
+            let response = try await data(forPath: "/")
         }
 
         // SunnyHomeManager has 'Sunny Home Manager \d.\d' in http://address/legal_notices.txt
@@ -243,42 +246,55 @@ extension SMADevice
         JLog.debug("\(address):SMA device found - logging in now")
 
         // login now
-        if true
-        {
-            let headers = [("Content-Type", "application/json")]
-            let loginBody = try JSONSerialization.data(withJSONObject: ["right": userright.rawValue, "pass": password], options: [])
-            let response = try await data(forPath: "/dyn/login.json", headers: .init(headers), httpMethod: .POST, requestBody: loginBody)
-
-            let decoder = JSONDecoder()
-            let loginResult = try decoder.decode([String: [String: String]].self, from: response.bodyData)
-
-            guard let sid = loginResult["result"]?["sid"]
-            else
-            {
-                JLog.debug("\(address):Login failed: \(response)")
-
-                throw DeviceError.loginFailed
-            }
-            sessionid = sid
-        }
+        sessionid = try await login()
+        JLog.debug("\(address):Successfull login")
 
         // get first time data
         if true
         {
-            _ = try await getInformationDictionary(for: "/dyn/getDashValues.json")
-            _ = try await getInformationDictionary(for: "/dyn/getAllOnlValues.json")
+            // {"destDev":[],"keys":["6400_00260100","6400_00262200","6100_40263F00","7142_40495B00","6102_40433600","6100_40495B00","6800_088F2000","6102_40433800","6102_40633400","6100_402F2000","6100_402F1E00","7162_40495B00","6102_40633E00"]}
+            try await getInformationDictionary(atPath: "/dyn/getDashValues.json")
+            try await getInformationDictionary(atPath: "/dyn/getAllOnlValues.json")
+            try await getInformationDictionary(atPath: "/dyn/getValues.json", requestIds: ["6800_10821E00"])
         }
 
-        JLog.debug("\(address):Successfull login")
-//            if let logoutURL = URL(string: "\(scheme)://\(address)/dyn/logout.json.json?sid=\(sid)") { _ = try? await session.data(from: logoutURL) }
+        try await logout()
+        JLog.debug("\(address):Successfull logout")
     }
 
-    func getInformationDictionary(for path: String) async throws -> [String: [String: Codable]]
+    func login() async throws -> String
     {
         let headers = [("Content-Type", "application/json")]
-        let loginBody = try JSONSerialization.data(withJSONObject: ["destDev": [String]()], options: [])
+        let loginBody = try JSONSerialization.data(withJSONObject: ["right": userright.rawValue, "pass": password], options: [])
+        let response = try await data(forPath: "/dyn/login.json", headers: .init(headers), httpMethod: .POST, requestBody: loginBody)
+
+        let decoder = JSONDecoder()
+        let loginResult = try decoder.decode([String: [String: String]].self, from: response.bodyData)
+
+        guard let sid = loginResult["result"]?["sid"] as? String
+        else
+        {
+            JLog.debug("\(address):Login failed: \(response)")
+
+            throw DeviceError.loginFailed
+        }
+        return sid
+    }
+
+    func logout() async throws
+    {
+        let headers = [("Content-Type", "application/json")]
+        try await data(forPath: "/dyn/logout.json", headers: .init(headers), httpMethod: .POST, requestBody: nil)
+    }
+
+    @discardableResult
+    func getInformationDictionary(atPath path: String, requestIds: [String] = [String]()) async throws -> [String: [String: Codable]]
+    {
+        let headers = [("Content-Type", "application/json")]
+
+        let postDictionary = requestIds.isEmpty ? ["destDev": [String]()] : ["destDev": [String](), "keys": requestIds]
+        let loginBody = try JSONSerialization.data(withJSONObject: postDictionary, options: [])
         let response = try await data(forPath: path, headers: .init(headers), httpMethod: .POST, requestBody: loginBody)
-//            // {"destDev":[],"keys":["6400_00260100","6400_00262200","6100_40263F00","7142_40495B00","6102_40433600","6100_40495B00","6800_088F2000","6102_40433800","6102_40633400","6100_402F2000","6100_402F1E00","7162_40495B00","6102_40633E00"]}
 
         JLog.trace("body:\(String(data: response.bodyData, encoding: .utf8) ?? response.bodyData.hexDump)")
         let decoder = JSONDecoder()
@@ -305,11 +321,13 @@ extension SMADevice
                     dictionary["write"] = objectDefinition.WriteLevel
 
 //                        dictionary["scale"] = objectDefinition.Scale ?? Decimal(1.0)
-                    let units = translate(tag: objectDefinition.Unit)
-
-                    if !units.isEmpty
+                    if let unit = objectDefinition.Unit
                     {
-                        dictionary["unit"] = units.count == 1 ? units.first : units
+                        dictionary["unit"] = translate(tag: unit).first
+                    }
+                    if let eventID = objectDefinition.TagIdEventMsg
+                    {
+                        dictionary["event"] = translate(tag: eventID).first
                     }
 
                     var pathComponents: [String] = [inverter.key]
@@ -317,10 +335,6 @@ extension SMADevice
                     pathComponents.append(contentsOf: translate(tag: objectDefinition.TagId))
                     let path = pathComponents.joined(separator: "/").lowercased().replacing(#/ /#) { _ in "-" }
 
-                    if let eventID = objectDefinition.TagIdEventMsg
-                    {
-                        dictionary["event"] = translate(tag: eventID)
-                    }
 
                     var decimalValues = [Decimal?]()
                     var stringValues = [String]()
@@ -369,6 +383,7 @@ extension SMADevice
         return retrievedInformation
     }
 
+    @discardableResult
     func string(forPath path: String, headers: HTTPHeaders = .init(), httpMethod: HTTPMethod = .GET, requestBody: Data? = nil) async throws -> (headers: HTTPHeaders, bodyString: String)
     {
         let (headers, data) = try await data(forPath: path, headers: headers, httpMethod: httpMethod, requestBody: requestBody)
@@ -380,11 +395,13 @@ extension SMADevice
         return (headers: headers, bodyString: string)
     }
 
+    @discardableResult
     func data(forPath path: String, headers: HTTPHeaders = .init(), httpMethod: HTTPMethod = .GET, requestBody: Data? = nil) async throws -> (headers: HTTPHeaders, bodyData: Data)
     {
         guard var url = URL(string: "\(scheme)://\(address)\(path.hasPrefix("/") ? path : "/" + path)")
-        else {
-        throw DeviceError.invalidURLError
+        else
+        {
+            throw DeviceError.invalidURLError
         }
 
         if let sessionid
@@ -426,7 +443,7 @@ extension SMADevice
             }
             return (headers: response.headers, bodyData: bodyData)
         }
-        throw DeviceError.invalidURLError
+        throw DeviceError.connectionError
     }
 
     func translate(tag: Int?) -> [String] { translate(tags: [tag]) }

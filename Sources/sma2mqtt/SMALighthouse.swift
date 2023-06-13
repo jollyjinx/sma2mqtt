@@ -72,15 +72,19 @@ actor SMALighthouse
         let task = Task { try await SMADevice(address: remoteAddress, userright: .user, password: password) }
         smaDeviceCache[remoteAddress] = .inProgress(task)
 
-        guard let smaDevice = try? await task.value
-        else
+        do
         {
-            JLog.error("\(remoteAddress): was not able to initialize - ignoring address")
+            let smaDevice = try await task.value
+            smaDeviceCache[remoteAddress] = .ready(smaDevice)
+            return smaDevice
+        }
+        catch
+        {
+            JLog.error("\(remoteAddress): was not able to initialize:\(error) - ignoring address")
+
             smaDeviceCache[remoteAddress] = .failed
             return nil
         }
-        smaDeviceCache[remoteAddress] = .ready(smaDevice)
-        return smaDevice
     }
 
     func shutdown() async throws { await mcastReceiver.shutdown() }
