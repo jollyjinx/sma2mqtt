@@ -496,7 +496,7 @@ extension SMADevice
     {
         if let tags = tags as? [Int]
         {
-            return tags.map { translations[$0] ?? "tag(\(String($0, radix: 16)))" }
+            return tags.map { translations[$0] ?? "tag-\(String($0))" }
         }
         return [String]()
     }
