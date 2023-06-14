@@ -107,8 +107,8 @@ public actor SMADevice
 
     public var name: String
     public var type: DeviceType = .unknown
-    private var smaObjectDefinitions: [String: SMADataObject]!
-    private var translations: [Int: String]!
+    private(set) var smaObjectDefinitions: [String: SMADataObject]!
+    private(set) var translations: [Int: String]!
     private var sessionid: String?
 
     public enum UserRight: String
@@ -250,12 +250,25 @@ extension SMADevice
         JLog.debug("\(address):Successfull login")
 
         // get first time data
+        if let deviceName = try await getDeviceName(), !deviceName.isEmpty
+        {
+            name = deviceName
+        }
+
         if true
         {
             // {"destDev":[],"keys":["6400_00260100","6400_00262200","6100_40263F00","7142_40495B00","6102_40433600","6100_40495B00","6800_088F2000","6102_40433800","6102_40633400","6100_402F2000","6100_402F1E00","7162_40495B00","6102_40633E00"]}
             try await getInformationDictionary(atPath: "/dyn/getDashValues.json")
             try await getInformationDictionary(atPath: "/dyn/getAllOnlValues.json")
             try await getInformationDictionary(atPath: "/dyn/getValues.json", requestIds: ["6800_10821E00"])
+            let allKeys = smaObjectDefinitions.keys.compactMap{ $0 as String}
+
+            for i in stride(from: 0, to: allKeys.count, by: 10)
+            {
+                let end = min(i + 10, allKeys.count)
+                let keys = Array(allKeys[i..<end])
+                try await getInformationDictionary(atPath: "/dyn/getValues.json", requestIds: keys)
+            }
         }
 
         try await logout()
@@ -281,6 +294,36 @@ extension SMADevice
         return sid
     }
 
+    func getDeviceName() async throws -> String?
+    {
+        let paths = smaObjectDefinitions.mapValues{
+            var tags = $0.TagHier
+            tags.append($0.TagId)
+            return translate(tags:tags).map{ $0.lowercased() }.joined(separator:"/").replacing(#/ /#){ _ in "-" }
+        }
+        JLog.trace("Devicename paths:\(paths)")
+        let devicenameKeys = paths.filter{ $0.value.hasSuffix("type-label/device-name") }.map{ $0.key }
+        JLog.trace("Devicename keys:\(devicenameKeys)")
+
+        guard !devicenameKeys.isEmpty
+        else
+        {
+            JLog.error("\(address) no type-label/device-name in smaDefinitions found - can't figure out name of device")
+            return nil
+        }
+
+        let deviceNameDictionary =  try await getInformationDictionary(atPath: "/dyn/getValues.json", requestIds: devicenameKeys )
+        JLog.trace("deviceNameDictionary:\(deviceNameDictionary)")
+        if let deviceName = deviceNameDictionary.first(where: {$0.key.hasSuffix("type-label/device-name") && !$0.value.isEmpty })?.key
+        {
+            JLog.trace("devicename: \(deviceName)")
+            return deviceName
+        }
+        JLog.notice("could not get deviceName.")
+
+        return nil
+    }
+
     func logout() async throws
     {
         let headers = [("Content-Type", "application/json")]
@@ -293,6 +336,8 @@ extension SMADevice
         let headers = [("Content-Type", "application/json")]
 
         let postDictionary = requestIds.isEmpty ? ["destDev": [String]()] : ["destDev": [String](), "keys": requestIds]
+
+        JLog.trace("keys:\(requestIds)")
         let loginBody = try JSONSerialization.data(withJSONObject: postDictionary, options: [])
         let response = try await data(forPath: path, headers: .init(headers), httpMethod: .POST, requestBody: loginBody)
 

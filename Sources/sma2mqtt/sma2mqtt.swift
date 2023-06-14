@@ -3,13 +3,16 @@ import Foundation
 import JLog
 import Logging
 
+extension Logger.Level : ExpressibleByArgument {}
+#if DEBUG
+    let defaultLoglevel:Logger.Level = .debug
+#else
+    let defaultLoglevel:Logger.Level = .notice
+#endif
+
 @main struct sma2mqtt: AsyncParsableCommand
 {
-    #if DEBUG
-        @Option(name: .shortAndLong, help: "optional debug output") var debug: String = "debug"
-    #else
-        @Option(name: .shortAndLong, help: "optional debug output") var debug: String = "notice"
-    #endif
+    @Option(help: "Set the log level.") var logLevel: Logger.Level = defaultLoglevel
 
     @Flag(name: .long, help: "send json output to stdout") var json: Bool = false
 
@@ -42,7 +45,13 @@ import Logging
     func run() async throws
     {
         var sunnyHomeManagers = [SMALighthouse]()
-        JLog.loglevel = Logger.Level(rawValue: debug) ?? Logger.Level.notice
+        JLog.loglevel = logLevel
+
+        if logLevel != defaultLoglevel
+        {
+            JLog.info("Loglevel: \(logLevel)")
+        }
+
         let mqttPublisher = try await MQTTPublisher(hostname: mqttServername, port: Int(mqttPort), username: mqttUsername, password: mqttPassword, emitInterval: interval, baseTopic: basetopic)
         let multicastGroups = [
             //            "239.12.0.78",
