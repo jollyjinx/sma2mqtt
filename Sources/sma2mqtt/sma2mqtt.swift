@@ -3,11 +3,11 @@ import Foundation
 import JLog
 import Logging
 
-extension Logger.Level : ExpressibleByArgument {}
+extension Logger.Level: ExpressibleByArgument {}
 #if DEBUG
-    let defaultLoglevel:Logger.Level = .debug
+    let defaultLoglevel: Logger.Level = .debug
 #else
-    let defaultLoglevel:Logger.Level = .notice
+    let defaultLoglevel: Logger.Level = .notice
 #endif
 
 @main struct sma2mqtt: AsyncParsableCommand

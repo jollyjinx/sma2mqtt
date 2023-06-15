@@ -261,13 +261,19 @@ extension SMADevice
             try await getInformationDictionary(atPath: "/dyn/getDashValues.json")
             try await getInformationDictionary(atPath: "/dyn/getAllOnlValues.json")
             try await getInformationDictionary(atPath: "/dyn/getValues.json", requestIds: ["6800_10821E00"])
-            let allKeys = smaObjectDefinitions.keys.compactMap{ $0 as String}
+            let allKeys = smaObjectDefinitions.keys.compactMap { $0 as String }
 
-            for i in stride(from: 0, to: allKeys.count, by: 10)
+            for key in allKeys
             {
-                let end = min(i + 10, allKeys.count)
-                let keys = Array(allKeys[i..<end])
-                try await getInformationDictionary(atPath: "/dyn/getValues.json", requestIds: keys)
+                do
+                {
+                    try await getInformationDictionary(atPath: "/dyn/getValues.json", requestIds: [key])
+                }
+                catch
+                {
+                    JLog.error("\(address) request failed for key:\(key)")
+                }
+                try await Task.sleep(nanoseconds: UInt64(0.05 * Double(NSEC_PER_SEC)))
             }
         }
 
@@ -296,13 +302,14 @@ extension SMADevice
 
     func getDeviceName() async throws -> String?
     {
-        let paths = smaObjectDefinitions.mapValues{
+        let paths = smaObjectDefinitions.mapValues
+        {
             var tags = $0.TagHier
             tags.append($0.TagId)
-            return translate(tags:tags).map{ $0.lowercased() }.joined(separator:"/").replacing(#/ /#){ _ in "-" }
+            return translate(tags: tags).map { $0.lowercased() }.joined(separator: "/").replacing(#/ /#) { _ in "-" }
         }
         JLog.trace("Devicename paths:\(paths)")
-        let devicenameKeys = paths.filter{ $0.value.hasSuffix("type-label/device-name") }.map{ $0.key }
+        let devicenameKeys = paths.filter { $0.value.hasSuffix("type-label/device-name") }.map(\.key)
         JLog.trace("Devicename keys:\(devicenameKeys)")
 
         guard !devicenameKeys.isEmpty
@@ -312,9 +319,9 @@ extension SMADevice
             return nil
         }
 
-        let deviceNameDictionary =  try await getInformationDictionary(atPath: "/dyn/getValues.json", requestIds: devicenameKeys )
+        let deviceNameDictionary = try await getInformationDictionary(atPath: "/dyn/getValues.json", requestIds: devicenameKeys)
         JLog.trace("deviceNameDictionary:\(deviceNameDictionary)")
-        if let deviceName = deviceNameDictionary.first(where: {$0.key.hasSuffix("type-label/device-name") && !$0.value.isEmpty })?.key
+        if let deviceName = deviceNameDictionary.first(where: { $0.key.hasSuffix("type-label/device-name") && !$0.value.isEmpty })?.key
         {
             JLog.trace("devicename: \(deviceName)")
             return deviceName
@@ -380,7 +387,6 @@ extension SMADevice
                     pathComponents.append(contentsOf: translate(tag: objectDefinition.TagId))
                     let path = pathComponents.joined(separator: "/").lowercased().replacing(#/ /#) { _ in "-" }
 
-
                     var decimalValues = [Decimal?]()
                     var stringValues = [String]()
                     var tagValues = [String]()
@@ -409,7 +415,8 @@ extension SMADevice
                     }
                     else
                     {
-                        JLog.error("\(address):neiter number nor string Values in \(objectId.value)")
+                        dictionary["value"] = nil
+                        JLog.error("\(address):neither number nor string Values in \(objectId)")
                     }
                     JLog.trace("\(dictionary)")
 
