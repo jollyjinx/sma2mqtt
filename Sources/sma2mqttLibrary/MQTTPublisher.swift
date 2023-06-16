@@ -10,7 +10,7 @@ import JLog
 import MQTTNIO
 import NIO
 
-actor MQTTPublisher
+public actor MQTTPublisher
 {
     let mqttClient: MQTTClient
     let emitInterval: Double
@@ -18,7 +18,7 @@ actor MQTTPublisher
     let mqttQueue = DispatchQueue(label: "mqttQueue")
     var lasttimeused = [String: Date]()
 
-    init(hostname: String, port: Int, username: String? = nil, password _: String? = nil, emitInterval: Double = 1.0, baseTopic: String = "") async throws
+    public init(hostname: String, port: Int, username: String? = nil, password _: String? = nil, emitInterval: Double = 1.0, baseTopic: String = "") async throws
     {
         self.emitInterval = emitInterval
         self.baseTopic = baseTopic
@@ -28,7 +28,7 @@ actor MQTTPublisher
         mqttQueue.async { _ = self.mqttClient.connect() }
     }
 
-    func publish(to topic: String, payload: String, qos: MQTTQoS, retain: Bool) async throws
+    public func publish(to topic: String, payload: String, qos: MQTTQoS, retain: Bool) async throws
     {
         let topic = "\(baseTopic)/\(topic)"
 

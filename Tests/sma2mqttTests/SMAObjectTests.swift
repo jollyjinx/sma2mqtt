@@ -54,4 +54,18 @@ final class SMAObjectTests: XCTestCase
 
         // try await Task.sleep(nanoseconds: UInt64( Int64.max-10) )
     }
+
+    func testSMAdefinition() async throws
+    {
+        let smaObjectDefinitions = SMADataObject.defaultDataObjects
+        let keys = smaObjectDefinitions.keys.compactMap { $0 as String }
+        let first = keys.first
+        print(first)
+    }
+
+    func testSMAName() async throws
+    {
+        let smaDevice = try await SMADevice(address: inverterAddress, userright: .user, password: inverterPassword)
+        let definitions = await smaDevice.smaObjectDefinitions
+    }
 }

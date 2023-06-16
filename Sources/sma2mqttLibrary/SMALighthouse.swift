@@ -9,7 +9,7 @@ import Foundation
 import JLog
 import sma2mqttLibrary
 
-actor SMALighthouse
+public actor SMALighthouse
 {
     let password: String
     let bindAddress: String
@@ -30,7 +30,7 @@ actor SMALighthouse
     var lastDiscoveryRequestDate = Date.distantPast
     let disoveryRequestInterval = 10.0
 
-    init(mqttPublisher: MQTTPublisher, multicastAddresses: [String], multicastPort: UInt16, bindAddress: String = "0.0.0.0", bindPort _: UInt16 = 0, password: String = "0000", jsonOutput: Bool) async throws
+    public init(mqttPublisher: MQTTPublisher, multicastAddresses: [String], multicastPort: UInt16, bindAddress: String = "0.0.0.0", bindPort _: UInt16 = 0, password: String = "0000", jsonOutput: Bool) async throws
     {
         self.password = password
         self.bindAddress = bindAddress
@@ -52,7 +52,7 @@ actor SMALighthouse
         }
     }
 
-    func remote(for remoteAddress: String) async -> SMADevice?
+    public func remote(for remoteAddress: String) async -> SMADevice?
     {
         if let cacheEntry = smaDeviceCache[remoteAddress]
         {
@@ -87,7 +87,7 @@ actor SMALighthouse
         }
     }
 
-    func shutdown() async throws { await mcastReceiver.shutdown() }
+    public func shutdown() async throws { await mcastReceiver.shutdown() }
 
     private func sendDiscoveryPacketIfNeeded() async
     {
@@ -101,7 +101,7 @@ actor SMALighthouse
         lastDiscoveryRequestDate = Date()
     }
 
-    func receiveNext() async throws
+    public func receiveNext() async throws
     {
 //        await sendDiscoveryPacketIfNeeded()
 

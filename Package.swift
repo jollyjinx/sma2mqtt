@@ -31,9 +31,6 @@ let package = Package(
             dependencies: [
                 "sma2mqttLibrary",
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
-                .product(name: "BinaryCoder", package: "BinaryCoder"),
-                .product(name: "NIO", package: "swift-nio"),
-                .product(name: "MQTTNIO", package: "mqtt-nio"),
                 .product(name: "JLog", package: "JLog"),
             ]
         ),
@@ -41,8 +38,11 @@ let package = Package(
             name: "sma2mqttLibrary",
             dependencies: [
                 .product(name: "BinaryCoder", package: "BinaryCoder"),
+//                .product(name: "BinaryCoder", package: "BinaryCoder"),
+                .product(name: "NIO", package: "swift-nio"),
                 .product(name: "NIOSSL", package: "swift-nio-ssl"),
                 .product(name: "AsyncHTTPClient", package: "async-http-client"),
+                .product(name: "MQTTNIO", package: "mqtt-nio"),
                 .product(name: "JLog", package: "JLog"),
             ],
             resources: [

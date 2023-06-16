@@ -2,6 +2,7 @@ import ArgumentParser
 import Foundation
 import JLog
 import Logging
+import sma2mqttLibrary
 
 extension Logger.Level: ExpressibleByArgument {}
 #if DEBUG
