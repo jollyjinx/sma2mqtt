@@ -43,6 +43,18 @@ extension Logger.Level: ExpressibleByArgument {}
 
     @Option(name: .long, help: "Inverter Password.") var inverterPassword: String = "0000"
 
+    @Option(name: .long, help: "Paths we are interested to update") var interestingPaths: [String] = [  "dc-side/dc-measurements/power",
+                                                                                                        "ac-side/grid-measurements/power",
+                                                                                                        "immediate/feedin",
+                                                                                                        "immediate/usage",
+                                                                                                        "immediate/gridfrequency",
+                                                                                                        "battery/state-of-charge",
+                                                                                                        "battery/battery-charge",
+                                                                                                        "battery/present-battery-charge",
+                                                                                                        "battery/present-battery-discharge",
+                                                                                                        "battery/battery/temperature",
+                                                                                                        "inverter/temperature"
+                                                                                                    ]
     func run() async throws
     {
         var sunnyHomeManagers = [SMALighthouse]()
@@ -77,6 +89,7 @@ extension Logger.Level: ExpressibleByArgument {}
                                                 bindAddress: bindAddress,
                                                 bindPort: bindPort,
                                                 password: inverterPassword,
+                                                interestingPaths: interestingPaths,
                                                 jsonOutput: json)
         sunnyHomeManagers.append(sunnyHome)
 

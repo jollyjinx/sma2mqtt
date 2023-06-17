@@ -100,6 +100,8 @@ public actor SMADevice
     let userright: UserRight
     let password: String
     let publisher: SMAPublisher?
+    let interestingPaths:[String]
+    var objectsToQueryContinously = Set<String>()
 
     public var lastSeen = Date.distantPast
 
@@ -114,6 +116,7 @@ public actor SMADevice
     private(set) var smaObjectDefinitions: [String: SMADataObject]!
     private(set) var translations: [Int: String]!
     private var sessionid: String?
+    private var refreshTask: Task<Void, Error>?
 
     public enum UserRight: String
     {
@@ -132,15 +135,34 @@ public actor SMADevice
         case hybridinverter
     }
 
-    public init(address: String, userright: UserRight = .user, password: String = "00000", publisher: SMAPublisher?) async throws
+    public init(address: String, userright: UserRight = .user, password: String = "00000", publisher: SMAPublisher? = nil,interestingPaths:[String] = []) async throws
     {
         self.address = address
         self.userright = userright
         self.password = password
         self.publisher = publisher
+        self.interestingPaths = interestingPaths
         name = address
         httpClient = HTTPClientProvider.sharedHttpClient
         try await findOutDeviceNameAndType()
+        if !objectsToQueryContinously.isEmpty
+        {
+            refreshTask = Task.detached {
+                var errorcounter = 0
+                while errorcounter < 100
+                {
+                    do {
+                        try await Task.sleep(nanoseconds: UInt64(10 * NSEC_PER_SEC) )
+                        try await self.queryInterestingObjects()
+                        errorcounter = 0
+                    } catch {
+                        JLog.error("\(address): Failed to query interesting objects: \(error)")
+                        errorcounter += 1
+                    }
+                }
+                JLog.error("\(address): too many erros")
+            }
+        }
     }
 
 //    deinit
@@ -151,13 +173,13 @@ public actor SMADevice
 
 public struct PublishedValue: Encodable
 {
-    let id: String
-    let prio: Int
-    let write: Int
-    var unit: String?
-    var scale: Decimal?
-    var event: String?
-    var values: [GetValuesResult.Value]
+//    let id: String
+//    let prio: Int
+//    let write: Int
+    let unit: String?
+    let scale: Decimal?
+//    let event: String?
+    let values: [GetValuesResult.Value]
 
     var stringValue: String?
     {
@@ -169,17 +191,19 @@ public struct PublishedValue: Encodable
         return nil
     }
 
+
+
     public func encode(to encoder: Encoder) throws
     {
-        enum CodingKeys: String, CodingKey { case id, prio, write, unit, scale, event, value }
+        enum CodingKeys: String, CodingKey { case  unit, scale, value } // id, prio, write, event, value }
         var container = encoder.container(keyedBy: CodingKeys.self)
 
-        try container.encode(id, forKey: .id)
-        try container.encode(prio, forKey: .prio)
-        try container.encode(write, forKey: .write)
+//        try container.encode(id, forKey: .id)
+//        try container.encode(prio, forKey: .prio)
+//        try container.encode(write, forKey: .write)
         try container.encode(unit, forKey: .unit)
         try container.encode(scale, forKey: .scale)
-        try container.encode(event, forKey: .event)
+//        try container.encode(event, forKey: .event)
 
         let compacted = values.compactMap { $0 }
         switch compacted.first
@@ -355,8 +379,11 @@ extension SMADevice
         if true
         {
             // {"destDev":[],"keys":["6400_00260100","6400_00262200","6100_40263F00","7142_40495B00","6102_40433600","6100_40495B00","6800_088F2000","6102_40433800","6102_40633400","6100_402F2000","6100_402F1E00","7162_40495B00","6102_40633E00"]}
+
             try await getInformationDictionary(atPath: "/dyn/getDashValues.json")
-//            try await getInformationDictionary(atPath: "/dyn/getAllOnlValues.json")
+            try await getInformationDictionary(atPath: "/dyn/getAllOnlValues.json")
+
+
 
 //            try await getInformationDictionary(atPath: "/dyn/getValues.json", requestIds: ["6800_10821E00"])
 //            let allKeys = smaObjectDefinitions.keys.compactMap { $0 as String }
@@ -375,9 +402,25 @@ extension SMADevice
 //            }
         }
 
-        try await logout()
+    //    try await logout()
+
         JLog.debug("\(address):Successfull logout")
     }
+
+    func queryInterestingObjects() async throws
+    {
+        if nil == sessionid
+        {
+            JLog.debug("\(address):Will Login")
+            sessionid = try await login()
+        }
+        JLog.debug("\(address):Successfull login")
+        try await getInformationDictionary(atPath: "/dyn/getValues.json", requestIds: Array(objectsToQueryContinously))
+//        JLog.debug("\(address):got information")
+//        try await logout()
+//        JLog.debug("\(address):Successfull logout")
+    }
+
 
     func login() async throws -> String
     {
@@ -434,10 +477,26 @@ extension SMADevice
     {
         let headers = [("Content-Type", "application/json")]
         try await data(forPath: "/dyn/logout.json", headers: .init(headers), httpMethod: .POST, requestBody: nil)
+        sessionid = nil
     }
 
     @discardableResult
     func getInformationDictionary(atPath path: String, requestIds: [String] = [String]()) async throws -> [String: PublishedValue]
+    {
+        do
+        {
+            return try await _getInformationDictionary(atPath: path, requestIds: requestIds)
+        }
+        catch
+        {
+            JLog.error("\(address): Failed request - setting session to nil")
+            sessionid = nil
+
+            throw error
+        }
+
+    }
+    func _getInformationDictionary(atPath path: String, requestIds: [String] = [String]()) async throws -> [String: PublishedValue]
     {
         let headers = [("Content-Type", "application/json")]
 
@@ -465,67 +524,37 @@ extension SMADevice
 
                 if let objectDefinition = smaObjectDefinitions[objectId.key]
                 {
-                    var singleValue = PublishedValue(id: objectId.key, prio: objectDefinition.Prio, write: objectDefinition.WriteLevel, scale: objectDefinition.Scale, values: objectId.value.values)
-//                        dictionary["scale"] = objectDefinition.Scale ?? Decimal(1.0)
-                    if let unit = objectDefinition.Unit
+                    var unit : String? = nil
+                    if let unitId = objectDefinition.Unit
                     {
-                        singleValue.unit = translate(tag: unit).first
+                        unit = translate(tag: unitId).first
                     }
-                    if let eventID = objectDefinition.TagIdEventMsg
-                    {
-                        singleValue.event = translate(tag: eventID).first
-                    }
+//                    let singleValue = PublishedValue(id: objectId.key, prio: objectDefinition.Prio, write: objectDefinition.WriteLevel, unit:unit, scale: objectDefinition.Scale, values: objectId.value.values)
+                    let singleValue = PublishedValue(unit:unit, scale: objectDefinition.Scale, values: objectId.value.values)
 
                     var pathComponents: [String] = [name]
                     pathComponents.append(contentsOf: translate(tags: objectDefinition.TagHier))
                     pathComponents.append(contentsOf: translate(tag: objectDefinition.TagId))
-                    let path = pathComponents.joined(separator: "/").lowercased().replacing(#/ /#) { _ in "-" }
+                    let mqttPath = pathComponents.joined(separator: "/").lowercased().replacing(#/ /#) { _ in "-" }
 
-//                    var decimalValues = [Decimal?]()
-//                    var stringValues = [String]()
-//                    var tagValues = [String]()
-//
-//                    let values = objectId.value.values
-//                    singleValue.value = objectId.value.values
+                    if  !objectsToQueryContinously.contains(objectId.key)
+                    {
+//                        !singleValue.values.compactMap{ $0 }.isEmpty
 
-//                    for (_, singlevalue) in objectId.value.values.enumerated()
-//                    {
-//                        switch singlevalue
-//                        {
-//                            case let .intValue(value): decimalValues.append(value == nil ? nil : Decimal(value!) * (objectDefinition.Scale ?? Decimal(1.0)))
-//                            case let .stringValue(value): stringValues.append(value)
-//                            case let .tagValues(values): tagValues.append(contentsOf: translate(tags: values))
-//                        }
-//                    }
-//
-//                    if !decimalValues.isEmpty
-//                    {
-//                        switch decimalValues.count
-//                        {
-//                            1: singleValue.value = decimalValues
-//                        dictionary["value"] = decimalValues.count == 1 ? decimalValues.first : decimalValues
-//                    }
-//                    else if !stringValues.isEmpty
-//                    {
-//                        dictionary["value"] = stringValues.count == 1 ? stringValues.first : stringValues
-//                    }
-//                    else if !tagValues.isEmpty
-//                    {
-//                        dictionary["value"] = tagValues.count == 1 ? tagValues.first : tagValues
-//                    }
-//                    else
-//                    {
-//                        dictionary["value"] = nil
-//                        JLog.error("\(address):neither number nor string Values in \(objectId)")
-//                    }
-//                    JLog.trace("\(singleValue)")
+                        if let _ = interestingPaths.first(where: { mqttPath.hasSuffix($0) })
+                        {
+                            objectsToQueryContinously.insert(objectId.key)
+                        }
+                        JLog.debug("\(address): objectsToQueryContinously:\(objectsToQueryContinously)")
+                    }
 
-                    retrievedInformation[path] = singleValue
+                    retrievedInformation[mqttPath] = singleValue
+
                     do
                     {
-                        if hasDeviceName
+                        if hasDeviceName && objectsToQueryContinously.contains(objectId.key)
                         {
-                            try await publisher?.publish(to: path, payload: singleValue.json, qos: .atMostOnce, retain: true)
+                            try await publisher?.publish(to: mqttPath, payload: singleValue.json, qos: .atMostOnce, retain: true)
                         }
                     }
                     catch
@@ -639,17 +668,17 @@ extension SMADevice
     }
 }
 
-extension SMADevice
-{
-    func value(forObject _: String)
-    {
-        //        if not logged in, log in
-        //          send command
-    }
-
-    func login() {}
-
-    func sendCommand() {}
-
-    func retrieveResults() {}
-}
+//extension SMADevice
+//{
+//    func value(forObject _: String)
+//    {
+//        //        if not logged in, log in
+//        //          send command
+//    }
+//
+//    func login() {}
+//
+//    func sendCommand() {}
+//
+//    func retrieveResults() {}
+//}

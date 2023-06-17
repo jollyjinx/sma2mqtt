@@ -13,6 +13,7 @@ public actor SMALighthouse
     let password: String
     let bindAddress: String
     let mqttPublisher: MQTTPublisher
+    let interestingPaths:[String]
     let jsonOutput: Bool
 
     let mcastReceiver: MulticastReceiver
@@ -29,12 +30,13 @@ public actor SMALighthouse
     var lastDiscoveryRequestDate = Date.distantPast
     let disoveryRequestInterval = 10.0
 
-    public init(mqttPublisher: MQTTPublisher, multicastAddresses: [String], multicastPort: UInt16, bindAddress: String = "0.0.0.0", bindPort _: UInt16 = 0, password: String = "0000", jsonOutput: Bool) async throws
+    public init(mqttPublisher: MQTTPublisher, multicastAddresses: [String], multicastPort: UInt16, bindAddress: String = "0.0.0.0", bindPort _: UInt16 = 0, password: String = "0000", interestingPaths:[String] = [] , jsonOutput: Bool = false) async throws
     {
         self.password = password
         self.bindAddress = bindAddress
         self.mqttPublisher = mqttPublisher
         self.jsonOutput = jsonOutput
+        self.interestingPaths = interestingPaths
 
         mcastReceiver = try MulticastReceiver(groups: multicastAddresses, bindAddress: bindAddress, listenPort: multicastPort)
         await mcastReceiver.startListening()
@@ -68,7 +70,7 @@ public actor SMALighthouse
 
         JLog.debug("Got new SMA Device with remoteAddress:\(remoteAddress)")
 
-        let task = Task { try await SMADevice(address: remoteAddress, userright: .user, password: password, publisher: mqttPublisher) }
+        let task = Task { try await SMADevice(address: remoteAddress, userright: .user, password: password, publisher: mqttPublisher, interestingPaths:interestingPaths) }
         smaDeviceCache[remoteAddress] = .inProgress(task)
 
         do
