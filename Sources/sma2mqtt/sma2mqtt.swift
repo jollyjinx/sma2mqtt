@@ -28,9 +28,9 @@ extension Logger.Level: ExpressibleByArgument {}
     @Option(name: .shortAndLong, help: "Interval to send updates to mqtt Server.") var interval: Double = 1.0
 
     #if DEBUG
-        @Option(name: .shortAndLong, help: "MQTT Server topic.") var basetopic: String = "example/sma/sunnymanager"
+        @Option(name: .shortAndLong, help: "MQTT Server topic.") var basetopic: String = "example/sma/"
     #else
-        @Option(name: .shortAndLong, help: "MQTT Server topic.") var basetopic: String = "sma/sunnymanager"
+        @Option(name: .shortAndLong, help: "MQTT Server topic.") var basetopic: String = "sma/"
     #endif
 
     @Option(name: .long, help: "Multicast Binding Listening Interface Address.") var bindAddress: String = "0.0.0.0"

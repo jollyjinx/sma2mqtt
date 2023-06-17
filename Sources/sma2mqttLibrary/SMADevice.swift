@@ -14,7 +14,6 @@ import NIOHTTP1
 import NIOSSL
 import RegexBuilder
 
-
 struct GetValuesResult: Decodable
 {
     enum Value: Decodable
@@ -99,6 +98,7 @@ public actor SMADevice
     let address: String
     let userright: UserRight
     let password: String
+    let publisher: SMAPublisher?
 
     public var lastSeen = Date.distantPast
 
@@ -129,11 +129,12 @@ public actor SMADevice
         case hybridinverter
     }
 
-    public init(address: String, userright: UserRight = .user, password: String = "00000") async throws
+    public init(address: String, userright: UserRight = .user, password: String = "00000", publisher: SMAPublisher?) async throws
     {
         self.address = address
         self.userright = userright
         self.password = password
+        self.publisher = publisher
         name = address
         httpClient = HTTPClientProvider.sharedHttpClient
         try await findOutDeviceNameAndType()
@@ -144,6 +145,86 @@ public actor SMADevice
 //        try? httpClient.syncShutdown()
 //    }
 }
+
+public struct PublishedValue: Encodable
+{
+    let id: String
+    let prio: Int
+    let write: Int
+    var unit: String?
+    var scale: Decimal?
+    var event: String?
+    var values: [GetValuesResult.Value]
+
+    var stringValue: String?
+    {
+        if values.count == 1,
+           case let .stringValue(stringValue) = values.first
+        {
+            return stringValue
+        }
+        return nil
+    }
+
+    public func encode(to encoder: Encoder) throws
+    {
+        enum CodingKeys: String, CodingKey { case id, prio, write, unit, scale, event, value }
+        var container = encoder.container(keyedBy: CodingKeys.self)
+
+        try container.encode(id, forKey: .id)
+        try container.encode(prio, forKey: .prio)
+        try container.encode(write, forKey: .write)
+        try container.encode(unit, forKey: .unit)
+        try container.encode(scale, forKey: .scale)
+        try container.encode(event, forKey: .event)
+
+        let compacted = values.compactMap { $0 }
+        switch compacted.first
+        {
+            case .stringValue:
+                let stringValues: [String?] = values.map
+                {
+                    if case let .stringValue(value) = $0
+                    {
+                        return value
+                    }
+                    return nil
+                }
+                if stringValues.count > 1
+                {
+                    try container.encode(stringValues, forKey: .value)
+                }
+                else
+                {
+                    try container.encode(stringValues.first, forKey: .value)
+                }
+
+            case .intValue:
+                let intValues: [Int?] = values.map
+                {
+                    if case let .intValue(value) = $0
+                    {
+                        return value
+                    }
+                    return nil
+                }
+                if intValues.count > 1
+                {
+                    try container.encode(intValues, forKey: .value)
+                }
+                else
+                {
+                    try container.encode(intValues.first, forKey: .value)
+                }
+
+            case let .tagValues(values): try container.encode(values, forKey: .value)
+
+            case nil: let value: Int? = nil; try container.encode(value, forKey: .value)
+        }
+    }
+}
+
+//    extension PublishedValue:Encodable {}
 
 public extension SMADevice
 {
@@ -183,7 +264,7 @@ extension SMADevice
     {
         JLog.debug("\(address):find out device type")
         // find out scheme
-        if let response = try? await data(forPath: "/")
+        if let _ = try? await data(forPath: "/")
         {
             scheme = "https"
         }
@@ -191,7 +272,7 @@ extension SMADevice
         {
             scheme = "http"
 
-            let response = try await data(forPath: "/")
+            try await data(forPath: "/")
         }
 
         // SunnyHomeManager has 'Sunny Home Manager \d.\d' in http://address/legal_notices.txt
@@ -260,22 +341,23 @@ extension SMADevice
         {
             // {"destDev":[],"keys":["6400_00260100","6400_00262200","6100_40263F00","7142_40495B00","6102_40433600","6100_40495B00","6800_088F2000","6102_40433800","6102_40633400","6100_402F2000","6100_402F1E00","7162_40495B00","6102_40633E00"]}
             try await getInformationDictionary(atPath: "/dyn/getDashValues.json")
-            try await getInformationDictionary(atPath: "/dyn/getAllOnlValues.json")
-            try await getInformationDictionary(atPath: "/dyn/getValues.json", requestIds: ["6800_10821E00"])
-            let allKeys = smaObjectDefinitions.keys.compactMap { $0 as String }
+//            try await getInformationDictionary(atPath: "/dyn/getAllOnlValues.json")
 
-            for key in allKeys
-            {
-                do
-                {
-                    try await getInformationDictionary(atPath: "/dyn/getValues.json", requestIds: [key])
-                }
-                catch
-                {
-                    JLog.error("\(address) request failed for key:\(key)")
-                }
-                try await Task.sleep(nanoseconds: UInt64(0.05 * Double(NSEC_PER_SEC)))
-            }
+//            try await getInformationDictionary(atPath: "/dyn/getValues.json", requestIds: ["6800_10821E00"])
+//            let allKeys = smaObjectDefinitions.keys.compactMap { $0 as String }
+
+//            for key in allKeys
+//            {
+//                do
+//                {
+//                    try await getInformationDictionary(atPath: "/dyn/getValues.json", requestIds: [key])
+//                }
+//                catch
+//                {
+//                    JLog.error("\(address) request failed for key:\(key)")
+//                }
+//                try await Task.sleep(nanoseconds: UInt64(0.05 * Double(NSEC_PER_SEC)))
+//            }
         }
 
         try await logout()
@@ -322,7 +404,8 @@ extension SMADevice
 
         let deviceNameDictionary = try await getInformationDictionary(atPath: "/dyn/getValues.json", requestIds: devicenameKeys)
         JLog.trace("deviceNameDictionary:\(deviceNameDictionary)")
-        if let deviceName = deviceNameDictionary.first(where: { $0.key.hasSuffix("type-label/device-name") && !$0.value.isEmpty })?.key
+
+        if let deviceName = deviceNameDictionary.first(where: { $0.key.hasSuffix("type-label/device-name") && !($0.value.stringValue?.isEmpty ?? true) })?.value.stringValue
         {
             JLog.trace("devicename: \(deviceName)")
             return deviceName
@@ -339,7 +422,7 @@ extension SMADevice
     }
 
     @discardableResult
-    func getInformationDictionary(atPath path: String, requestIds: [String] = [String]()) async throws -> [String: [String: Codable]]
+    func getInformationDictionary(atPath path: String, requestIds: [String] = [String]()) async throws -> [String: PublishedValue]
     {
         let headers = [("Content-Type", "application/json")]
 
@@ -355,7 +438,7 @@ extension SMADevice
 
         JLog.trace("values:\(getValuesResult)")
 
-        var retrievedInformation = [String: [String: Codable]]()
+        var retrievedInformation = [String: PublishedValue]()
 
         for inverter in getValuesResult.result
         {
@@ -367,61 +450,70 @@ extension SMADevice
 
                 if let objectDefinition = smaObjectDefinitions[objectId.key]
                 {
-                    var dictionary = [String: Codable]()
-
-                    dictionary["object"] = objectId.key
-                    dictionary["prio"] = objectDefinition.Prio
-                    dictionary["write"] = objectDefinition.WriteLevel
-
+                    var singleValue = PublishedValue(id: objectId.key, prio: objectDefinition.Prio, write: objectDefinition.WriteLevel, scale: objectDefinition.Scale, values: objectId.value.values)
 //                        dictionary["scale"] = objectDefinition.Scale ?? Decimal(1.0)
                     if let unit = objectDefinition.Unit
                     {
-                        dictionary["unit"] = translate(tag: unit).first
+                        singleValue.unit = translate(tag: unit).first
                     }
                     if let eventID = objectDefinition.TagIdEventMsg
                     {
-                        dictionary["event"] = translate(tag: eventID).first
+                        singleValue.event = translate(tag: eventID).first
                     }
 
-                    var pathComponents: [String] = [inverter.key]
+                    var pathComponents: [String] = [name]
                     pathComponents.append(contentsOf: translate(tags: objectDefinition.TagHier))
                     pathComponents.append(contentsOf: translate(tag: objectDefinition.TagId))
                     let path = pathComponents.joined(separator: "/").lowercased().replacing(#/ /#) { _ in "-" }
 
-                    var decimalValues = [Decimal?]()
-                    var stringValues = [String]()
-                    var tagValues = [String]()
+//                    var decimalValues = [Decimal?]()
+//                    var stringValues = [String]()
+//                    var tagValues = [String]()
+//
+//                    let values = objectId.value.values
+//                    singleValue.value = objectId.value.values
 
-                    for (_, singlevalue) in objectId.value.values.enumerated()
-                    {
-                        switch singlevalue
-                        {
-                            case let .intValue(value): decimalValues.append(value == nil ? nil : Decimal(value!) * (objectDefinition.Scale ?? Decimal(1.0)))
-                            case let .stringValue(value): stringValues.append(value)
-                            case let .tagValues(values): tagValues.append(contentsOf: translate(tags: values))
-                        }
-                    }
+//                    for (_, singlevalue) in objectId.value.values.enumerated()
+//                    {
+//                        switch singlevalue
+//                        {
+//                            case let .intValue(value): decimalValues.append(value == nil ? nil : Decimal(value!) * (objectDefinition.Scale ?? Decimal(1.0)))
+//                            case let .stringValue(value): stringValues.append(value)
+//                            case let .tagValues(values): tagValues.append(contentsOf: translate(tags: values))
+//                        }
+//                    }
+//
+//                    if !decimalValues.isEmpty
+//                    {
+//                        switch decimalValues.count
+//                        {
+//                            1: singleValue.value = decimalValues
+//                        dictionary["value"] = decimalValues.count == 1 ? decimalValues.first : decimalValues
+//                    }
+//                    else if !stringValues.isEmpty
+//                    {
+//                        dictionary["value"] = stringValues.count == 1 ? stringValues.first : stringValues
+//                    }
+//                    else if !tagValues.isEmpty
+//                    {
+//                        dictionary["value"] = tagValues.count == 1 ? tagValues.first : tagValues
+//                    }
+//                    else
+//                    {
+//                        dictionary["value"] = nil
+//                        JLog.error("\(address):neither number nor string Values in \(objectId)")
+//                    }
+//                    JLog.trace("\(singleValue)")
 
-                    if !decimalValues.isEmpty
+                    retrievedInformation[path] = singleValue
+                    do
                     {
-                        dictionary["value"] = decimalValues.count == 1 ? decimalValues.first : decimalValues
+                        try await publisher?.publish(to: path, payload: singleValue.json, qos: .atMostOnce, retain: true)
                     }
-                    else if !stringValues.isEmpty
+                    catch
                     {
-                        dictionary["value"] = stringValues.count == 1 ? stringValues.first : stringValues
+                        JLog.error("\(address): could not convert to json error:\(error) singleValue:\(singleValue)")
                     }
-                    else if !tagValues.isEmpty
-                    {
-                        dictionary["value"] = tagValues.count == 1 ? tagValues.first : tagValues
-                    }
-                    else
-                    {
-                        dictionary["value"] = nil
-                        JLog.error("\(address):neither number nor string Values in \(objectId)")
-                    }
-                    JLog.trace("\(dictionary)")
-
-                    retrievedInformation[path] = dictionary
                 }
                 else
                 {
@@ -429,9 +521,9 @@ extension SMADevice
                 }
             }
         }
-        let data = try! JSONSerialization.data(withJSONObject: retrievedInformation, options: [])
-
-        JLog.debug("retrieved:\(String(data: data, encoding: .utf8) ?? "")")
+//        let data = try! JSONSerialization.data(withJSONObject: retrievedInformation, options: [])
+//
+//        JLog.debug("retrieved:\(String(data: data, encoding: .utf8) ?? "")")
 
         return retrievedInformation
     }

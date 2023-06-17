@@ -7,7 +7,6 @@
 
 import Foundation
 import JLog
-import sma2mqttLibrary
 
 public actor SMALighthouse
 {
@@ -69,7 +68,7 @@ public actor SMALighthouse
 
         JLog.debug("Got new SMA Device with remoteAddress:\(remoteAddress)")
 
-        let task = Task { try await SMADevice(address: remoteAddress, userright: .user, password: password) }
+        let task = Task { try await SMADevice(address: remoteAddress, userright: .user, password: password, publisher: mqttPublisher) }
         smaDeviceCache[remoteAddress] = .inProgress(task)
 
         do

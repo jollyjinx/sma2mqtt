@@ -10,7 +10,12 @@ import JLog
 import MQTTNIO
 import NIO
 
-public actor MQTTPublisher
+public protocol SMAPublisher
+{
+    func publish(to topic: String, payload: String, qos: MQTTQoS, retain: Bool) async throws
+}
+
+public actor MQTTPublisher: SMAPublisher
 {
     let mqttClient: MQTTClient
     let emitInterval: Double
@@ -21,7 +26,7 @@ public actor MQTTPublisher
     public init(hostname: String, port: Int, username: String? = nil, password _: String? = nil, emitInterval: Double = 1.0, baseTopic: String = "") async throws
     {
         self.emitInterval = emitInterval
-        self.baseTopic = baseTopic
+        self.baseTopic = baseTopic.hasSuffix("/") ? String(baseTopic.dropLast(1)) : baseTopic
 
         mqttClient = MQTTClient(host: hostname, port: port, identifier: ProcessInfo.processInfo.processName, eventLoopGroupProvider: .createNew, configuration: .init(userName: username, password: ""))
 
@@ -30,7 +35,7 @@ public actor MQTTPublisher
 
     public func publish(to topic: String, payload: String, qos: MQTTQoS, retain: Bool) async throws
     {
-        let topic = "\(baseTopic)/\(topic)"
+        let topic = baseTopic + "/" + topic
 
         let timenow = Date()
         let lasttime = lasttimeused[topic, default: .distantPast]
