@@ -47,7 +47,7 @@ public extension Encodable
     var json: String
     {
         let jsonEncoder = JSONEncoder()
-        jsonEncoder.outputFormatting = [.sortedKeys, .prettyPrinted]
+        jsonEncoder.outputFormatting = [.sortedKeys]
         let jsonData = try? jsonEncoder.encode(self)
         return jsonData != nil ? String(data: jsonData!, encoding: .utf8) ?? "" : ""
     }

@@ -8,6 +8,7 @@
 import AsyncHTTPClient
 import Foundation
 import JLog
+import NIO
 import NIOCore
 import NIOFoundationCompat
 import NIOHTTP1
@@ -106,7 +107,9 @@ public actor SMADevice
     var scheme = "https"
     let httpClient: HTTPClient
 
+    private var hasDeviceName = false
     public var name: String
+
     public var type: DeviceType = .unknown
     private(set) var smaObjectDefinitions: [String: SMADataObject]!
     private(set) var translations: [Int: String]!
@@ -228,9 +231,11 @@ public struct PublishedValue: Encodable
 
 public extension SMADevice
 {
-    func receivedData(_ data: Data) -> SMAPacket?
+    func receivedData(_ data: Data) async -> SMAPacket?
     {
         lastSeen = Date()
+
+        guard hasDeviceName else { return nil }
 
         guard !data.isEmpty
         else
@@ -245,6 +250,15 @@ public extension SMADevice
             JLog.error("did not decode")
             return nil
         }
+
+        for obisvalue in smaPacket.obis
+        {
+            if obisvalue.mqtt != .invisible
+            {
+                try? await publisher?.publish(to: name + "/" + obisvalue.topic, payload: obisvalue.json, qos: .atLeastOnce, retain: obisvalue.mqtt == .retained)
+            }
+        }
+
         return smaPacket
     }
 }
@@ -271,8 +285,6 @@ extension SMADevice
         else
         {
             scheme = "http"
-
-            try await data(forPath: "/")
         }
 
         // SunnyHomeManager has 'Sunny Home Manager \d.\d' in http://address/legal_notices.txt
@@ -286,11 +298,13 @@ extension SMADevice
                 JLog.debug("\(address):SMA device found: Sunny Home Manager, version:\(version)")
                 name = "sunnymanager"
                 type = .sunnyhomemanager
+                hasDeviceName = true
                 return
             }
             JLog.debug("\(address):legal no match")
         }
         JLog.debug("\(address):not homemanager")
+//        try await data(forPath: "/")
 
         do
         {
@@ -336,6 +350,7 @@ extension SMADevice
         {
             name = deviceName
         }
+        hasDeviceName = true
 
         if true
         {
@@ -508,7 +523,10 @@ extension SMADevice
                     retrievedInformation[path] = singleValue
                     do
                     {
-                        try await publisher?.publish(to: path, payload: singleValue.json, qos: .atMostOnce, retain: true)
+                        if hasDeviceName
+                        {
+                            try await publisher?.publish(to: path, payload: singleValue.json, qos: .atMostOnce, retain: true)
+                        }
                     }
                     catch
                     {

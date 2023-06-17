@@ -115,26 +115,27 @@ public actor SMALighthouse
             JLog.debug("\(packet.sourceAddress) ignoring as failed to initialize device")
             return
         }
-
+//
         Task.detached
         {
-            if let smaPacket = await smaDevice.receivedData(packet.data)
-            {
-                for obisvalue in smaPacket.obis
-                {
-                    if obisvalue.mqtt != .invisible
-                    {
-                        try? await self.mqttPublisher.publish(to: obisvalue.topic, payload: obisvalue.json, qos: .atLeastOnce, retain: obisvalue.mqtt == .retained)
-                    }
-
-                    if self.jsonOutput
-                    {
-                        var obisvalue = obisvalue
-                        obisvalue.includeTopicInJSON = true
-                        print("\(obisvalue.json)")
-                    }
-                }
-            }
+            await smaDevice.receivedData(packet.data)
         }
+//            {
+//                for obisvalue in smaPacket.obis
+//                {
+//                    if obisvalue.mqtt != .invisible
+//                    {
+//                        try? await self.mqttPublisher.publish(to: obisvalue.topic, payload: obisvalue.json, qos: .atLeastOnce, retain: obisvalue.mqtt == .retained)
+//                    }
+//
+//                    if self.jsonOutput
+//                    {
+//                        var obisvalue = obisvalue
+//                        obisvalue.includeTopicInJSON = true
+//                        print("\(obisvalue.json)")
+//                    }
+//                }
+//            }
+//        }
     }
 }
