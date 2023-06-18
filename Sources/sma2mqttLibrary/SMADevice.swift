@@ -113,10 +113,10 @@ public actor SMADevice
     public var name: String
 
     public var type: DeviceType = .unknown
-    private(set) var smaObjectDefinitions: [String: SMADataObject]!
-    private(set) var translations: [Int: String]!
     private var sessionid: String?
     private var refreshTask: Task<Void, Error>?
+    private var tagTranslator = SMATagTranslator.shared
+
 
     public enum UserRight: String
     {
@@ -152,7 +152,7 @@ public actor SMADevice
                 while errorcounter < 100
                 {
                     do {
-                        try await Task.sleep(nanoseconds: UInt64(10 * NSEC_PER_SEC) )
+                        try await Task.sleep(nanoseconds: UInt64(3 * NSEC_PER_SEC) )
                         try await self.queryInterestingObjects()
                         errorcounter = 0
                     } catch {
@@ -195,14 +195,14 @@ public struct PublishedValue: Encodable
 
     public func encode(to encoder: Encoder) throws
     {
-        enum CodingKeys: String, CodingKey { case  unit, scale, value } // id, prio, write, event, value }
+        enum CodingKeys: String, CodingKey { case  unit, value } //scale,  id, prio, write, event, value }
         var container = encoder.container(keyedBy: CodingKeys.self)
 
 //        try container.encode(id, forKey: .id)
 //        try container.encode(prio, forKey: .prio)
 //        try container.encode(write, forKey: .write)
         try container.encode(unit, forKey: .unit)
-        try container.encode(scale, forKey: .scale)
+//        try container.encode(scale, forKey: .scale)
 //        try container.encode(event, forKey: .event)
 
         let compacted = values.compactMap { $0 }
@@ -227,21 +227,26 @@ public struct PublishedValue: Encodable
                 }
 
             case .intValue:
-                let intValues: [Int?] = values.map
+                let decimalValues: [Decimal?] = values.map
                 {
-                    if case let .intValue(value) = $0
+                    if case let .intValue(value) = $0,
+                        let value = value
                     {
-                        return value
+                        if let scale = scale, scale != Decimal(1)
+                        {
+                            return Decimal(value) * scale
+                        }
+                        return Decimal(value)
                     }
                     return nil
                 }
-                if intValues.count > 1
+                if decimalValues.count > 1
                 {
-                    try container.encode(intValues, forKey: .value)
+                    try container.encode(decimalValues, forKey: .value)
                 }
                 else
                 {
-                    try container.encode(intValues.first, forKey: .value)
+                    try container.encode(decimalValues.first, forKey: .value)
                 }
 
             case let .tagValues(values): try container.encode(values, forKey: .value)
@@ -332,35 +337,14 @@ extension SMADevice
 
         do
         {
-            let response = try await string(forPath: "/data/ObjectMetadata_Istl.json")
-            let smaObjectDefinitions = try SMADataObject.dataObjects(from: response.bodyString)
+            let definitionData = try await data(forPath: "/data/ObjectMetadata_Istl.json").bodyData
+            let translationData = try await data(forPath: "/data/l10n/en-US.json").bodyData
 
-            self.smaObjectDefinitions = smaObjectDefinitions
+            self.tagTranslator = SMATagTranslator(definitionData: definitionData, translationData: translationData)
         }
         catch
         {
-            JLog.error("\(address): no sma data object found \(error)- using default")
-
-            smaObjectDefinitions = SMADataObject.defaultDataObjects
-        }
-
-        do
-        {
-            let response = try await data(forPath: "/data/l10n/en-US.json")
-            let translations = try JSONDecoder().decode([String: String?].self, from: response.bodyData)
-
-            self.translations = Dictionary(uniqueKeysWithValues: translations.compactMap
-            {
-                guard let intvalue = Int($0) else { return nil }
-                guard let stringvalue = $1 else { return nil }
-                return (intvalue, stringvalue)
-            })
-        }
-        catch
-        {
-            JLog.error("\(address): no translations found \(error)- using default")
-
-            translations = SMADataObject.defaultTranslations
+            JLog.error("\(address): no sma definitions / translations found \(error)- using default")
         }
 
         JLog.debug("\(address):SMA device found - logging in now")
@@ -383,23 +367,27 @@ extension SMADevice
             try await getInformationDictionary(atPath: "/dyn/getDashValues.json")
             try await getInformationDictionary(atPath: "/dyn/getAllOnlValues.json")
 
+            var validatedObjectids = Set<String>()
 
 
 //            try await getInformationDictionary(atPath: "/dyn/getValues.json", requestIds: ["6800_10821E00"])
 //            let allKeys = smaObjectDefinitions.keys.compactMap { $0 as String }
 
-//            for key in allKeys
-//            {
-//                do
-//                {
-//                    try await getInformationDictionary(atPath: "/dyn/getValues.json", requestIds: [key])
-//                }
-//                catch
-//                {
-//                    JLog.error("\(address) request failed for key:\(key)")
-//                }
-//                try await Task.sleep(nanoseconds: UInt64(0.05 * Double(NSEC_PER_SEC)))
-//            }
+            for key in objectsToQueryContinously
+            {
+                do
+                {
+                    try await getInformationDictionary(atPath: "/dyn/getValues.json", requestIds: [key])
+                    validatedObjectids.insert(key)
+                }
+                catch
+                {
+                    JLog.error("\(address) request failed for key:\(key)")
+                }
+                try await Task.sleep(nanoseconds: UInt64(0.05 * Double(NSEC_PER_SEC)))
+            }
+            JLog.trace("\(address): validated ids:\(validatedObjectids)")
+            objectsToQueryContinously = validatedObjectids
         }
 
     //    try await logout()
@@ -416,15 +404,12 @@ extension SMADevice
         }
         JLog.debug("\(address):Successfull login")
         try await getInformationDictionary(atPath: "/dyn/getValues.json", requestIds: Array(objectsToQueryContinously))
-//        JLog.debug("\(address):got information")
-//        try await logout()
-//        JLog.debug("\(address):Successfull logout")
     }
 
 
     func login() async throws -> String
     {
-        let headers = [("Content-Type", "application/json")]
+        let headers = [("Content-Type", "application/json"),("Connection","keep-alive")]
         let loginBody = try JSONSerialization.data(withJSONObject: ["right": userright.rawValue, "pass": password], options: [])
         let response = try await data(forPath: "/dyn/login.json", headers: .init(headers), httpMethod: .POST, requestBody: loginBody)
 
@@ -443,15 +428,7 @@ extension SMADevice
 
     func getDeviceName() async throws -> String?
     {
-        let paths = smaObjectDefinitions.mapValues
-        {
-            var tags = $0.TagHier
-            tags.append($0.TagId)
-            return translate(tags: tags).map { $0.lowercased() }.joined(separator: "/").replacing(#/ /#) { _ in "-" }
-        }
-        JLog.trace("Devicename paths:\(paths)")
-        let devicenameKeys = paths.filter { $0.value.hasSuffix("type-label/device-name") }.map(\.key)
-        JLog.trace("Devicename keys:\(devicenameKeys)")
+        let devicenameKeys = tagTranslator.devicenameObjectIDs
 
         guard !devicenameKeys.isEmpty
         else
@@ -463,7 +440,7 @@ extension SMADevice
         let deviceNameDictionary = try await getInformationDictionary(atPath: "/dyn/getValues.json", requestIds: devicenameKeys)
         JLog.trace("deviceNameDictionary:\(deviceNameDictionary)")
 
-        if let deviceName = deviceNameDictionary.first(where: { $0.key.hasSuffix("type-label/device-name") && !($0.value.stringValue?.isEmpty ?? true) })?.value.stringValue
+        if let deviceName = deviceNameDictionary.first(where: {  !($0.value.stringValue?.isEmpty ?? true) })?.value.stringValue
         {
             JLog.trace("devicename: \(deviceName)")
             return deviceName
@@ -522,19 +499,19 @@ extension SMADevice
             {
                 JLog.trace("objectId:\(objectId.key)")
 
-                if let objectDefinition = smaObjectDefinitions[objectId.key]
+                if let objectDefinition = tagTranslator.smaObjectDefinitions[objectId.key]
                 {
                     var unit : String? = nil
                     if let unitId = objectDefinition.Unit
                     {
-                        unit = translate(tag: unitId).first
+                        unit = tagTranslator.translate(tag: unitId)
                     }
 //                    let singleValue = PublishedValue(id: objectId.key, prio: objectDefinition.Prio, write: objectDefinition.WriteLevel, unit:unit, scale: objectDefinition.Scale, values: objectId.value.values)
                     let singleValue = PublishedValue(unit:unit, scale: objectDefinition.Scale, values: objectId.value.values)
 
                     var pathComponents: [String] = [name]
-                    pathComponents.append(contentsOf: translate(tags: objectDefinition.TagHier))
-                    pathComponents.append(contentsOf: translate(tag: objectDefinition.TagId))
+                    pathComponents.append(contentsOf: tagTranslator.translate(tags: objectDefinition.TagHier))
+                    pathComponents.append(tagTranslator.translate(tag: objectDefinition.TagId))
                     let mqttPath = pathComponents.joined(separator: "/").lowercased().replacing(#/ /#) { _ in "-" }
 
                     if  !objectsToQueryContinously.contains(objectId.key)
@@ -637,48 +614,4 @@ extension SMADevice
         }
         throw DeviceError.connectionError
     }
-
-    func translate(tag: Int?) -> [String] { translate(tags: [tag]) }
-    func translate(tags: [Int?]) -> [String]
-    {
-        if let tags = tags as? [Int]
-        {
-            return tags.map { translations[$0] ?? "tag-\(String($0))" }
-        }
-        return [String]()
-    }
-
-    public func values() async
-    {}
-
-    var description: String
-    {
-        "NO description yet" //        var returnStrings = [String]()
-        //
-        //        for (id,smaObject) in smaDataObjects
-        //        {
-        //                let tagName     =   translations[smaObject.TagId] ?? "tag-\( Int(smaObject.TagId) )"
-        //                let eventName   =   smaObject.TagIdEventMsg != nil ? translations[smaObject.TagIdEventMsg!] ?? "event-\( Int(smaObject.TagIdEventMsg!) )" :  ""
-        //                let tagHierachy =   smaObject.TagHier.map{ translations[$0] ?? "tag-\( Int($0) )" }.joined(separator:".")
-        //                let unitName    =   smaObject.Unit != nil ? translations[smaObject.Unit!] ?? "unit-\( Int(smaObject.Unit!) )"  : ""
-        //
-        //                returnStrings.append("\(id): \(tagName) \(eventName) \(tagHierachy) \(unitName) \(smaObject.description)")
-        //        }
-        //        return returnStrings.joined(separator: "\n\n")
-    }
 }
-
-//extension SMADevice
-//{
-//    func value(forObject _: String)
-//    {
-//        //        if not logged in, log in
-//        //          send command
-//    }
-//
-//    func login() {}
-//
-//    func sendCommand() {}
-//
-//    func retrieveResults() {}
-//}

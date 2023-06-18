@@ -47,25 +47,14 @@ final class SMAObjectTests: XCTestCase
 
     func testSMAInverter() async throws
     {
-        let smaDevice = try await SMADevice(address: inverterAddress, userright: .user, password: inverterPassword, publisher: nil)
-        let description = await smaDevice.description
-//        print("\(description)")
-        await smaDevice.values()
-
-        // try await Task.sleep(nanoseconds: UInt64( Int64.max-10) )
+        let _ = try await SMADevice(address: inverterAddress, userright: .user, password: inverterPassword, publisher: nil)
     }
 
     func testSMAdefinition() async throws
     {
         let smaObjectDefinitions = SMADataObject.defaultDataObjects
         let keys = smaObjectDefinitions.keys.compactMap { $0 as String }
-        let first = keys.first
-        print(first)
-    }
 
-    func testSMAName() async throws
-    {
-        let smaDevice = try await SMADevice(address: inverterAddress, userright: .user, password: inverterPassword, publisher: nil)
-        let definitions = await smaDevice.smaObjectDefinitions
+        XCTAssertNotNil(keys.first, "Incorrectly loaded smaObjectDefinitions")
     }
 }

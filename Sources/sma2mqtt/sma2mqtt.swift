@@ -52,8 +52,8 @@ extension Logger.Level: ExpressibleByArgument {}
                                                                                                         "battery/battery-charge",
                                                                                                         "battery/present-battery-charge",
                                                                                                         "battery/present-battery-discharge",
-                                                                                                        "battery/battery/temperature",
-                                                                                                        "inverter/temperature"
+//                                                                                                        "battery/battery/temperature",
+                                                                                                        "temperature",
                                                                                                     ]
     func run() async throws
     {
