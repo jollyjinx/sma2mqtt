@@ -45,10 +45,10 @@ let package = Package(
                 .product(name: "JLog", package: "JLog"),
             ],
             resources: [
-                .copy("Resources/obisdefinition.json"),
-                .copy("Resources/SMANetPacketDefinitions.json"),
-                .copy("Resources/sma.data.objectMetaData.json"),
-                .copy("Resources/sma.data.Translation_Names.json"),
+                .copy("Obis/Resources/obisdefinition.json"),
+                .copy("DataObjects/Resources/sma.data.objectMetaData.json"),
+                .copy("DataObjects/Resources/sma.data.Translation_Names.json"),
+                .copy("SMAPacket/Resources/SMANetPacketDefinitions.json"),
             ]
         ),
         .testTarget(

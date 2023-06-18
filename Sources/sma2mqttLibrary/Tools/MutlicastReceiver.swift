@@ -32,14 +32,12 @@ enum MulticastReceiverError: Error
 actor MulticastReceiver
 {
     private let socketFileDescriptor: Int32
-//    private var receiveBuffer: UnsafeMutablePointer<UInt8>?
     private let bufferSize: Int
     private var isListening: Bool = true
 
     init(groups: [String], bindAddress: String, listenPort: UInt16, bufferSize: Int = 65536) throws
     {
         self.bufferSize = bufferSize
-//        receiveBuffer = UnsafeMutablePointer<UInt8>.allocate(capacity: bufferSize)
 
         socketFileDescriptor = socket(AF_INET, SOCK_DGRAM_VALUE, 0) // IPPROTO_UDP) // 0 , IPPROTO_MTP
         guard socketFileDescriptor != -1 else { throw MulticastReceiverError.socketCreationFailed(errno) }
@@ -172,76 +170,3 @@ actor MulticastReceiver
         }
     }
 }
-
-// func main() async {
-//    // Define the multicast groups and port
-//    let multicastGroups: [MulticastGroup] = [
-//        MulticastGroup(address: "239.12.0.78", port: 955),
-//        MulticastGroup(address: "239.12.1.105", port: 955)
-//    ]
-//
-//    // Create an instance of MulticastReceiver
-//    do {
-//        let receiver = try MulticastReceiver(groups: multicastGroups)
-//
-//        // Start listening for packets
-//        receiver.startListening()
-//
-//        // Receive and process packets in a loop
-//        while true {
-//            if let packet = await receiver.receiveNextPacket() {
-//                let hexEncodedData = packet.data.map { String(format: "%02X", $0) }.joined(separator: " ")
-//                print("Received packet from \(packet.sourceAddress): \(hexEncodedData)")
-//            }
-//        }
-//    } catch {
-//        print("Error creating MulticastReceiver:", error)
-//    }
-// }
-//
-//// Run the main function
-// Task {
-//    await main()
-// }
-//
-//
-//
-//    let multicastGroups: [String] = [
-//                                "239.12.255.253",
-//                                "239.12.255.254",
-//                                "239.12.255.255",
-//
-//                                "239.12.0.78",
-//                                "239.12.1.105",     // 10.112.16.166
-//                                "239.12.1.153",     // 10.112.16.127
-//                                "239.12.1.55",      // 10.112.16.166
-//                                "239.12.1.87",      // 10.112.16.107
-//    ]
-//
-//    // Create an instance of MulticastReceiver
-//    do
-//    {
-////        let receiver = try MulticastReceiver(groups: multicastGroups,listenAddress: "0.0.0.0", listenPort:9522)
-//        let receiver = try MulticastReceiver(groups: multicastGroups,listenAddress: "10.112.16.115", listenPort:9522)
-//        // Start listening for packets
-//        await receiver.startListening()
-//        print("Starting to listen")
-//
-//        // Receive and process packets in a loop
-//
-//        while true
-//        {
-//            print("awaiting next packet")
-//            let packet = try await receiver.receiveNextPacket()
-//
-//            let hexEncodedData = packet.data.map { String(format: "%02X", $0) }.joined(separator: " ")
-//            print("Received packet from \(packet.sourceAddress): \(hexEncodedData)")
-//        }
-//    }
-//    catch
-//    {
-//        print("Error creating MulticastReceiver:", error)
-//    }
-//
-//
-// print("end")
