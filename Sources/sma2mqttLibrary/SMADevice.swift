@@ -110,9 +110,8 @@ public actor SMADevice
     let httpClient: HTTPClient
 
     private var hasDeviceName = false
-    public var name: String
+    public var name: String { willSet { hasDeviceName = true } }
 
-    public var type: DeviceType = .unknown
     private var sessionid: String?
     private var refreshTask: Task<Void, Error>?
     private var tagTranslator = SMATagTranslator.shared
@@ -121,17 +120,8 @@ public actor SMADevice
     {
         case user = "usr"
         case installer = "istl"
-        case servicce = "svc"
+        case service = "svc"
         case developer = "dvlp"
-    }
-
-    public enum DeviceType
-    {
-        case unknown
-        case sunnyhomemanager
-        case inverter
-        case batteryinverter
-        case hybridinverter
     }
 
     public init(address: String, userright: UserRight = .user, password: String = "00000", publisher: SMAPublisher? = nil, interestingPaths: [String] = []) async throws
@@ -256,19 +246,26 @@ public struct PublishedValue: Encodable
                     try container.encode(unitString, forKey: .unit)
                 }
 
-            case let .tagValues(values): let translated = values.map { $0 == nil ? nil : tagTranslator.translate(tag: $0!) }
-                try container.encode(translated, forKey: .value)
+            case let .tagValues(values):
+                let translated = values.map { $0 == nil ? nil : tagTranslator.translate(tag: $0!) }
+
+                if translated.count > 1
+                {
+                    try container.encode(translated, forKey: .value)
+                }
+                else
+                {
+                    try container.encode(translated.first, forKey: .value)
+                }
 
             case nil: let value: Int? = nil; try container.encode(value, forKey: .value)
         }
     }
 }
 
-//    extension PublishedValue:Encodable {}
-
 public extension SMADevice
 {
-    func receivedData(_ data: Data) async -> SMAPacket?
+    func receivedUDPData(_ data: Data) async -> SMAPacket?
     {
         lastSeen = Date()
 
@@ -277,14 +274,14 @@ public extension SMADevice
         guard !data.isEmpty
         else
         {
-            JLog.error("received empty packet")
+            JLog.error("\(address):received empty packet")
             return nil
         }
 
         guard let smaPacket = try? SMAPacket(data: data)
         else
         {
-            JLog.error("did not decode")
+            JLog.error("\(address):did not decode")
             return nil
         }
 
@@ -314,7 +311,7 @@ extension SMADevice
     func findOutDeviceNameAndType() async throws
     {
         JLog.debug("\(address):find out device type")
-        // find out scheme
+
         if let _ = try? await data(forPath: "/")
         {
             scheme = "https"
@@ -324,7 +321,6 @@ extension SMADevice
             scheme = "http"
         }
 
-        // SunnyHomeManager has 'Sunny Home Manager \d.\d' in http://address/legal_notices.txt
         if let response = try? await string(forPath: "legal_notices.txt")
         {
             JLog.debug("\(address):got legal notice")
@@ -334,14 +330,12 @@ extension SMADevice
 
                 JLog.debug("\(address):SMA device found: Sunny Home Manager, version:\(version)")
                 name = "sunnymanager"
-                type = .sunnyhomemanager
                 hasDeviceName = true
                 return
             }
             JLog.debug("\(address):legal no match")
         }
         JLog.debug("\(address):not homemanager")
-//        try await data(forPath: "/")
 
         do
         {
@@ -370,36 +364,31 @@ extension SMADevice
 
         if true
         {
-            // {"destDev":[],"keys":["6400_00260100","6400_00262200","6100_40263F00","7142_40495B00","6102_40433600","6100_40495B00","6800_088F2000","6102_40433800","6102_40633400","6100_402F2000","6100_402F1E00","7162_40495B00","6102_40633E00"]}
-
             try await getInformationDictionary(atPath: "/dyn/getDashValues.json")
             try await getInformationDictionary(atPath: "/dyn/getAllOnlValues.json")
 
-            var validatedObjectids = Set<String>()
+            var validatedObjectids = objectsToQueryContinously
 
-//            try await getInformationDictionary(atPath: "/dyn/getValues.json", requestIds: ["6800_10821E00"])
-//            let allKeys = smaObjectDefinitions.keys.compactMap { $0 as String }
-
-            for key in objectsToQueryContinously
+            for key in tagTranslator.devicenameObjectIDs
             {
                 do
                 {
                     try await getInformationDictionary(atPath: "/dyn/getValues.json", requestIds: [key])
-                    validatedObjectids.insert(key)
+
+                    if objectsToQueryContinously.contains(key)
+                    {
+                        validatedObjectids.insert(key)
+                    }
                 }
                 catch
                 {
-                    JLog.error("\(address) request failed for key:\(key)")
+                    JLog.error("\(address):request failed for key:\(key)")
                 }
                 try await Task.sleep(nanoseconds: UInt64(0.05 * Double(NSEC_PER_SEC)))
             }
-            JLog.trace("\(address): validated ids:\(validatedObjectids)")
+            JLog.trace("\(address):validated ids:\(validatedObjectids)")
             objectsToQueryContinously = validatedObjectids
         }
-
-        //    try await logout()
-
-        JLog.debug("\(address):Successfull logout")
     }
 
     func queryInterestingObjects() async throws
@@ -415,6 +404,8 @@ extension SMADevice
 
     func login() async throws -> String
     {
+        JLog.debug("\(address):Login")
+
         let headers = [("Content-Type", "application/json"), ("Connection", "keep-alive")]
         let loginBody = try JSONSerialization.data(withJSONObject: ["right": userright.rawValue, "pass": password], options: [])
         let response = try await data(forPath: "/dyn/login.json", headers: .init(headers), httpMethod: .POST, requestBody: loginBody)
@@ -439,19 +430,19 @@ extension SMADevice
         guard !devicenameKeys.isEmpty
         else
         {
-            JLog.error("\(address) no type-label/device-name in smaDefinitions found - can't figure out name of device")
+            JLog.error("\(address):no type-label/device-name in smaDefinitions found - can't figure out name of device")
             return nil
         }
 
         let deviceNameDictionary = try await getInformationDictionary(atPath: "/dyn/getValues.json", requestIds: devicenameKeys)
-        JLog.trace("deviceNameDictionary:\(deviceNameDictionary)")
+        JLog.trace("\(address):deviceNameDictionary:\(deviceNameDictionary)")
 
         if let deviceName = deviceNameDictionary.first(where: { !($0.value.stringValue?.isEmpty ?? true) })?.value.stringValue
         {
-            JLog.trace("devicename: \(deviceName)")
+            JLog.trace("\(address) devicename: \(deviceName)")
             return deviceName
         }
-        JLog.notice("could not get deviceName.")
+        JLog.notice("\(address):could not get deviceName.")
 
         return nil
     }
@@ -485,25 +476,25 @@ extension SMADevice
 
         let postDictionary = requestIds.isEmpty ? ["destDev": [String]()] : ["destDev": [String](), "keys": requestIds]
 
-        JLog.trace("keys:\(requestIds)")
+        JLog.trace("\(address):get keys:\(requestIds)")
         let loginBody = try JSONSerialization.data(withJSONObject: postDictionary, options: [])
         let response = try await data(forPath: path, headers: .init(headers), httpMethod: .POST, requestBody: loginBody)
 
-        JLog.trace("body:\(String(data: response.bodyData, encoding: .utf8) ?? response.bodyData.hexDump)")
+        JLog.trace("\(address):retrieved body:\(String(data: response.bodyData, encoding: .utf8) ?? response.bodyData.hexDump)")
         let decoder = JSONDecoder()
         let getValuesResult = try decoder.decode(GetValuesResult.self, from: response.bodyData)
 
-        JLog.trace("values:\(getValuesResult)")
+        JLog.trace("\(address):values:\(getValuesResult)")
 
         var retrievedInformation = [String: PublishedValue]()
 
         for inverter in getValuesResult.result
         {
-            JLog.trace("inverter:\(inverter.key)")
+            JLog.trace("\(address):inverter:\(inverter.key)")
 
             for objectId in inverter.value
             {
-                JLog.trace("objectId:\(objectId.key)")
+                JLog.trace("\(address):working on objectId:\(objectId.key)")
 
                 if let objectDefinition = tagTranslator.smaObjectDefinitions[objectId.key]
                 {
@@ -522,27 +513,27 @@ extension SMADevice
                         if let _ = interestingPaths.first(where: { mqttPath.hasSuffix($0) })
                         {
                             objectsToQueryContinously.insert(objectId.key)
+                            JLog.debug("\(address):objectsToQueryContinously:\(objectsToQueryContinously)")
                         }
-                        JLog.debug("\(address): objectsToQueryContinously:\(objectsToQueryContinously)")
                     }
 
                     retrievedInformation[mqttPath] = singleValue
 
                     do
                     {
-                        if hasDeviceName, objectsToQueryContinously.contains(objectId.key)
+                        if hasDeviceName // , objectsToQueryContinously.contains(objectId.key)
                         {
                             try await publisher?.publish(to: mqttPath, payload: singleValue.json, qos: .atMostOnce, retain: true)
                         }
                     }
                     catch
                     {
-                        JLog.error("\(address): could not convert to json error:\(error) singleValue:\(singleValue)")
+                        JLog.error("\(address):could not convert to json error:\(error) singleValue:\(singleValue)")
                     }
                 }
                 else
                 {
-                    JLog.error("cant find objectDefinition for \(objectId.key)")
+                    JLog.error("\(address):can't find objectDefinition for \(objectId.key)")
                 }
             }
         }
@@ -579,7 +570,7 @@ extension SMADevice
             url = url.byAppendingQueryItems([URLQueryItem(name: "sid", value: sessionid)]) ?? url
         }
 
-        JLog.debug("requesting: \(url) for \(address)")
+        JLog.debug("\(address):requesting: \(url) for \(address)")
         var request = HTTPClientRequest(url: url.absoluteString)
         request.method = httpMethod
 
@@ -592,7 +583,7 @@ extension SMADevice
 
         let response = try await httpClient.execute(request, timeout: .seconds(5))
 
-        JLog.trace("url:\(url) got response: \(response)")
+        JLog.trace("\(address):url:\(url) got response: \(response)")
         lastSeen = Date()
 
         if response.status == .ok
@@ -605,11 +596,11 @@ extension SMADevice
                 {
                     bodyData.append(Data(buffer: buffer))
                 }
-                JLog.trace("url:\(url) receivedData:\(bodyData.count)")
+                JLog.trace("\(address):url:\(url) receivedData:\(bodyData.count)")
             }
             catch
             {
-                JLog.trace("url:\(url) Error: \(error) receivedData:\(bodyData.count)")
+                JLog.trace("\(address):url:\(url) Error: \(error) receivedData:\(bodyData.count)")
             }
             return (headers: response.headers, bodyData: bodyData)
         }

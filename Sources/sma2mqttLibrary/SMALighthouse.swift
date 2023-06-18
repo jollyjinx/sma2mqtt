@@ -16,6 +16,8 @@ public actor SMALighthouse
     let interestingPaths: [String]
     let jsonOutput: Bool
 
+    let mcastAddress: String
+    let mcastPort: UInt16
     let mcastReceiver: MulticastReceiver
 
     private enum SMADeviceCacheEntry
@@ -30,15 +32,18 @@ public actor SMALighthouse
     var lastDiscoveryRequestDate = Date.distantPast
     let disoveryRequestInterval = 10.0
 
-    public init(mqttPublisher: MQTTPublisher, multicastAddresses: [String], multicastPort: UInt16, bindAddress: String = "0.0.0.0", bindPort _: UInt16 = 0, password: String = "0000", interestingPaths: [String] = [], jsonOutput: Bool = false) async throws
+    public init(mqttPublisher: MQTTPublisher, multicastAddress: String, multicastPort: UInt16, bindAddress: String = "0.0.0.0", bindPort _: UInt16 = 0, password: String = "0000", interestingPaths: [String] = [], jsonOutput: Bool = false) async throws
     {
         self.password = password
+        mcastAddress = multicastAddress
+        mcastPort = multicastPort
+
         self.bindAddress = bindAddress
         self.mqttPublisher = mqttPublisher
         self.jsonOutput = jsonOutput
         self.interestingPaths = interestingPaths
 
-        mcastReceiver = try MulticastReceiver(groups: multicastAddresses, bindAddress: bindAddress, listenPort: multicastPort)
+        mcastReceiver = try MulticastReceiver(groups: [mcastAddress], bindAddress: bindAddress, listenPort: multicastPort)
         await mcastReceiver.startListening()
 
         Task
@@ -95,21 +100,16 @@ public actor SMALighthouse
         guard Date().timeIntervalSince(lastDiscoveryRequestDate) > disoveryRequestInterval else { return }
 
         let data: [UInt8] = [0x53, 0x4D, 0x41, 0x00, 0x00, 0x04, 0x02, 0xA0, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00]
-        let address = "239.12.255.254"
-        let port: UInt16 = 9522
-
-        await mcastReceiver.sendPacket(data: data, address: address, port: port)
+        await mcastReceiver.sendPacket(data: data, address: mcastAddress, port: mcastPort)
         lastDiscoveryRequestDate = Date()
     }
 
     public func receiveNext() async throws
     {
-//        await sendDiscoveryPacketIfNeeded()
-
         let packet = try await mcastReceiver.receiveNextPacket()
 
         JLog.debug("Received packet from \(packet.sourceAddress)")
-//        JLog.debug("Received packet from \(packet.sourceAddress): \(packet.data.hexDump)")
+        JLog.trace("Received packet from \(packet.sourceAddress): \(packet.data.hexDump)")
 
         guard let smaDevice = await remote(for: packet.sourceAddress)
         else
@@ -117,27 +117,10 @@ public actor SMALighthouse
             JLog.debug("\(packet.sourceAddress) ignoring as failed to initialize device")
             return
         }
-//
+
         Task.detached
         {
-            await smaDevice.receivedData(packet.data)
+            await smaDevice.receivedUDPData(packet.data)
         }
-//            {
-//                for obisvalue in smaPacket.obis
-//                {
-//                    if obisvalue.mqtt != .invisible
-//                    {
-//                        try? await self.mqttPublisher.publish(to: obisvalue.topic, payload: obisvalue.json, qos: .atLeastOnce, retain: obisvalue.mqtt == .retained)
-//                    }
-//
-//                    if self.jsonOutput
-//                    {
-//                        var obisvalue = obisvalue
-//                        obisvalue.includeTopicInJSON = true
-//                        print("\(obisvalue.json)")
-//                    }
-//                }
-//            }
-//        }
     }
 }

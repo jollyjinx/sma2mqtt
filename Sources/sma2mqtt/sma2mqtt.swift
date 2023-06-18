@@ -43,17 +43,22 @@ extension Logger.Level: ExpressibleByArgument {}
 
     @Option(name: .long, help: "Inverter Password.") var inverterPassword: String = "0000"
 
-    @Option(name: .long, help: "Paths we are interested to update") var interestingPaths: [String] = ["dc-side/dc-measurements/power",
-                                                                                                      "ac-side/grid-measurements/power",
-                                                                                                      "immediate/feedin",
-                                                                                                      "immediate/usage",
-                                                                                                      "immediate/gridfrequency",
-                                                                                                      "battery/state-of-charge",
-                                                                                                      "battery/battery-charge",
-                                                                                                      "battery/present-battery-charge",
-                                                                                                      "battery/present-battery-discharge",
-//                                                                                                        "battery/battery/temperature",
-                                                                                                      "temperature",
+    @Option(name: .long, help: "Paths we are interested to update") var interestingPaths: [String] = [
+        "dc-side/dc-measurements/power",
+        "ac-side/grid-measurements/power",
+        "ac-side/measured-values/daily-yield",
+        "immediate/feedin",
+        "immediate/usage",
+
+//                                                                                                      "immediate/gridfrequency",
+        "battery/state-of-charge",
+//                                                                                                      "battery/battery-charge",
+//                                                                                                      "battery/present-battery-charge",
+//                                                                                                      "battery/present-battery-discharge",
+        "battery/battery/temperature",
+        "battery/battery/battery-charge/battery-charge",
+        "temperatures",
+        // "temperature",
     ]
     func run() async throws
     {
@@ -66,25 +71,9 @@ extension Logger.Level: ExpressibleByArgument {}
         }
 
         let mqttPublisher = try await MQTTPublisher(hostname: mqttServername, port: Int(mqttPort), username: mqttUsername, password: mqttPassword, emitInterval: interval, baseTopic: basetopic)
-        let multicastGroups = [
-            //            "239.12.0.78",
-//            "239.12.1.105",
-//            "239.12.1.153",
-//            "239.12.1.55",
-//            "239.12.1.87",
-
-//            "239.12.255.252",
-//            "239.12.255.253",
-            "239.12.255.254",
-//            "239.12.255.255",
-//
-//            "239.192.0.0", //
-//
-//            "224.0.0.251", // 10.112.16.195
-        ]
 
         let sunnyHome = try await SMALighthouse(mqttPublisher: mqttPublisher,
-                                                multicastAddresses: multicastGroups,
+                                                multicastAddress: mcastAddress,
                                                 multicastPort: mcastPort,
                                                 bindAddress: bindAddress,
                                                 bindPort: bindPort,
