@@ -18,11 +18,6 @@ struct SMATagTranslator
 
     static var shared: SMATagTranslator = .init(definitionData: nil, translationData: nil)
 
-//    init(smaObjectDefinitions: [String : SMADataObject] = SMADataObject.defaultDataObjects , translations: [Int : String] = SMADataObject.defaultTranslations ) {
-//        self.smaObjectDefinitions = smaObjectDefinitions
-//        self.translations = translations
-//    }
-
     init(definitionData: Data?, translationData: Data?)
     {
         if let definitionData,
@@ -55,7 +50,7 @@ struct SMATagTranslator
             var tags = value.TagHier
             tags.append(value.TagId)
             return (key, tags.map { translations[$0] ?? "tag-\(String($0))" }
-                .map { $0.lowercased() }
+                .map { $0.lowercased().replacing(#/[\\\/\s]+/#){_ in "-"} }
                 .joined(separator: "/")
                 .replacing(#/ /#) { _ in "-" })
         })
@@ -72,11 +67,6 @@ struct SMATagTranslator
             return tags.map { translate(tag: $0) }
         }
         return [String]()
-    }
-
-    func translatePath(tags: [Int]) -> String
-    {
-        translate(tags: tags).map { $0.lowercased() }.joined(separator: "/").replacing(#/ /#) { _ in "-" }
     }
 
     var devicenameObjectIDs: [String] { objectsAndPaths.filter { $0.value.hasSuffix("type-label/device-name") }.map(\.key) }

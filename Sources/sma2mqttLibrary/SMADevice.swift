@@ -101,7 +101,9 @@ public actor SMADevice
     let password: String
     let publisher: SMAPublisher?
     let interestingPaths: [String]
+
     var objectsToQueryContinously = Set<String>()
+    let requestAllObjects:Bool
 
     public var lastSeen = Date.distantPast
 
@@ -124,14 +126,17 @@ public actor SMADevice
         case developer = "dvlp"
     }
 
-    public init(address: String, userright: UserRight = .user, password: String = "00000", publisher: SMAPublisher? = nil, interestingPaths: [String] = []) async throws
+    public init(address: String, userright: UserRight = .user, password: String = "00000", publisher: SMAPublisher? = nil, refreshInterval:Int = 10, interestingPaths: [String] = [], requestAllObjects: Bool = false) async throws
     {
         self.address = address
         self.userright = userright
         self.password = password
         self.publisher = publisher
         self.interestingPaths = interestingPaths
+        self.requestAllObjects = requestAllObjects
         name = address
+        hasDeviceName = false
+
         httpClient = HTTPClientProvider.sharedHttpClient
         try await findOutDeviceNameAndType()
         if !objectsToQueryContinously.isEmpty
@@ -143,7 +148,7 @@ public actor SMADevice
                 {
                     do
                     {
-                        try await Task.sleep(nanoseconds: UInt64(3 * NSEC_PER_SEC))
+                        try await Task.sleep(nanoseconds:  UInt64(refreshInterval) * UInt64(NSEC_PER_SEC) )
                         try await self.queryInterestingObjects()
                         errorcounter = 0
                     }
@@ -330,7 +335,6 @@ extension SMADevice
 
                 JLog.debug("\(address):SMA device found: Sunny Home Manager, version:\(version)")
                 name = "sunnymanager"
-                hasDeviceName = true
                 return
             }
             JLog.debug("\(address):legal no match")
@@ -360,34 +364,36 @@ extension SMADevice
         {
             name = deviceName
         }
-        hasDeviceName = true
 
         if true
         {
             try await getInformationDictionary(atPath: "/dyn/getDashValues.json")
             try await getInformationDictionary(atPath: "/dyn/getAllOnlValues.json")
 
-            var validatedObjectids = objectsToQueryContinously
-
-            for key in tagTranslator.devicenameObjectIDs
+            if requestAllObjects
             {
-                do
-                {
-                    try await getInformationDictionary(atPath: "/dyn/getValues.json", requestIds: [key])
+                var validatedObjectids = objectsToQueryContinously
 
-                    if objectsToQueryContinously.contains(key)
-                    {
-                        validatedObjectids.insert(key)
-                    }
-                }
-                catch
+                for key in tagTranslator.devicenameObjectIDs
                 {
-                    JLog.error("\(address):request failed for key:\(key)")
+                    do
+                    {
+                        try await getInformationDictionary(atPath: "/dyn/getValues.json", requestIds: [key])
+
+                        if objectsToQueryContinously.contains(key)
+                        {
+                            validatedObjectids.insert(key)
+                        }
+                    }
+                    catch
+                    {
+                        JLog.error("\(address):request failed for key:\(key)")
+                    }
+                    try await Task.sleep(nanoseconds: UInt64(0.05 * Double(NSEC_PER_SEC)))
                 }
-                try await Task.sleep(nanoseconds: UInt64(0.05 * Double(NSEC_PER_SEC)))
+                JLog.trace("\(address):validated ids:\(validatedObjectids)")
+                objectsToQueryContinously = validatedObjectids
             }
-            JLog.trace("\(address):validated ids:\(validatedObjectids)")
-            objectsToQueryContinously = validatedObjectids
         }
     }
 
@@ -470,6 +476,11 @@ extension SMADevice
         }
     }
 
+    func pathIsInteresting(_ path:String) -> Bool
+    {
+        nil != interestingPaths.first(where: { path.hasSuffix($0) })
+    }
+
     func _getInformationDictionary(atPath path: String, requestIds: [String] = [String]()) async throws -> [String: PublishedValue]
     {
         let headers = [("Content-Type", "application/json")]
@@ -498,30 +509,31 @@ extension SMADevice
 
                 if let objectDefinition = tagTranslator.smaObjectDefinitions[objectId.key]
                 {
-//                    let singleValue = PublishedValue(id: objectId.key, prio: objectDefinition.Prio, write: objectDefinition.WriteLevel, unit:unit, scale: objectDefinition.Scale, values: objectId.value.values)
                     let singleValue = PublishedValue(unit: objectDefinition.Unit, scale: objectDefinition.Scale, values: objectId.value.values, tagTranslator: tagTranslator)
-
-                    var pathComponents: [String] = [name]
-                    pathComponents.append(contentsOf: tagTranslator.translate(tags: objectDefinition.TagHier))
-                    pathComponents.append(tagTranslator.translate(tag: objectDefinition.TagId))
-                    let mqttPath = pathComponents.joined(separator: "/").lowercased().replacing(#/ /#) { _ in "-" }
-
-                    if !objectsToQueryContinously.contains(objectId.key)
-                    {
-//                        !singleValue.values.compactMap{ $0 }.isEmpty
-
-                        if let _ = interestingPaths.first(where: { mqttPath.hasSuffix($0) })
-                        {
-                            objectsToQueryContinously.insert(objectId.key)
-                            JLog.debug("\(address):objectsToQueryContinously:\(objectsToQueryContinously)")
-                        }
-                    }
+                    let mqttPath =  name.lowercased().replacing(#/[\\\/\s]+/#){_ in "-"} + "/" + (tagTranslator.objectsAndPaths[objectId.key] ?? "unkown-id-\(objectId.key)")
 
                     retrievedInformation[mqttPath] = singleValue
 
+                    let isInteresting:Bool
+
+                    if objectsToQueryContinously.contains(objectId.key)
+                    {
+                        isInteresting = true
+                    }
+                    else if pathIsInteresting(mqttPath)
+                    {
+                        isInteresting = true
+                        objectsToQueryContinously.insert(objectId.key)
+                        JLog.debug("\(address):objectsToQueryContinously:\(objectsToQueryContinously)")
+                    }
+                    else
+                    {
+                        isInteresting = false
+                    }
+
                     do
                     {
-                        if hasDeviceName // , objectsToQueryContinously.contains(objectId.key)
+                        if hasDeviceName && isInteresting
                         {
                             try await publisher?.publish(to: mqttPath, payload: singleValue.json, qos: .atMostOnce, retain: true)
                         }
@@ -537,10 +549,6 @@ extension SMADevice
                 }
             }
         }
-//        let data = try! JSONSerialization.data(withJSONObject: retrievedInformation, options: [])
-//
-//        JLog.debug("retrieved:\(String(data: data, encoding: .utf8) ?? "")")
-
         return retrievedInformation
     }
 

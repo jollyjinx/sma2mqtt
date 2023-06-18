@@ -26,25 +26,36 @@ I use __sma2mqtt__ in 'production' and it works fine. Inverter values are curren
 
 
 ```
-USAGE: sma2mqtt [--debug ...] [--json] [--mqtt-servername <mqtt-servername>] [--mqtt-port <mqtt-port>] [--interval <interval>] [--topic <topic>] [--bind-address <bind-address>] [--bind-port <bind-port>] [--mcast-address <mcast-address>] [--mcast-port <mcast-port>]
+USAGE: sma2mqtt <options>
 
 OPTIONS:
-  -d, --debug             optional debug output 
-  --json                  send json output to stdout 
+  --log-level <log-level> Set the log level. (default: notice)
+  --json                  send json output to stdout
   --mqtt-servername <mqtt-servername>
                           MQTT Server hostname (default: mqtt)
   --mqtt-port <mqtt-port> MQTT Server port (default: 1883)
+  --mqtt-username <mqtt-username>
+                          MQTT Server username (default: mqtt)
+  --mqtt-password <mqtt-password>
+                          MQTT Server password
   -i, --interval <interval>
                           Interval to send updates to mqtt Server. (default: 1.0)
-  -t, --topic <topic>     MQTT Server topic. (default: sma/sunnymanager)
+  -b, --basetopic <basetopic>
+                          MQTT Server topic. (default: sma/)
   --bind-address <bind-address>
                           Multicast Binding Listening Interface Address. (default: 0.0.0.0)
-  --bind-port <bind-port> Multicast Binding Listening Port number. (default: 0)
+  --bind-port <bind-port> Multicast Binding Listening Port number. (default: 9522)
   --mcast-address <mcast-address>
                           Multicast Group Address. (default: 239.12.255.254)
   --mcast-port <mcast-port>
                           Multicast Group Port number. (default: 9522)
+  --inverter-password <inverter-password>
+                          Inverter Password. (default: 0000)
+  --interesting-paths <interesting-paths>
+                          Paths we are interested to update (default: dc-side/dc-measurements/power, ac-side/grid-measurements/power, ac-side/measured-values/daily-yield, immediate/feedin, immediate/usage, battery/state-of-charge, battery/battery/temperature,
+                          battery/battery/battery-charge/battery-charge, temperatures)
   -h, --help              Show help information.
+
 ```
 
 
