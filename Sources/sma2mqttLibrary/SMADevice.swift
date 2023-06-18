@@ -103,7 +103,7 @@ public actor SMADevice
     let interestingPaths: [String]
 
     var objectsToQueryContinously = Set<String>()
-    let requestAllObjects:Bool
+    let requestAllObjects: Bool
 
     public var lastSeen = Date.distantPast
 
@@ -126,7 +126,7 @@ public actor SMADevice
         case developer = "dvlp"
     }
 
-    public init(address: String, userright: UserRight = .user, password: String = "00000", publisher: SMAPublisher? = nil, refreshInterval:Int = 10, interestingPaths: [String] = [], requestAllObjects: Bool = false) async throws
+    public init(address: String, userright: UserRight = .user, password: String = "00000", publisher: SMAPublisher? = nil, refreshInterval: Int = 10, interestingPaths: [String] = [], requestAllObjects: Bool = false) async throws
     {
         self.address = address
         self.userright = userright
@@ -148,7 +148,7 @@ public actor SMADevice
                 {
                     do
                     {
-                        try await Task.sleep(nanoseconds:  UInt64(refreshInterval) * UInt64(NSEC_PER_SEC) )
+                        try await Task.sleep(nanoseconds: UInt64(refreshInterval) * UInt64(NSEC_PER_SEC))
                         try await self.queryInterestingObjects()
                         errorcounter = 0
                     }
@@ -160,110 +160,6 @@ public actor SMADevice
                 }
                 JLog.error("\(address): too many erros")
             }
-        }
-    }
-
-//    deinit
-//    {
-//        try? httpClient.syncShutdown()
-//    }
-}
-
-public struct PublishedValue: Encodable
-{
-//    let id: String
-//    let prio: Int
-//    let write: Int
-    let unit: Int?
-    let scale: Decimal?
-//    let event: String?
-    let values: [GetValuesResult.Value]
-
-    let tagTranslator: SMATagTranslator
-
-    var stringValue: String?
-    {
-        if values.count == 1,
-           case let .stringValue(stringValue) = values.first
-        {
-            return stringValue
-        }
-        return nil
-    }
-
-    public func encode(to encoder: Encoder) throws
-    {
-        enum CodingKeys: String, CodingKey { case unit, value, scale, id, prio, write, event }
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-//        try container.encode(id, forKey: .id)
-//        try container.encode(prio, forKey: .prio)
-//        try container.encode(write, forKey: .write)
-//        try container.encode(scale, forKey: .scale)
-//        try container.encode(event, forKey: .event)
-
-        let compacted = values.compactMap { $0 }
-        switch compacted.first
-        {
-            case .stringValue:
-                let stringValues: [String?] = values.map
-                {
-                    if case let .stringValue(value) = $0
-                    {
-                        return value
-                    }
-                    return nil
-                }
-                if stringValues.count > 1
-                {
-                    try container.encode(stringValues, forKey: .value)
-                }
-                else
-                {
-                    try container.encode(stringValues.first, forKey: .value)
-                }
-
-            case .intValue:
-                let decimalValues: [Decimal?] = values.map
-                {
-                    if case let .intValue(value) = $0,
-                       let value
-                    {
-                        if let scale, scale != Decimal(1)
-                        {
-                            return Decimal(value) * scale
-                        }
-                        return Decimal(value)
-                    }
-                    return nil
-                }
-                if decimalValues.count > 1
-                {
-                    try container.encode(decimalValues, forKey: .value)
-                }
-                else
-                {
-                    try container.encode(decimalValues.first, forKey: .value)
-                }
-                if let unit
-                {
-                    let unitString = tagTranslator.translate(tag: unit)
-                    try container.encode(unitString, forKey: .unit)
-                }
-
-            case let .tagValues(values):
-                let translated = values.map { $0 == nil ? nil : tagTranslator.translate(tag: $0!) }
-
-                if translated.count > 1
-                {
-                    try container.encode(translated, forKey: .value)
-                }
-                else
-                {
-                    try container.encode(translated.first, forKey: .value)
-                }
-
-            case nil: let value: Int? = nil; try container.encode(value, forKey: .value)
         }
     }
 }
@@ -476,9 +372,9 @@ extension SMADevice
         }
     }
 
-    func pathIsInteresting(_ path:String) -> Bool
+    func pathIsInteresting(_ path: String) -> Bool
     {
-        nil != interestingPaths.first(where: { path.hasSuffix($0) })
+        interestingPaths.first(where: { path.hasSuffix($0) }) != nil
     }
 
     func _getInformationDictionary(atPath path: String, requestIds: [String] = [String]()) async throws -> [String: PublishedValue]
@@ -507,45 +403,38 @@ extension SMADevice
             {
                 JLog.trace("\(address):working on objectId:\(objectId.key)")
 
-                if let objectDefinition = tagTranslator.smaObjectDefinitions[objectId.key]
+                let singleValue = PublishedValue(objectID: objectId.key, values: objectId.value.values, tagTranslator: tagTranslator)
+                let mqttPath = name.lowercased().replacing(#/[\\\/\s]+/#) { _ in "-" } + "/" + (tagTranslator.objectsAndPaths[objectId.key] ?? "unkown-id-\(objectId.key)")
+
+                retrievedInformation[mqttPath] = singleValue
+
+                let isInteresting: Bool
+
+                if objectsToQueryContinously.contains(objectId.key)
                 {
-                    let singleValue = PublishedValue(unit: objectDefinition.Unit, scale: objectDefinition.Scale, values: objectId.value.values, tagTranslator: tagTranslator)
-                    let mqttPath =  name.lowercased().replacing(#/[\\\/\s]+/#){_ in "-"} + "/" + (tagTranslator.objectsAndPaths[objectId.key] ?? "unkown-id-\(objectId.key)")
-
-                    retrievedInformation[mqttPath] = singleValue
-
-                    let isInteresting:Bool
-
-                    if objectsToQueryContinously.contains(objectId.key)
-                    {
-                        isInteresting = true
-                    }
-                    else if pathIsInteresting(mqttPath)
-                    {
-                        isInteresting = true
-                        objectsToQueryContinously.insert(objectId.key)
-                        JLog.debug("\(address):objectsToQueryContinously:\(objectsToQueryContinously)")
-                    }
-                    else
-                    {
-                        isInteresting = false
-                    }
-
-                    do
-                    {
-                        if hasDeviceName && isInteresting
-                        {
-                            try await publisher?.publish(to: mqttPath, payload: singleValue.json, qos: .atMostOnce, retain: true)
-                        }
-                    }
-                    catch
-                    {
-                        JLog.error("\(address):could not convert to json error:\(error) singleValue:\(singleValue)")
-                    }
+                    isInteresting = true
+                }
+                else if pathIsInteresting(mqttPath)
+                {
+                    isInteresting = true
+                    objectsToQueryContinously.insert(objectId.key)
+                    JLog.debug("\(address):objectsToQueryContinously:\(objectsToQueryContinously)")
                 }
                 else
                 {
-                    JLog.error("\(address):can't find objectDefinition for \(objectId.key)")
+                    isInteresting = false
+                }
+
+                do
+                {
+                    if hasDeviceName, isInteresting
+                    {
+                        try await publisher?.publish(to: mqttPath, payload: singleValue.json, qos: .atMostOnce, retain: true)
+                    }
+                }
+                catch
+                {
+                    JLog.error("\(address):could not convert to json error:\(error) singleValue:\(singleValue)")
                 }
             }
         }

@@ -10,7 +10,7 @@ import Foundation
 public extension UInt32 { var ipv4String: String { "\(self >> 24).\(self >> 16 & 0xFF).\(self >> 8 & 0xFF).\(self & 0xFF)" } }
 
 #if os(Linux)
-public let NSEC_PER_SEC : Int64 = 1_000_000_000
+    public let NSEC_PER_SEC: Int64 = 1_000_000_000
 #endif
 
 public extension Data
