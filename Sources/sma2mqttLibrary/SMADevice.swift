@@ -100,7 +100,7 @@ public actor SMADevice
     let userright: UserRight
     let password: String
     let publisher: SMAPublisher?
-    let interestingPaths:[String]
+    let interestingPaths: [String]
     var objectsToQueryContinously = Set<String>()
 
     public var lastSeen = Date.distantPast
@@ -116,7 +116,6 @@ public actor SMADevice
     private var sessionid: String?
     private var refreshTask: Task<Void, Error>?
     private var tagTranslator = SMATagTranslator.shared
-
 
     public enum UserRight: String
     {
@@ -135,7 +134,7 @@ public actor SMADevice
         case hybridinverter
     }
 
-    public init(address: String, userright: UserRight = .user, password: String = "00000", publisher: SMAPublisher? = nil,interestingPaths:[String] = []) async throws
+    public init(address: String, userright: UserRight = .user, password: String = "00000", publisher: SMAPublisher? = nil, interestingPaths: [String] = []) async throws
     {
         self.address = address
         self.userright = userright
@@ -147,15 +146,19 @@ public actor SMADevice
         try await findOutDeviceNameAndType()
         if !objectsToQueryContinously.isEmpty
         {
-            refreshTask = Task.detached {
+            refreshTask = Task.detached
+            {
                 var errorcounter = 0
                 while errorcounter < 100
                 {
-                    do {
-                        try await Task.sleep(nanoseconds: UInt64(3 * NSEC_PER_SEC) )
+                    do
+                    {
+                        try await Task.sleep(nanoseconds: UInt64(3 * NSEC_PER_SEC))
                         try await self.queryInterestingObjects()
                         errorcounter = 0
-                    } catch {
+                    }
+                    catch
+                    {
                         JLog.error("\(address): Failed to query interesting objects: \(error)")
                         errorcounter += 1
                     }
@@ -176,12 +179,12 @@ public struct PublishedValue: Encodable
 //    let id: String
 //    let prio: Int
 //    let write: Int
-    let unit: String?
+    let unit: Int?
     let scale: Decimal?
 //    let event: String?
     let values: [GetValuesResult.Value]
 
-    let tagTranslator:SMATagTranslator
+    let tagTranslator: SMATagTranslator
 
     var stringValue: String?
     {
@@ -193,11 +196,9 @@ public struct PublishedValue: Encodable
         return nil
     }
 
-
-
     public func encode(to encoder: Encoder) throws
     {
-        enum CodingKeys: String, CodingKey { case  unit, value, scale,  id, prio, write, event }
+        enum CodingKeys: String, CodingKey { case unit, value, scale, id, prio, write, event }
         var container = encoder.container(keyedBy: CodingKeys.self)
 
 //        try container.encode(id, forKey: .id)
@@ -231,9 +232,9 @@ public struct PublishedValue: Encodable
                 let decimalValues: [Decimal?] = values.map
                 {
                     if case let .intValue(value) = $0,
-                        let value = value
+                       let value
                     {
-                        if let scale = scale, scale != Decimal(1)
+                        if let scale, scale != Decimal(1)
                         {
                             return Decimal(value) * scale
                         }
@@ -249,10 +250,14 @@ public struct PublishedValue: Encodable
                 {
                     try container.encode(decimalValues.first, forKey: .value)
                 }
-                try container.encode(unit, forKey: .unit)
+                if let unit
+                {
+                    let unitString = tagTranslator.translate(tag: unit)
+                    try container.encode(unitString, forKey: .unit)
+                }
 
-            case let .tagValues(values):    let translated = values.map{ $0 == nil ? nil : tagTranslator.translate(tag: $0!) }
-                                            try container.encode(translated, forKey: .value)
+            case let .tagValues(values): let translated = values.map { $0 == nil ? nil : tagTranslator.translate(tag: $0!) }
+                try container.encode(translated, forKey: .value)
 
             case nil: let value: Int? = nil; try container.encode(value, forKey: .value)
         }
@@ -343,7 +348,7 @@ extension SMADevice
             let definitionData = try await data(forPath: "/data/ObjectMetadata_Istl.json").bodyData
             let translationData = try await data(forPath: "/data/l10n/en-US.json").bodyData
 
-            self.tagTranslator = SMATagTranslator(definitionData: definitionData, translationData: translationData)
+            tagTranslator = SMATagTranslator(definitionData: definitionData, translationData: translationData)
         }
         catch
         {
@@ -372,7 +377,6 @@ extension SMADevice
 
             var validatedObjectids = Set<String>()
 
-
 //            try await getInformationDictionary(atPath: "/dyn/getValues.json", requestIds: ["6800_10821E00"])
 //            let allKeys = smaObjectDefinitions.keys.compactMap { $0 as String }
 
@@ -393,14 +397,14 @@ extension SMADevice
             objectsToQueryContinously = validatedObjectids
         }
 
-    //    try await logout()
+        //    try await logout()
 
         JLog.debug("\(address):Successfull logout")
     }
 
     func queryInterestingObjects() async throws
     {
-        if nil == sessionid
+        if sessionid == nil
         {
             JLog.debug("\(address):Will Login")
             sessionid = try await login()
@@ -409,10 +413,9 @@ extension SMADevice
         try await getInformationDictionary(atPath: "/dyn/getValues.json", requestIds: Array(objectsToQueryContinously))
     }
 
-
     func login() async throws -> String
     {
-        let headers = [("Content-Type", "application/json"),("Connection","keep-alive")]
+        let headers = [("Content-Type", "application/json"), ("Connection", "keep-alive")]
         let loginBody = try JSONSerialization.data(withJSONObject: ["right": userright.rawValue, "pass": password], options: [])
         let response = try await data(forPath: "/dyn/login.json", headers: .init(headers), httpMethod: .POST, requestBody: loginBody)
 
@@ -443,7 +446,7 @@ extension SMADevice
         let deviceNameDictionary = try await getInformationDictionary(atPath: "/dyn/getValues.json", requestIds: devicenameKeys)
         JLog.trace("deviceNameDictionary:\(deviceNameDictionary)")
 
-        if let deviceName = deviceNameDictionary.first(where: {  !($0.value.stringValue?.isEmpty ?? true) })?.value.stringValue
+        if let deviceName = deviceNameDictionary.first(where: { !($0.value.stringValue?.isEmpty ?? true) })?.value.stringValue
         {
             JLog.trace("devicename: \(deviceName)")
             return deviceName
@@ -474,8 +477,8 @@ extension SMADevice
 
             throw error
         }
-
     }
+
     func _getInformationDictionary(atPath path: String, requestIds: [String] = [String]()) async throws -> [String: PublishedValue]
     {
         let headers = [("Content-Type", "application/json")]
@@ -504,20 +507,15 @@ extension SMADevice
 
                 if let objectDefinition = tagTranslator.smaObjectDefinitions[objectId.key]
                 {
-                    var unit : String? = nil
-                    if let unitId = objectDefinition.Unit
-                    {
-                        unit = tagTranslator.translate(tag: unitId)
-                    }
 //                    let singleValue = PublishedValue(id: objectId.key, prio: objectDefinition.Prio, write: objectDefinition.WriteLevel, unit:unit, scale: objectDefinition.Scale, values: objectId.value.values)
-                    let singleValue = PublishedValue(unit:unit, scale: objectDefinition.Scale, values: objectId.value.values,tagTranslator: tagTranslator)
+                    let singleValue = PublishedValue(unit: objectDefinition.Unit, scale: objectDefinition.Scale, values: objectId.value.values, tagTranslator: tagTranslator)
 
                     var pathComponents: [String] = [name]
                     pathComponents.append(contentsOf: tagTranslator.translate(tags: objectDefinition.TagHier))
                     pathComponents.append(tagTranslator.translate(tag: objectDefinition.TagId))
                     let mqttPath = pathComponents.joined(separator: "/").lowercased().replacing(#/ /#) { _ in "-" }
 
-                    if  !objectsToQueryContinously.contains(objectId.key)
+                    if !objectsToQueryContinously.contains(objectId.key)
                     {
 //                        !singleValue.values.compactMap{ $0 }.isEmpty
 
@@ -532,7 +530,7 @@ extension SMADevice
 
                     do
                     {
-                        if hasDeviceName && objectsToQueryContinously.contains(objectId.key)
+                        if hasDeviceName, objectsToQueryContinously.contains(objectId.key)
                         {
                             try await publisher?.publish(to: mqttPath, payload: singleValue.json, qos: .atMostOnce, retain: true)
                         }

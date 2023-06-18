@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Patrick Stein on 17.06.23.
 //
@@ -14,34 +14,34 @@ struct SMATagTranslator
 
     let smaObjectDefinitions: [String: SMADataObject]
     let translations: [Int: String]
-    let objectsAndPaths : [ObjectIDString:String]
+    let objectsAndPaths: [ObjectIDString: String]
 
-    static var shared:SMATagTranslator = { SMATagTranslator(definitionData:nil,translationData:nil) }()
+    static var shared: SMATagTranslator = .init(definitionData: nil, translationData: nil)
 
 //    init(smaObjectDefinitions: [String : SMADataObject] = SMADataObject.defaultDataObjects , translations: [Int : String] = SMADataObject.defaultTranslations ) {
 //        self.smaObjectDefinitions = smaObjectDefinitions
 //        self.translations = translations
 //    }
 
-    init(definitionData:Data?,translationData:Data?)
+    init(definitionData: Data?, translationData: Data?)
     {
-        if  let definitionData,
-            let dataObjectsString = String(data:definitionData,encoding: .utf8),
-            let smaObjectDefinitions = try? SMADataObject.dataObjects(from: dataObjectsString)
+        if let definitionData,
+           let dataObjectsString = String(data: definitionData, encoding: .utf8),
+           let smaObjectDefinitions = try? SMADataObject.dataObjects(from: dataObjectsString)
         {
             self.smaObjectDefinitions = smaObjectDefinitions
         }
         else
         {
-            self.smaObjectDefinitions = SMADataObject.defaultDataObjects
+            smaObjectDefinitions = SMADataObject.defaultDataObjects
         }
 
         let translations: [Int: String]
 
-        if  let translationData,
-            let rawTranslations = try? JSONDecoder().decode([String: String].self, from:translationData)
+        if let translationData,
+           let rawTranslations = try? JSONDecoder().decode([String: String].self, from: translationData)
         {
-            translations = Dictionary(uniqueKeysWithValues:rawTranslations.compactMap{ if let key = Int($0.key) { return (key,$0.value) } else { return nil } })
+            translations = Dictionary(uniqueKeysWithValues: rawTranslations.compactMap { if let key = Int($0.key) { return (key, $0.value) } else { return nil } })
         }
         else
         {
@@ -49,20 +49,19 @@ struct SMATagTranslator
         }
         self.translations = translations
 
-        self.objectsAndPaths =  Dictionary(uniqueKeysWithValues: self.smaObjectDefinitions.map
+        objectsAndPaths = Dictionary(uniqueKeysWithValues: smaObjectDefinitions.map
         {
-            (key,value) in
+            key, value in
             var tags = value.TagHier
             tags.append(value.TagId)
-            return ( key , tags.map { translations[$0] ?? "tag-\(String($0))" }
-                                .map { $0.lowercased() }
-                                .joined(separator: "/")
-                                .replacing(#/ /#) { _ in "-" } )
+            return (key, tags.map { translations[$0] ?? "tag-\(String($0))" }
+                .map { $0.lowercased() }
+                .joined(separator: "/")
+                .replacing(#/ /#) { _ in "-" })
         })
 
         JLog.trace("Objects and Paths:\(objectsAndPaths)")
     }
-
 
     func translate(tag: Int) -> String { translations[tag] ?? "tag-\(String(tag))" }
 
@@ -70,16 +69,15 @@ struct SMATagTranslator
     {
         if let tags = tags as? [Int]
         {
-            return tags.map{ translate(tag:$0) }
+            return tags.map { translate(tag: $0) }
         }
         return [String]()
     }
 
-    func translatePath(tags:[Int]) -> String
+    func translatePath(tags: [Int]) -> String
     {
-        return translate(tags: tags).map { $0.lowercased() }.joined(separator: "/").replacing(#/ /#) { _ in "-" }
+        translate(tags: tags).map { $0.lowercased() }.joined(separator: "/").replacing(#/ /#) { _ in "-" }
     }
 
-    var devicenameObjectIDs:[String] { get { objectsAndPaths.filter { $0.value.hasSuffix("type-label/device-name") }.map(\.key) } }
-
+    var devicenameObjectIDs: [String] { objectsAndPaths.filter { $0.value.hasSuffix("type-label/device-name") }.map(\.key) }
 }
