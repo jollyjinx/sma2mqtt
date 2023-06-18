@@ -181,6 +181,8 @@ public struct PublishedValue: Encodable
 //    let event: String?
     let values: [GetValuesResult.Value]
 
+    let tagTranslator:SMATagTranslator
+
     var stringValue: String?
     {
         if values.count == 1,
@@ -195,13 +197,12 @@ public struct PublishedValue: Encodable
 
     public func encode(to encoder: Encoder) throws
     {
-        enum CodingKeys: String, CodingKey { case  unit, value } //scale,  id, prio, write, event, value }
+        enum CodingKeys: String, CodingKey { case  unit, value, scale,  id, prio, write, event }
         var container = encoder.container(keyedBy: CodingKeys.self)
 
 //        try container.encode(id, forKey: .id)
 //        try container.encode(prio, forKey: .prio)
 //        try container.encode(write, forKey: .write)
-        try container.encode(unit, forKey: .unit)
 //        try container.encode(scale, forKey: .scale)
 //        try container.encode(event, forKey: .event)
 
@@ -248,8 +249,10 @@ public struct PublishedValue: Encodable
                 {
                     try container.encode(decimalValues.first, forKey: .value)
                 }
+                try container.encode(unit, forKey: .unit)
 
-            case let .tagValues(values): try container.encode(values, forKey: .value)
+            case let .tagValues(values):    let translated = values.map{ $0 == nil ? nil : tagTranslator.translate(tag: $0!) }
+                                            try container.encode(translated, forKey: .value)
 
             case nil: let value: Int? = nil; try container.encode(value, forKey: .value)
         }
@@ -507,7 +510,7 @@ extension SMADevice
                         unit = tagTranslator.translate(tag: unitId)
                     }
 //                    let singleValue = PublishedValue(id: objectId.key, prio: objectDefinition.Prio, write: objectDefinition.WriteLevel, unit:unit, scale: objectDefinition.Scale, values: objectId.value.values)
-                    let singleValue = PublishedValue(unit:unit, scale: objectDefinition.Scale, values: objectId.value.values)
+                    let singleValue = PublishedValue(unit:unit, scale: objectDefinition.Scale, values: objectId.value.values,tagTranslator: tagTranslator)
 
                     var pathComponents: [String] = [name]
                     pathComponents.append(contentsOf: tagTranslator.translate(tags: objectDefinition.TagHier))
