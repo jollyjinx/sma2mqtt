@@ -8,7 +8,7 @@ import BinaryCoder
 import Foundation
 import JLog
 
-struct SMANetPacketValue: Decodable
+public struct SMANetPacketValue
 {
     let number: UInt8
     let address: UInt16
@@ -28,7 +28,7 @@ struct SMANetPacketValue: Decodable
         case unknown = 0x01
     }
 
-    enum PacketValue: Encodable, Decodable
+    enum PacketValue: Codable
     {
         case uint([UInt32])
         case int([Int32])
@@ -44,7 +44,7 @@ struct SMANetPacketValue: Decodable
     var description: String { json }
 }
 
-extension SMANetPacketValue: Encodable
+extension SMANetPacketValue: Codable
 {
     public func encode(to encoder: Encoder) throws
     {
@@ -89,7 +89,7 @@ extension SMANetPacketValue: Encodable
 
 extension SMANetPacketValue: BinaryDecodable
 {
-    init(fromBinary decoder: BinaryDecoder) throws
+    public init(fromBinary decoder: BinaryDecoder) throws
     {
         let startposition = decoder.position
 

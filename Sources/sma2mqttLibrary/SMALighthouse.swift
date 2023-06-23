@@ -75,7 +75,7 @@ public actor SMALighthouse
 
         JLog.debug("Got new SMA Device with remoteAddress:\(remoteAddress)")
 
-        let task = Task { try await SMADevice(address: remoteAddress, userright: .user, password: password, publisher: mqttPublisher, interestingPaths: interestingPaths) }
+        let task = Task { try await SMADevice(address: remoteAddress, userright: .user, password: password, publisher: mqttPublisher, interestingPaths: interestingPaths, udpEmitter: mcastReceiver) }
         smaDeviceCache[remoteAddress] = .inProgress(task)
 
         do

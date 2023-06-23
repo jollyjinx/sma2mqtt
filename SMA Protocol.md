@@ -14,42 +14,49 @@ I did not find any thorough documentation on the SMA UDP Protocol, so I started 
 - Python Webclient [SMAPY][https://github.com/jonkerj/smapy]
 
 
-## SMA Protocol
+# SMA Protocol Packet
 
-Sma Protocol starts with 'SMA\0' and then packets in big-endian order follow.
-
-    addr | type   | explanation
-    -----------------------------------
-    0x00 | U32    | 0x534D4100 == 'SMA\0'  Magic Number
-    0x04 | U16    | length of packet
-    0x06 | U16    | Tag     0xABBC   A = 0 , B = Tag ID, C = 0
-         |        |         0x0000 = 0x00: End of packets
-         |        |         0x0010 = 0x01: SMA Net Version 1
-         |        |         0x0200 = 0x20: End of discovery request ?
-         |        |         0x02A0 = 0x2A: Discovery Request  
-         |        |         0x02C0 = 0x2C: Group number
-    0x08 | U8*len | packet content
-
-
-
-### End of packets 0x0000
+Sma Protocol starts with 'SMA\0' and then tag packets follow until a tag end packet
 
     addr | type   | explanation
     -----------------------------------
-    0x00 | U16    | 0x0000 end of transmission
+    0x00 | U8     | 0x53    S
+    0x01 | U8     | 0x4D    M
+    0x02 | U8     | 0x41    A
+    0x03 | U8     | 0x0     \0
+
+    one or more Tag Packets follow
+    until End Tag Packet
+
+# SMA Tag Packet 
+
+Tag packet start with a , then a tag in big-endian order follow until the end tag packet (8 bytes of zeros)
+
+    0x00 | U16    | length of packet
+    0x02 | U16    | Tag
+    0x03 |        | Data
+    ...           | ...
+    0x03 + length | Data
+    
+A SMA Tag seems to have a internal structure of 0xABBC   A = 0 , B = Tag ID, C = 0
+
+0x0000  | end marker usually 2 bytes content 
+        | content
+        | U16 | 0x0000 - END of SMA Packets
+        |     | 0x0001 - More Tag Packets follow   
+        |    
+0x0010  | SMA Net Version Version 1 Packet
+0x0020  | Unkown, value: 0x0000 0001
+0x0030  | IP Address of source ( 4 bytes )
+0x0040  | Unkown, value : 0x0000 0002
+0x0070  | Unkown, value : 0xef0c = 239 12 -MCast ?
+0x0080  | Unkown, value : 0x00
+0x0200  | Discovery Request 
+0x02A0  | Group Packet 
+0x02C0  | Group Number
 
 
-
-### End of discovery 0x0200
-
-
-    addr | type   | explanation
-    -----------------------------------
-    0x00 | U16    | 0x0200 end of discovery request ?
-
-
-
-### Discovery Request 0x02a0
+## SMA Tag 0x200: Discovery Request
 
 Discovery request has 4 bytes of data containing 0xff.
     
@@ -58,7 +65,6 @@ Discovery request has 4 bytes of data containing 0xff.
     0x00 | U32    | 0xFFFF FFFF requesting discovery reply
          |        | 0x0000 0001 normal request
 
-
     A full discovery request looks like this:
     
     addr | type   | value       | explanation
@@ -66,11 +72,11 @@ Discovery request has 4 bytes of data containing 0xff.
     0x00 | U32    | 0x534D4100  | 'SMA\0'  Magic Number
     -----|--------|-------------|-------
     0x04 | U16    | 0x0004      | length of packet
-    0x06 | U16    | 0x02a0      | tag ( Discovery Request )
-    0x08 | U32    | 0xFFFF FFFF | requesting discovery reply
+    0x06 | U16    | 0x02a0      | tag Group
+    0x08 | U32    | 0xFFFF FFFF | to all groups ? 
     -----|--------|-------------|-------
     0x0C | U16    | 0x0000      | length of packet
-    0x0E | U16    | 0x0200      | tag ( Discovery End? )
+    0x0E | U16    | 0x0200      | tag: discovery request )
     -----|--------|-------------|-------
     0x10 | U16    | 0x0000      | length of packet
     0x12 | U16    | 0x0000      | tag ( End of packets )
@@ -84,16 +90,18 @@ Discovery request has 4 bytes of data containing 0xff.
          |        |                  0xFF03 bluethooth ?
 
 
-# SMA Net Version 1 (Tag:0x0010)
+## SMA Tag 0x0010 : SMA Net Version 1
 
     addr | type   | explanation
     -----|--------|--------------------
-    0x00 | U16    | Protocol ID:    0x6069 Sunny Home Manger
-         |        |                 0x6065 Inverter Communication
+    0x00 | U16    | Protocol ID:
+         |        |    0x6069 Sunny Home Manger
+         |        |    0x6065 Inverter Communication
+         |        |    0x0001 ? Version ? followed by a 0x0003 as data          
     0x02 | length | Data
 
 
-## 0x6069 Protocol: Sunny Home Manger
+## SMA Tag 0x0010 SubTag 0x6069: Sunny Home Manger Protocol
 
 The information on  the Sunny Home Manger protocol 0x6069 [EMETER-Protokoll-T1-de-10.pdf](https://www.sma.de/fileadmin/content/global/Partner/Documents/SMA_Labs/EMETER-Protokoll-TI-en-10.pdf) is enough to figure it out. 
 Exact values I figured out can be found in [Obis.swift](Sources/sma2mqtt/Obis.swift)
@@ -106,7 +114,7 @@ Exact values I figured out can be found in [Obis.swift](Sources/sma2mqtt/Obis.sw
     0x0A |        |   0x6069 data packets follow:
 
 
-## 0x6069 data packets (Big Endian)
+### Data Packets (Big Endian)
 
     addr | type    | explanation
     -----|---------|--------------------
@@ -120,7 +128,7 @@ Exact values I figured out can be found in [Obis.swift](Sources/sma2mqtt/Obis.sw
 
 
 
-## 0x6065 Protocol: Inverter Communication (Little Endian)
+## SMA Tag 0x0010 SubTag 0x6065: Inverter Communication (Little Endian)
 
 Beware, this protocol uses little endian format. Requests and responses share the same header format. 
 Requests to the inverter send the header followed by a command (e.g. logon, logoff, data request ).
@@ -137,7 +145,7 @@ Responses from the inverter have the same header with data then attached (e.g. a
          |    |     |                                  1 group address ?
 
     0x02 | 02 | U16 | Destination SysID
-    0x04 | 04 | U32 | Destination Serial number
+    0x04 | 04 | U32 | Destination Serial number     or group 
 
     0x08 | 08 | U8  | 0x00                             needs to be 0x00
     0x09 | 09 | U8  | 0x00 sending does not seem to matter except for login
@@ -145,6 +153,9 @@ Responses from the inverter have the same header with data then attached (e.g. a
          |    |     |  0xA1 1010 0000b
          |    |     |  0xE0 1110 0000b          e0 means failed
          |    |     |       -X-- ----           0 ok, 1, failed
+                    |  From SB sessionprotocol bit7 addressing ( 0 = adr / 1 = group)
+                    |                          bit6 acknoledge ( 0 = request / 1 = answer )
+                    |                          bit 0-5 reserved
 
 
     0x0A | 10 | U16 |  Source SysID           Any: 0xFFFF

@@ -2,111 +2,69 @@ import BinaryCoder
 import Foundation
 import JLog
 
-public struct SMAPacket: Encodable, Decodable
+public struct SMAPacket: Codable
 {
-    var smaprefix: UInt32
-    var group: UInt32?
-    var systemid: UInt16?
-    var serialnumber: UInt32?
-    var currenttimems: UInt32?
+    enum MagicHeader: UInt32
+    {
+        case smaprefix = 0x534D_4100 // == 'SMA\0'
+    }
 
-    var obisPackets: [ObisPacket]
-    var smaNetPackets: [SMANetPacket]
-
-    public var obis: [ObisValue] { obisPackets.first?.obisvalues ?? [] }
-}
-
-enum SMAPacketType: UInt16
-{
-    case obisPacket = 0x6069
-    case netPacket = 0x6065
+    var smaTagPackets: [SMATagPacket]
 }
 
 extension SMAPacket: BinaryDecodable
 {
-    enum SMAPacketError: Swift.Error
-    {
-        case notaSMAPacket(String)
-        case prematureEndOfSMAContentData(String)
-    }
-
-    public init(data: Data) throws
-    {
-        let byteArray = [UInt8](data)
-        let binaryDecoder = BinaryDecoder(data: byteArray)
-        self = try binaryDecoder.decode(SMAPacket.self)
-    }
-
-    public init(byteArray: [UInt8]) throws
-    {
-        let binaryDecoder = BinaryDecoder(data: byteArray)
-        self = try binaryDecoder.decode(SMAPacket.self)
-    }
-
     public init(fromBinary decoder: BinaryDecoder) throws
     {
-        JLog.debug("")
+        JLog.trace("")
 
-        obisPackets = [ObisPacket]()
-        smaNetPackets = [SMANetPacket]()
+        let prefix: UInt32
+        do
+        {
+            prefix = try decoder.decode(UInt32.self).bigEndian
+        }
+        catch { throw PacketError.prematureEndOfData("not long enough for SMA\\0 header") }
+        guard prefix == MagicHeader.smaprefix.rawValue
+        else { throw PacketError.notExpectedPacket("packet not sma packet - does not start with SMA\\0") }
 
-        do { smaprefix = try decoder.decode(UInt32.self).bigEndian }
-        catch { throw SMAPacketError.prematureEndOfSMAContentData("not long enough for SMA\\0 header") }
+        JLog.trace("Valid SMAPacket Prefix")
 
-        guard smaprefix == 0x534D_4100 // == 'SMA\0'
-        else { throw SMAPacketError.notaSMAPacket("packet not sma packet - does not start with SMA\\0") }
+        var endTagRead = false
 
-        JLog.debug("Valid SMA Prefix")
-
-        var endPacketRead = false
-
+        var smaTagPackets = [SMATagPacket]()
         repeat
         {
             let smaTagPacket = try SMATagPacket(fromBinary: decoder)
-            let smaNetDecoder = BinaryDecoder(data: [UInt8](smaTagPacket.data))
 
-            switch smaTagPacket.type
-            {
-                case .end: endPacketRead = true
-
-                case .group:
-                    JLog.trace("tag0 :\(smaTagPacket)")
-                    let groupnumber = try smaNetDecoder.decode(UInt32.self).bigEndian
-                    JLog.trace("\(String(format: "groupnumber : 0x%08x d:%d", groupnumber, groupnumber))")
-                    group = groupnumber
-
-                case .net:
-                    if let protocolid = try? smaNetDecoder.decode(UInt16.self).bigEndian,
-                       let packetType = SMAPacketType(rawValue: protocolid)
-                    {
-                        JLog.debug("got packetType:\(packetType)")
-
-                        switch packetType
-                        {
-                            case .obisPacket:
-                                JLog.debug("recognizing ObisPacket")
-
-                                let obisPacket = try ObisPacket(fromBinary: smaNetDecoder)
-                                obisPackets.append(obisPacket)
-
-                            case .netPacket:
-                                JLog.debug("recognizing SMANetPacket")
-
-                                let smaNetPacket = try SMANetPacket(fromBinary: smaNetDecoder)
-                                smaNetPackets.append(smaNetPacket)
-                        }
-                    }
-                    else
-                    {
-                        JLog.error("Could not decode protocolid of smaTagType:\(smaTagPacket.type) length:\(smaTagPacket.data.count) data:\(smaTagPacket.data.hexDump)")
-                    }
-
-                case .unknown:
-                    JLog.warning("smaTagPacketType unknown:\(smaTagPacket.tag) length:\(smaTagPacket.data.count) data:\(smaTagPacket.data.hexDump)")
-            }
+            smaTagPackets.append(smaTagPacket)
+            endTagRead = smaTagPacket.isLastPacket
         }
-        while !decoder.isAtEnd && !endPacketRead
+        while !decoder.isAtEnd && !endTagRead
 
-        JLog.trace("\npayload:\(json)")
+        if decoder.isAtEnd, !endTagRead
+        {
+            throw PacketError.prematureEndOfData("SMAPacket atEnd but no Endpacket read")
+        }
+        self.smaTagPackets = smaTagPackets
     }
 }
+
+public extension SMAPacket
+{
+    var obis: [ObisValue] { smaTagPackets.first(where: { $0.type == .net })?.obisvalues ?? [] }
+}
+
+//
+//    var group: UInt32?
+//    var systemid: UInt16?
+//    var serialnumber: UInt32?
+//    var currenttimems: UInt32?
+//
+//    var obisPackets: [ObisPacket]
+//    var smaNetPackets: [SMANetPacket]
+// }
+
+// extension SMAPacket
+// {
+//    public var obis: [ObisValue] { obisPackets.first?.obisvalues ?? [] }
+// }

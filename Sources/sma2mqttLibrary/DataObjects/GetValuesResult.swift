@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Patrick Stein on 18.06.23.
 //
@@ -75,4 +75,3 @@ struct GetValuesResult: Decodable
 
     let result: [InverterName: [SMAObjectID: Result]]
 }
-

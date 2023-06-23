@@ -9,13 +9,18 @@ import JLog
     let SOCK_DGRAM_VALUE = SOCK_DGRAM
 #endif
 
-struct Packet
+public protocol UDPEmitter
+{
+    func sendPacket(data: [UInt8], address: String, port: UInt16) async
+}
+
+public struct Packet
 {
     let data: Data
     let sourceAddress: String
 }
 
-enum MulticastReceiverError: Error
+private enum MulticastReceiverError: Error
 {
     case socketCreationFailed(Int32)
     case socketOptionReuseAddressFailed(Int32)
@@ -29,7 +34,7 @@ enum MulticastReceiverError: Error
     case addressStringConversionFailed(Int32)
 }
 
-actor MulticastReceiver
+actor MulticastReceiver: UDPEmitter
 {
     private let socketFileDescriptor: Int32
     private let bufferSize: Int

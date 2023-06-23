@@ -12,7 +12,6 @@ import NIOFoundationCompat
 import NIOHTTP1
 import RegexBuilder
 
-
 public actor SMADevice
 {
     let address: String
@@ -30,6 +29,12 @@ public actor SMADevice
     var scheme = "https"
     let httpClient: HTTPClient
 
+    let udpEmitter: UDPEmitter?
+    var udpSerial: Int?
+    var udpLoggedIn = false
+    var udpSession: Int?
+    var udpPacketCounter = 1
+
     private var hasDeviceName = false
     public var name: String { willSet { hasDeviceName = true } }
 
@@ -45,7 +50,7 @@ public actor SMADevice
         case developer = "dvlp"
     }
 
-    public init(address: String, userright: UserRight = .user, password: String = "00000", publisher: SMAPublisher? = nil, refreshInterval: Int = 10, interestingPaths: [String] = [], requestAllObjects: Bool = false) async throws
+    public init(address: String, userright: UserRight = .user, password: String = "00000", publisher: SMAPublisher? = nil, refreshInterval: Int = 10, interestingPaths: [String] = [], requestAllObjects: Bool = false, udpEmitter: UDPEmitter? = nil) async throws
     {
         self.address = address
         self.userright = userright
@@ -53,6 +58,7 @@ public actor SMADevice
         self.publisher = publisher
         self.interestingPaths = interestingPaths
         self.requestAllObjects = requestAllObjects
+        self.udpEmitter = udpEmitter
         name = address
         hasDeviceName = false
 
@@ -85,12 +91,30 @@ public actor SMADevice
 
 public extension SMADevice
 {
+    func encodePassword(password: String, usertype: UInt8 = 0x88) -> [UInt8]
+    {
+        let paddedPassword = password.padding(toLength: 12, withPad: "\0", startingAt: 0)
+        let passwordData = Data(paddedPassword.utf8)
+
+        var encoded: [UInt8] = []
+        for byte in passwordData
+        {
+            let calculate = UInt8((Int(byte) + Int(usertype)) % 256)
+            encoded.append(calculate)
+        }
+
+        return encoded
+    }
+
+    func getPacketCounter() -> UInt16
+    {
+        udpPacketCounter = (udpPacketCounter + 1)
+        return UInt16(udpPacketCounter | 0x8000)
+    }
+
     func receivedUDPData(_ data: Data) async -> SMAPacket?
     {
         lastSeen = Date()
-
-        guard hasDeviceName else { return nil }
-
         guard !data.isEmpty
         else
         {
@@ -98,12 +122,23 @@ public extension SMADevice
             return nil
         }
 
-        guard let smaPacket = try? SMAPacket(data: data)
-        else
+        JLog.trace("received udp packet:\(data.hexDump)")
+
+        let smaPacket: SMAPacket
+
+        do
         {
-            JLog.error("\(address):did not decode")
+            smaPacket = try SMAPacket(data: data)
+        }
+        catch
+        {
+            JLog.error("\(address):did not decode :\(error) \(data.hexDump)")
             return nil
         }
+
+        JLog.trace("\(address): received \(smaPacket)")
+
+        guard hasDeviceName else { return nil }
 
         for obisvalue in smaPacket.obis
         {

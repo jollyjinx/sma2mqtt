@@ -8,7 +8,7 @@
 import Foundation
 import JLog
 
-struct SMANetPacketDefinition: Encodable, Decodable
+struct SMANetPacketDefinition: Codable
 {
     let address: String
 
