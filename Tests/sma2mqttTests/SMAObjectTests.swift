@@ -57,4 +57,19 @@ final class SMAObjectTests: XCTestCase
 
         XCTAssertNotNil(keys.first, "Incorrectly loaded smaObjectDefinitions")
     }
+
+    func testPassword() async throws
+    {
+        let encoded = SMAPacketGenerator.encodePassword(password: "password", userRight: .user)
+        XCTAssertEqual(encoded.hexStringToData(),"f8e9 fbfb fff7 faec 8888 8888".hexStringToData())
+   }
+
+
+    func testDiscoveryPacket() async throws
+    {
+        let encoded = SMAPacketGenerator.generateDiscoveryPacket()
+        XCTAssertEqual(encoded.hexStringToData(),"534d 4100 0004 02a0 ffff ffff 0000 0020 0000".hexStringToData())
+    }
+
+
 }

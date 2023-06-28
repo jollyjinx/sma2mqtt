@@ -8,13 +8,20 @@
 import Foundation
 import JLog
 
+
 struct SMATagTranslator
 {
     typealias ObjectIDString = String
 
     let smaObjectDefinitions: [ObjectIDString: SMADataObject]
     let translations: [Int: String]
-    let objectsAndPaths: [ObjectIDString: String]
+    let objectsAndPaths: [ObjectIDString: SimpleObject]
+
+    struct SimpleObject:Codable
+    {
+        let path:String
+        let format:Int
+    }
 
     static var shared: SMATagTranslator = .init(definitionData: nil, translationData: nil)
 
@@ -47,15 +54,21 @@ struct SMATagTranslator
         objectsAndPaths = Dictionary(uniqueKeysWithValues: smaObjectDefinitions.map
         {
             key, value in
+
             var tags = value.TagHier
             tags.append(value.TagId)
-            return (key, tags.map { translations[$0] ?? "tag-\(String($0))" }
+
+            let path = tags.map { translations[$0] ?? "tag-\(String($0))" }
                 .map { $0.lowercased().replacing(#/[\\\/\s]+/#) { _ in "-" } }
                 .joined(separator: "/")
-                .replacing(#/ /#) { _ in "-" })
+                .replacing(#/ /#) { _ in "-" }
+
+            let simpleObject = SimpleObject(path: path, format: value.DataFrmt)
+
+            return (key,simpleObject)
         })
 
-        JLog.trace("Objects and Paths:\(objectsAndPaths)")
+        JLog.trace("Objects and Paths:\(objectsAndPaths.json)")
     }
 
     func translate(tag: Int) -> String { translations[tag] ?? "tag-\(String(tag))" }
@@ -69,5 +82,5 @@ struct SMATagTranslator
         return [String]()
     }
 
-    var devicenameObjectIDs: [String] { objectsAndPaths.filter { $0.value.hasSuffix("type-label/device-name") }.map(\.key) }
+    var devicenameObjectIDs: [String] { objectsAndPaths.filter { $0.value.path.hasSuffix("type-label/device-name") }.map(\.key) }
 }

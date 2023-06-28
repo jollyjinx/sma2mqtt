@@ -288,18 +288,6 @@
       1080
     ]
   },
-  "6180_08412500": {
-    "Prio": 2,
-    "TagId": 5341,
-    "TagIdEvtMsg": 12969,
-    "DataFrmt": 18,
-    "Typ": 1,
-    "WriteLevel": 5,
-    "TagHier": [
-      830,
-      309
-    ]
-  },
   "6182_08413400": {
     "Prio": 2,
     "TagId": 3822,
@@ -452,58 +440,6 @@
       309
     ]
   },
-  "6100_00412F00": {
-    "Prio": 2,
-    "TagId": 5392,
-    "TagIdEvtMsg": 130018,
-    "DataFrmt": 0,
-    "Scale": 1,
-    "Typ": 0,
-    "WriteLevel": 5,
-    "TagHier": [
-      830,
-      309
-    ]
-  },
-  "6100_00412C00": {
-    "Prio": 2,
-    "TagId": 5389,
-    "TagIdEvtMsg": 130015,
-    "DataFrmt": 0,
-    "Scale": 1,
-    "Typ": 0,
-    "WriteLevel": 5,
-    "TagHier": [
-      830,
-      309
-    ]
-  },
-  "6100_00412E00": {
-    "Prio": 2,
-    "TagId": 5391,
-    "TagIdEvtMsg": 130017,
-    "DataFrmt": 0,
-    "Scale": 1,
-    "Typ": 0,
-    "WriteLevel": 5,
-    "TagHier": [
-      830,
-      309
-    ]
-  },
-  "6100_00412D00": {
-    "Prio": 2,
-    "TagId": 5390,
-    "TagIdEvtMsg": 130016,
-    "DataFrmt": 0,
-    "Scale": 1,
-    "Typ": 0,
-    "WriteLevel": 5,
-    "TagHier": [
-      830,
-      309
-    ]
-  },
   "6180_08412800": {
     "Prio": 2,
     "TagId": 1765,
@@ -567,35 +503,10 @@
       309
     ]
   },
-  "6180_08412B00": {
-    "Prio": 2,
-    "TagId": 4572,
-    "TagIdEvtMsg": 12418,
-    "DataFrmt": 18,
-    "Typ": 1,
-    "WriteLevel": 5,
-    "TagHier": [
-      830,
-      309
-    ]
-  },
   "6182_08412B00": {
     "Prio": 2,
     "TagId": 4572,
     "TagIdEvtMsg": 12418,
-    "DataFrmt": 18,
-    "Typ": 1,
-    "WriteLevel": 5,
-    "TagHier": [
-      830,
-      309
-    ],
-    "Deprecated": true
-  },
-  "6180_08412A00": {
-    "Prio": 2,
-    "TagId": 4571,
-    "TagIdEvtMsg": 12417,
     "DataFrmt": 18,
     "Typ": 1,
     "WriteLevel": 5,
@@ -614,73 +525,7 @@
     "TagHier": [
       830,
       309
-    ],
-    "Deprecated": true
-  },
-  "6100_08412600": {
-    "Prio": 2,
-    "TagId": 5393,
-    "TagIdEvtMsg": 13009,
-    "DataFrmt": 18,
-    "Typ": 1,
-    "WriteLevel": 5,
-    "TagHier": [
-      830,
-      340,
-      5359
     ]
-  },
-  "6100_00412700": {
-    "Prio": 2,
-    "TagId": 2350,
-    "TagIdEvtMsg": 13010,
-    "Unit": 19,
-    "DataFrmt": 0,
-    "Scale": 1,
-    "Typ": 0,
-    "WriteLevel": 5,
-    "TagHier": [
-      830,
-      340
-    ]
-  },
-  "6100_00413000": {
-    "Prio": 2,
-    "TagId": 3223,
-    "TagIdEvtMsg": 13011,
-    "Unit": 19,
-    "DataFrmt": 0,
-    "Scale": 1,
-    "Typ": 0,
-    "WriteLevel": 5,
-    "TagHier": [
-      830,
-      340
-    ],
-    "Min": true,
-    "Max": true,
-    "Sum": true,
-    "Avg": true,
-    "Cnt": true
-  },
-  "6100_00413100": {
-    "Prio": 2,
-    "TagId": 3224,
-    "TagIdEvtMsg": 13012,
-    "Unit": 19,
-    "DataFrmt": 0,
-    "Scale": 1,
-    "Typ": 0,
-    "WriteLevel": 5,
-    "TagHier": [
-      830,
-      340
-    ],
-    "Min": true,
-    "Max": true,
-    "Sum": true,
-    "Avg": true,
-    "Cnt": true
   },
   "6800_08811F00": {
     "Prio": 4,
@@ -1202,18 +1047,6 @@
       299
     ]
   },
-  "6800_08822900": {
-    "Prio": 4,
-    "TagId": 5368,
-    "TagIdEvtMsg": 13001,
-    "DataFrmt": 18,
-    "Typ": 1,
-    "WriteLevel": 5,
-    "TagHier": [
-      831,
-      299
-    ]
-  },
   "6800_10821E00": {
     "Prio": 4,
     "TagId": 284,
@@ -1515,15 +1348,14 @@
   "6800_08837800": {
     "Prio": 4,
     "TagId": 725,
-    "TagIdEvtMsg": "lDisplayLanguage",
+    "TagIdEvtMsg": 10309,
     "DataFrmt": 18,
     "Typ": 1,
     "WriteLevel": 1,
     "TagHier": [
       832,
       56
-    ],
-    "ParaInfo": "iDisplayLanguage"
+    ]
   },
   "6800_08837900": {
     "Prio": 4,
@@ -1774,27 +1606,6 @@
       832,
       58,
       1883
-    ],
-    "Min": true,
-    "Max": true,
-    "Avg": true,
-    "Cnt": true,
-    "MinD": true,
-    "MaxD": true
-  },
-  "6102_00435A00": {
-    "Prio": 2,
-    "TagId": 5233,
-    "TagIdEvtMsg": 12897,
-    "Unit": 1,
-    "DataFrmt": 0,
-    "Scale": 1,
-    "Typ": 0,
-    "WriteLevel": 5,
-    "TagHier": [
-      832,
-      58,
-      5234
     ],
     "Min": true,
     "Max": true,
@@ -2421,20 +2232,6 @@
       1426
     ]
   },
-  "6802_00830900": {
-    "Prio": 4,
-    "TagId": 5180,
-    "TagIdEvtMsg": 12877,
-    "Unit": 3,
-    "DataFrmt": 3,
-    "Scale": 0.001,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      832,
-      267
-    ]
-  },
   "6102_00632300": {
     "Prio": 3,
     "TagId": 3940,
@@ -2544,18 +2341,6 @@
     "DataFrmt": 18,
     "Typ": 1,
     "WriteLevel": 2,
-    "TagHier": [
-      832,
-      267
-    ]
-  },
-  "6802_08A33D00": {
-    "Prio": 5,
-    "TagId": 5320,
-    "TagIdEvtMsg": 11848,
-    "DataFrmt": 18,
-    "Typ": 1,
-    "WriteLevel": 5,
     "TagHier": [
       832,
       267
@@ -2732,32 +2517,6 @@
       267
     ]
   },
-  "6800_08A33A00": {
-    "Prio": 5,
-    "TagId": 5162,
-    "TagIdEvtMsg": 12864,
-    "DataFrmt": 18,
-    "Typ": 1,
-    "WriteLevel": 2,
-    "TagHier": [
-      832,
-      267
-    ],
-    "ParaInfo": "12864t"
-  },
-  "6802_08A33A00": {
-    "Prio": 5,
-    "TagId": 5162,
-    "TagIdEvtMsg": 12864,
-    "DataFrmt": 18,
-    "Typ": 1,
-    "WriteLevel": 2,
-    "TagHier": [
-      832,
-      267
-    ],
-    "Deprecated": true
-  },
   "6802_00833300": {
     "Prio": 4,
     "TagId": 380,
@@ -2782,8 +2541,7 @@
     "TagHier": [
       832,
       267
-    ],
-    "ParaInfo": "lAfciInfo"
+    ]
   },
   "6402_00435300": {
     "Prio": 2,
@@ -3501,46 +3259,6 @@
       1430
     ]
   },
-  "6800_08830700": {
-    "Prio": 4,
-    "TagId": 26,
-    "TagIdEvtMsg": 13003,
-    "DataFrmt": 25,
-    "Typ": 1,
-    "WriteLevel": 1,
-    "TagHier": [
-      832,
-      309,
-      5350
-    ]
-  },
-  "6100_00435C00": {
-    "Prio": 2,
-    "TagId": 5380,
-    "TagIdEvtMsg": 13002,
-    "DataFrmt": 0,
-    "Scale": 1,
-    "Typ": 0,
-    "WriteLevel": 5,
-    "TagHier": [
-      832,
-      309,
-      5350
-    ]
-  },
-  "6180_08435D00": {
-    "Prio": 2,
-    "TagId": 5379,
-    "TagIdEvtMsg": 13004,
-    "DataFrmt": 18,
-    "Typ": 1,
-    "WriteLevel": 5,
-    "TagHier": [
-      832,
-      309,
-      5350
-    ]
-  },
   "6800_00832100": {
     "Prio": 4,
     "TagId": 2562,
@@ -3640,20 +3358,6 @@
     "DataFrmt": 18,
     "Typ": 1,
     "WriteLevel": 5,
-    "TagHier": [
-      832,
-      309
-    ]
-  },
-  "6802_00830800": {
-    "Prio": 4,
-    "TagId": 5334,
-    "TagIdEvtMsg": 12946,
-    "Unit": 10,
-    "DataFrmt": 0,
-    "Scale": 1,
-    "Typ": 0,
-    "WriteLevel": 2,
     "TagHier": [
       832,
       309
@@ -4020,18 +3724,6 @@
     "Prio": 4,
     "TagId": 877,
     "TagIdEvtMsg": 10374,
-    "DataFrmt": 18,
-    "Typ": 1,
-    "WriteLevel": 1,
-    "TagHier": [
-      832,
-      394
-    ]
-  },
-  "6800_08990A00": {
-    "Prio": 4,
-    "TagId": 5192,
-    "TagIdEvtMsg": 12885,
     "DataFrmt": 18,
     "Typ": 1,
     "WriteLevel": 1,
@@ -5024,20 +4716,6 @@
       1639,
       3065
     ]
-  },
-  "6802_08A33B00": {
-    "Prio": 5,
-    "TagId": 1690,
-    "TagIdEvtMsg": 12856,
-    "DataFrmt": 18,
-    "Typ": 1,
-    "WriteLevel": 2,
-    "TagHier": [
-      832,
-      1639,
-      2608
-    ],
-    "ParaInfo": "12856t"
   },
   "6800_0883D100": {
     "Prio": 4,
@@ -6135,11 +5813,11 @@
       4715
     ]
   },
-  "680E_08841F00": {
-    "Prio": 4,
+  "6182_08441F00": {
+    "Prio": 2,
     "TagId": 5105,
     "TagIdEvtMsg": 12829,
-    "DataFrmt": 23,
+    "DataFrmt": 18,
     "Typ": 1,
     "WriteLevel": 5,
     "TagHier": [
@@ -6148,8 +5826,8 @@
       5103
     ]
   },
-  "680E_08841E00": {
-    "Prio": 4,
+  "6180_08441E00": {
+    "Prio": 2,
     "TagId": 5104,
     "TagIdEvtMsg": 12828,
     "DataFrmt": 23,
@@ -6274,8 +5952,7 @@
       834,
       62,
       1201
-    ],
-    "ParaInfo": "iSmaShadeFix"
+    ]
   },
   "6800_08855C00": {
     "Prio": 4,
@@ -8084,8 +7761,7 @@
       834,
       309,
       4956
-    ],
-    "Hidden": true
+    ]
   },
   "6180_08652600": {
     "Prio": 3,
@@ -8295,18 +7971,6 @@
     "Cnt": true,
     "SumD": true
   },
-  "6800_08854300": {
-    "Prio": 4,
-    "TagId": 5144,
-    "TagIdEvtMsg": 12851,
-    "DataFrmt": 18,
-    "Typ": 1,
-    "WriteLevel": 2,
-    "TagHier": [
-      834,
-      309
-    ]
-  },
   "6800_08852C00": {
     "Prio": 4,
     "TagId": 4147,
@@ -8317,8 +7981,7 @@
     "TagHier": [
       834,
       309
-    ],
-    "SortTranslation": false
+    ]
   },
   "6800_08853A00": {
     "Prio": 4,
@@ -8506,90 +8169,6 @@
     "TagHier": [
       834,
       1234
-    ]
-  },
-  "6802_00A52100": {
-    "Prio": 5,
-    "TagId": 5245,
-    "TagIdEvtMsg": 12902,
-    "Unit": 1,
-    "DataFrmt": 1,
-    "Scale": 0.1,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      834,
-      4208
-    ]
-  },
-  "6802_00A52400": {
-    "Prio": 5,
-    "TagId": 5259,
-    "TagIdEvtMsg": 12919,
-    "Unit": 1,
-    "DataFrmt": 1,
-    "Scale": 0.1,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      834,
-      4208
-    ]
-  },
-  "6802_40A52200": {
-    "Prio": 5,
-    "TagId": 5246,
-    "TagIdEvtMsg": 12903,
-    "Unit": 1275,
-    "DataFrmt": 1,
-    "Scale": 0.1,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      834,
-      4208
-    ]
-  },
-  "6802_40A51F00": {
-    "Prio": 5,
-    "TagId": 5243,
-    "TagIdEvtMsg": 12900,
-    "Unit": 1275,
-    "DataFrmt": 1,
-    "Scale": 0.1,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      834,
-      4208
-    ]
-  },
-  "6802_40A52300": {
-    "Prio": 5,
-    "TagId": 5247,
-    "TagIdEvtMsg": 12904,
-    "Unit": 1275,
-    "DataFrmt": 1,
-    "Scale": 0.1,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      834,
-      4208
-    ]
-  },
-  "6802_40A52000": {
-    "Prio": 5,
-    "TagId": 5244,
-    "TagIdEvtMsg": 12901,
-    "Unit": 1275,
-    "DataFrmt": 1,
-    "Scale": 0.1,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      834,
-      4208
     ]
   },
   "6180_08452D00": {
@@ -10628,20 +10207,6 @@
     ],
     "Deprecated": true
   },
-  "6802_0886A800": {
-    "Prio": 4,
-    "TagId": 5238,
-    "TagIdEvtMsg": 12898,
-    "DataFrmt": 18,
-    "Typ": 1,
-    "WriteLevel": 2,
-    "GridGuard": true,
-    "TagHier": [
-      835,
-      267,
-      1080
-    ]
-  },
   "6802_40862000": {
     "Prio": 4,
     "TagId": 3805,
@@ -10774,20 +10339,6 @@
       267
     ]
   },
-  "6802_0086A700": {
-    "Prio": 4,
-    "TagId": 5232,
-    "TagIdEvtMsg": 12896,
-    "Unit": 15,
-    "DataFrmt": 0,
-    "Scale": 1,
-    "Typ": 0,
-    "WriteLevel": 3,
-    "TagHier": [
-      835,
-      267
-    ]
-  },
   "6802_00866900": {
     "Prio": 4,
     "TagId": 4357,
@@ -10797,20 +10348,6 @@
     "Scale": 1,
     "Typ": 0,
     "WriteLevel": 2,
-    "TagHier": [
-      835,
-      267
-    ]
-  },
-  "6802_0086A600": {
-    "Prio": 4,
-    "TagId": 5231,
-    "TagIdEvtMsg": 12895,
-    "Unit": 15,
-    "DataFrmt": 0,
-    "Scale": 1,
-    "Typ": 0,
-    "WriteLevel": 3,
     "TagHier": [
       835,
       267
@@ -10951,20 +10488,6 @@
     "Scale": 1,
     "Typ": 0,
     "WriteLevel": 2,
-    "TagHier": [
-      835,
-      267
-    ]
-  },
-  "6802_0086A900": {
-    "Prio": 4,
-    "TagId": 5264,
-    "TagIdEvtMsg": 12920,
-    "Unit": 18,
-    "DataFrmt": 0,
-    "Scale": 1,
-    "Typ": 0,
-    "WriteLevel": 3,
     "TagHier": [
       835,
       267
@@ -13853,7 +13376,7 @@
   },
   "6800_00869A00": {
     "Prio": 4,
-    "TagId": 372,
+    "TagId": 2244,
     "TagIdEvtMsg": 11112,
     "DataFrmt": 15,
     "Scale": 1,
@@ -13906,7 +13429,7 @@
   },
   "6800_00869B00": {
     "Prio": 4,
-    "TagId": 372,
+    "TagId": 2244,
     "TagIdEvtMsg": 11113,
     "DataFrmt": 15,
     "Scale": 1,
@@ -13959,7 +13482,7 @@
   },
   "6800_00869C00": {
     "Prio": 4,
-    "TagId": 372,
+    "TagId": 2244,
     "TagIdEvtMsg": 11114,
     "DataFrmt": 15,
     "Scale": 1,
@@ -14868,18 +14391,6 @@
       309
     ]
   },
-  "6802_08A62400": {
-    "Prio": 5,
-    "TagId": 5310,
-    "TagIdEvtMsg": 12945,
-    "DataFrmt": 18,
-    "Typ": 1,
-    "WriteLevel": 2,
-    "TagHier": [
-      835,
-      309
-    ]
-  },
   "6802_08862600": {
     "Prio": 4,
     "TagId": 2559,
@@ -14892,35 +14403,10 @@
       309
     ]
   },
-  "6802_0086AE00": {
-    "Prio": 4,
-    "TagId": 5282,
-    "TagIdEvtMsg": 12930,
-    "DataFrmt": 0,
-    "Scale": 1,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      835,
-      309
-    ]
-  },
   "6800_0886A400": {
     "Prio": 4,
     "TagId": 5051,
     "TagIdEvtMsg": 12789,
-    "DataFrmt": 18,
-    "Typ": 1,
-    "WriteLevel": 2,
-    "TagHier": [
-      835,
-      309
-    ]
-  },
-  "6800_0886AF00": {
-    "Prio": 4,
-    "TagId": 5289,
-    "TagIdEvtMsg": 12939,
     "DataFrmt": 18,
     "Typ": 1,
     "WriteLevel": 2,
@@ -15907,7 +15393,7 @@
       4936
     ]
   },
-  "6800_0086AC00": {
+  "6800_0086AA00": {
     "Prio": 4,
     "TagId": 1761,
     "TagIdEvtMsg": 11036,
@@ -15915,7 +15401,7 @@
     "DataFrmt": 2,
     "Scale": 0.01,
     "Typ": 0,
-    "WriteLevel": 2,
+    "WriteLevel": 1,
     "TagHier": [
       835,
       2113
@@ -17142,20 +16628,6 @@
       4191
     ]
   },
-  "6802_00A62300": {
-    "Prio": 5,
-    "TagId": 5281,
-    "TagIdEvtMsg": 12929,
-    "Unit": 1,
-    "DataFrmt": 1,
-    "Scale": 0.1,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      835,
-      4208
-    ]
-  },
   "6100_00572800": {
     "Prio": 2,
     "TagId": 2359,
@@ -17239,141 +16711,6 @@
     "MinD": true,
     "MaxD": true,
     "Deprecated": true
-  },
-  "6100_40574600": {
-    "Prio": 2,
-    "TagId": 325,
-    "TagIdEvtMsg": 12983,
-    "Unit": 3,
-    "DataFrmt": 3,
-    "Scale": 0.001,
-    "Typ": 0,
-    "WriteLevel": 5,
-    "TagHier": [
-      835,
-      5332,
-      38
-    ]
-  },
-  "6100_40574700": {
-    "Prio": 2,
-    "TagId": 327,
-    "TagIdEvtMsg": 12984,
-    "Unit": 3,
-    "DataFrmt": 3,
-    "Scale": 0.001,
-    "Typ": 0,
-    "WriteLevel": 5,
-    "TagHier": [
-      835,
-      5332,
-      38
-    ]
-  },
-  "6100_40574800": {
-    "Prio": 2,
-    "TagId": 329,
-    "TagIdEvtMsg": 12985,
-    "Unit": 3,
-    "DataFrmt": 3,
-    "Scale": 0.001,
-    "Typ": 0,
-    "WriteLevel": 5,
-    "TagHier": [
-      835,
-      5332,
-      38
-    ]
-  },
-  "6100_00574300": {
-    "Prio": 2,
-    "TagId": 325,
-    "TagIdEvtMsg": 12980,
-    "Unit": 14,
-    "DataFrmt": 2,
-    "Scale": 0.01,
-    "Typ": 0,
-    "WriteLevel": 5,
-    "TagHier": [
-      835,
-      5332,
-      441
-    ]
-  },
-  "6100_00574400": {
-    "Prio": 2,
-    "TagId": 327,
-    "TagIdEvtMsg": 12981,
-    "Unit": 14,
-    "DataFrmt": 2,
-    "Scale": 0.01,
-    "Typ": 0,
-    "WriteLevel": 5,
-    "TagHier": [
-      835,
-      5332,
-      441
-    ]
-  },
-  "6100_00574500": {
-    "Prio": 2,
-    "TagId": 329,
-    "TagIdEvtMsg": 12982,
-    "Unit": 14,
-    "DataFrmt": 2,
-    "Scale": 0.01,
-    "Typ": 0,
-    "WriteLevel": 5,
-    "TagHier": [
-      835,
-      5332,
-      441
-    ]
-  },
-  "6100_40574900": {
-    "Prio": 2,
-    "TagId": 325,
-    "TagIdEvtMsg": 12986,
-    "Unit": 18,
-    "DataFrmt": 0,
-    "Scale": 1,
-    "Typ": 0,
-    "WriteLevel": 5,
-    "TagHier": [
-      835,
-      5332,
-      450
-    ]
-  },
-  "6100_40574A00": {
-    "Prio": 2,
-    "TagId": 327,
-    "TagIdEvtMsg": 12987,
-    "Unit": 18,
-    "DataFrmt": 0,
-    "Scale": 1,
-    "Typ": 0,
-    "WriteLevel": 5,
-    "TagHier": [
-      835,
-      5332,
-      450
-    ]
-  },
-  "6100_40574B00": {
-    "Prio": 2,
-    "TagId": 329,
-    "TagIdEvtMsg": 12988,
-    "Unit": 18,
-    "DataFrmt": 0,
-    "Scale": 1,
-    "Typ": 0,
-    "WriteLevel": 5,
-    "TagHier": [
-      835,
-      5332,
-      450
-    ]
   },
   "6100_00574100": {
     "Prio": 2,
@@ -17559,48 +16896,12 @@
       1332
     ]
   },
-  "6802_00876B00": {
-    "Prio": 4,
-    "TagId": 5340,
-    "TagIdEvtMsg": 12964,
-    "Unit": 4314,
-    "DataFrmt": 23,
-    "Scale": 0.001,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "GridGuard": true,
-    "TagHier": [
-      836,
-      229,
-      53,
-      28,
-      1332
-    ]
-  },
   "6802_08879900": {
     "Prio": 4,
     "TagId": 50,
     "TagIdEvtMsg": 10688,
     "DataFrmt": 18,
     "Typ": 1,
-    "WriteLevel": 2,
-    "GridGuard": true,
-    "TagHier": [
-      836,
-      229,
-      53,
-      28,
-      1332
-    ]
-  },
-  "6802_00876A00": {
-    "Prio": 4,
-    "TagId": 5339,
-    "TagIdEvtMsg": 12963,
-    "Unit": 4314,
-    "DataFrmt": 23,
-    "Scale": 0.001,
-    "Typ": 0,
     "WriteLevel": 2,
     "GridGuard": true,
     "TagHier": [
@@ -18235,8 +17536,7 @@
       229,
       53,
       222
-    ],
-    "Deprecated": true
+    ]
   },
   "6802_00878E00": {
     "Prio": 4,
@@ -18286,8 +17586,7 @@
       229,
       53,
       222
-    ],
-    "Deprecated": true
+    ]
   },
   "6802_08877E00": {
     "Prio": 4,
@@ -18682,7 +17981,6 @@
     "Scale": 0.001,
     "Typ": 0,
     "WriteLevel": 2,
-    "GridGuard": true,
     "TagHier": [
       836,
       229,
@@ -19062,8 +18360,7 @@
       229,
       53,
       442
-    ],
-    "Deprecated": true
+    ]
   },
   "6802_00877800": {
     "Prio": 4,
@@ -19146,8 +18443,7 @@
       229,
       53,
       442
-    ],
-    "Deprecated": true
+    ]
   },
   "6802_00877600": {
     "Prio": 4,
@@ -19425,21 +18721,6 @@
     "Typ": 0,
     "WriteLevel": 2,
     "GridGuard": true,
-    "TagHier": [
-      836,
-      229,
-      53
-    ]
-  },
-  "6802_00874B00": {
-    "Prio": 4,
-    "TagId": 5151,
-    "TagIdEvtMsg": 12852,
-    "Unit": 11,
-    "DataFrmt": 0,
-    "Scale": 1,
-    "Typ": 0,
-    "WriteLevel": 2,
     "TagHier": [
       836,
       229,
@@ -21751,19 +21032,6 @@
       46
     ]
   },
-  "6102_00693C00": {
-    "Prio": 3,
-    "TagId": 5291,
-    "TagIdEvtMsg": 12940,
-    "DataFrmt": 23,
-    "Scale": 1,
-    "Typ": 0,
-    "WriteLevel": 5,
-    "TagHier": [
-      838,
-      46
-    ]
-  },
   "6802_00894300": {
     "Prio": 4,
     "TagId": 2542,
@@ -21930,18 +21198,6 @@
     "MinD": true,
     "MaxD": true
   },
-  "6800_08895A00": {
-    "Prio": 4,
-    "TagId": 5279,
-    "TagIdEvtMsg": 12927,
-    "DataFrmt": 18,
-    "Typ": 1,
-    "WriteLevel": 2,
-    "TagHier": [
-      838,
-      46
-    ]
-  },
   "6100_00497300": {
     "Prio": 2,
     "TagId": 2653,
@@ -22091,19 +21347,6 @@
     "Cnt": true,
     "MinD": true,
     "MaxD": true
-  },
-  "6102_00493100": {
-    "Prio": 2,
-    "TagId": 5295,
-    "TagIdEvtMsg": 12942,
-    "DataFrmt": 0,
-    "Scale": 1,
-    "Typ": 0,
-    "WriteLevel": 5,
-    "TagHier": [
-      838,
-      46
-    ]
   },
   "6100_00495400": {
     "Prio": 2,
@@ -22507,34 +21750,6 @@
       46
     ]
   },
-  "6802_00894B00": {
-    "Prio": 4,
-    "TagId": 2428,
-    "TagIdEvtMsg": 12858,
-    "Unit": 18,
-    "DataFrmt": 0,
-    "Scale": 1,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      838,
-      46
-    ]
-  },
-  "6802_00894C00": {
-    "Prio": 4,
-    "TagId": 2430,
-    "TagIdEvtMsg": 12859,
-    "Unit": 18,
-    "DataFrmt": 0,
-    "Scale": 1,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      838,
-      46
-    ]
-  },
   "6800_08892B00": {
     "Prio": 4,
     "TagId": 3804,
@@ -22671,19 +21886,6 @@
       915
     ]
   },
-  "6802_00894900": {
-    "Prio": 4,
-    "TagId": 5155,
-    "TagIdEvtMsg": 12855,
-    "DataFrmt": 0,
-    "Scale": 1,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      838,
-      309
-    ]
-  },
   "6100_00491F00": {
     "Prio": 2,
     "TagId": 4656,
@@ -22703,30 +21905,6 @@
     "Avg": true,
     "Cnt": true,
     "SumD": true
-  },
-  "6182_08493D00": {
-    "Prio": 2,
-    "TagId": 5294,
-    "TagIdEvtMsg": 12941,
-    "DataFrmt": 18,
-    "Typ": 1,
-    "WriteLevel": 5,
-    "TagHier": [
-      838,
-      309
-    ]
-  },
-  "6182_08493E00": {
-    "Prio": 2,
-    "TagId": 5297,
-    "TagIdEvtMsg": 12943,
-    "DataFrmt": 18,
-    "Typ": 1,
-    "WriteLevel": 5,
-    "TagHier": [
-      838,
-      309
-    ]
   },
   "6802_00893200": {
     "Prio": 4,
@@ -22930,46 +22108,6 @@
       838,
       1733
     ]
-  },
-  "6200_00493F00": {
-    "Prio": 2,
-    "TagId": 5321,
-    "TagIdEvtMsg": 12973,
-    "Unit": 14,
-    "DataFrmt": 2,
-    "Scale": 0.01,
-    "Typ": 0,
-    "WriteLevel": 5,
-    "TagHier": [
-      838,
-      1733
-    ],
-    "Min": true,
-    "Max": true,
-    "Avg": true,
-    "Cnt": true,
-    "MinD": true,
-    "MaxD": true
-  },
-  "6100_00493F00": {
-    "Prio": 2,
-    "TagId": 5321,
-    "TagIdEvtMsg": 12973,
-    "Unit": 14,
-    "DataFrmt": 2,
-    "Scale": 0.01,
-    "Typ": 0,
-    "WriteLevel": 5,
-    "TagHier": [
-      838,
-      1733
-    ],
-    "Min": true,
-    "Max": true,
-    "Avg": true,
-    "Cnt": true,
-    "MinD": true,
-    "MaxD": true
   },
   "6200_00693300": {
     "Prio": 3,
@@ -23221,48 +22359,6 @@
     ],
     "Sum": true,
     "SumD": true
-  },
-  "6802_00A91F00": {
-    "Prio": 5,
-    "TagId": 5149,
-    "TagIdEvtMsg": 12853,
-    "Unit": 6,
-    "DataFrmt": 7,
-    "Scale": 1,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      838,
-      1733
-    ]
-  },
-  "6802_00A92000": {
-    "Prio": 5,
-    "TagId": 5150,
-    "TagIdEvtMsg": 12854,
-    "Unit": 34,
-    "DataFrmt": 7,
-    "Scale": 1,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      838,
-      1733
-    ]
-  },
-  "6802_00A92100": {
-    "Prio": 5,
-    "TagId": 5280,
-    "TagIdEvtMsg": 12928,
-    "Unit": 6,
-    "DataFrmt": 7,
-    "Scale": 1,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      838,
-      1733
-    ]
   },
   "6402_00497900": {
     "Prio": 2,
@@ -24017,20 +23113,6 @@
       2532
     ]
   },
-  "6802_00894A00": {
-    "Prio": 4,
-    "TagId": 5157,
-    "TagIdEvtMsg": 12857,
-    "Unit": 1,
-    "DataFrmt": 0,
-    "Scale": 1,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      838,
-      2532
-    ]
-  },
   "6802_00894F00": {
     "Prio": 4,
     "TagId": 2565,
@@ -24311,22 +23393,9 @@
       2314
     ]
   },
-  "6800_088AA100": {
-    "Prio": 4,
-    "TagId": 823,
-    "TagIdEvtMsg": 12961,
-    "DataFrmt": 18,
-    "Typ": 1,
-    "WriteLevel": 1,
-    "TagHier": [
-      839,
-      290,
-      2314
-    ]
-  },
   "6800_008AA200": {
     "Prio": 4,
-    "TagId": 372,
+    "TagId": 2244,
     "TagIdEvtMsg": 11173,
     "DataFrmt": 15,
     "Scale": 1,
@@ -24450,7 +23519,7 @@
     "DataFrmt": 0,
     "Scale": 1,
     "Typ": 0,
-    "WriteLevel": 2,
+    "WriteLevel": 1,
     "TagHier": [
       839,
       309
@@ -26498,42 +25567,6 @@
       210
     ]
   },
-  "6802_10AB2600": {
-    "Prio": 5,
-    "TagId": 5266,
-    "TagIdEvtMsg": 12921,
-    "DataFrmt": 27,
-    "Typ": 2,
-    "WriteLevel": 2,
-    "TagHier": [
-      840,
-      210
-    ]
-  },
-  "6802_10AB2700": {
-    "Prio": 5,
-    "TagId": 5267,
-    "TagIdEvtMsg": 12922,
-    "DataFrmt": 27,
-    "Typ": 2,
-    "WriteLevel": 2,
-    "TagHier": [
-      840,
-      210
-    ]
-  },
-  "6802_10AB2800": {
-    "Prio": 5,
-    "TagId": 5268,
-    "TagIdEvtMsg": 12923,
-    "DataFrmt": 27,
-    "Typ": 2,
-    "WriteLevel": 2,
-    "TagHier": [
-      840,
-      210
-    ]
-  },
   "6800_10AB2200": {
     "Prio": 5,
     "TagId": 717,
@@ -26746,26 +25779,6 @@
       4246
     ]
   },
-  "6102_004B2D00": {
-    "Prio": 2,
-    "TagId": 5174,
-    "TagIdEvtMsg": 12876,
-    "Unit": 13,
-    "DataFrmt": 23,
-    "Scale": 1,
-    "Typ": 0,
-    "WriteLevel": 5,
-    "TagHier": [
-      840,
-      309
-    ],
-    "Min": true,
-    "Max": true,
-    "Avg": true,
-    "Cnt": true,
-    "MinD": true,
-    "MaxD": true
-  },
   "6800_088B3400": {
     "Prio": 4,
     "TagId": 1625,
@@ -26881,61 +25894,6 @@
       840,
       1625,
       4246
-    ]
-  },
-  "6802_088B4300": {
-    "Prio": 4,
-    "TagId": 4760,
-    "TagIdEvtMsg": 12880,
-    "DataFrmt": 18,
-    "Typ": 1,
-    "WriteLevel": 2,
-    "TagHier": [
-      840,
-      1628,
-      5183
-    ]
-  },
-  "6802_008B4500": {
-    "Prio": 4,
-    "TagId": 5225,
-    "TagIdEvtMsg": 12891,
-    "DataFrmt": 23,
-    "Scale": 1,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      840,
-      1628,
-      5183
-    ]
-  },
-  "6802_008B4600": {
-    "Prio": 4,
-    "TagId": 5226,
-    "TagIdEvtMsg": 12892,
-    "DataFrmt": 23,
-    "Scale": 1,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      840,
-      1628,
-      5183
-    ]
-  },
-  "6802_008B4700": {
-    "Prio": 4,
-    "TagId": 5227,
-    "TagIdEvtMsg": 12893,
-    "DataFrmt": 23,
-    "Scale": 1,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      840,
-      1628,
-      5183
     ]
   },
   "6800_088B7000": {
@@ -27352,18 +26310,6 @@
     "TagHier": [
       840,
       5079
-    ]
-  },
-  "6800_088C2300": {
-    "Prio": 4,
-    "TagId": 5349,
-    "TagIdEvtMsg": 12970,
-    "DataFrmt": 18,
-    "Typ": 1,
-    "WriteLevel": 1,
-    "TagHier": [
-      841,
-      360
     ]
   },
   "6800_088C2200": {
@@ -28426,7 +27372,6 @@
     "TagId": 3948,
     "TagIdEvtMsg": 11940,
     "DataFrmt": 6,
-    "Scale": 1,
     "Typ": 0,
     "WriteLevel": 2,
     "TagHier": [
@@ -28453,7 +27398,6 @@
     "TagId": 3947,
     "TagIdEvtMsg": 11939,
     "DataFrmt": 6,
-    "Scale": 1,
     "Typ": 0,
     "WriteLevel": 2,
     "TagHier": [
@@ -28923,7 +27867,6 @@
     "TagId": 3951,
     "TagIdEvtMsg": 11943,
     "DataFrmt": 6,
-    "Scale": 1,
     "Typ": 0,
     "WriteLevel": 2,
     "TagHier": [
@@ -28936,7 +27879,6 @@
     "TagId": 3950,
     "TagIdEvtMsg": 11942,
     "DataFrmt": 6,
-    "Scale": 1,
     "Typ": 0,
     "WriteLevel": 2,
     "TagHier": [
@@ -29086,18 +28028,6 @@
     "DataFrmt": 18,
     "Typ": 1,
     "WriteLevel": 5,
-    "TagHier": [
-      843,
-      309
-    ]
-  },
-  "6802_088EA400": {
-    "Prio": 4,
-    "TagId": 3741,
-    "TagIdEvtMsg": 13014,
-    "DataFrmt": 25,
-    "Typ": 1,
-    "WriteLevel": 2,
     "TagHier": [
       843,
       309
@@ -29285,20 +28215,6 @@
     "Cnt": true,
     "MinD": true,
     "MaxD": true
-  },
-  "6802_408EA300": {
-    "Prio": 4,
-    "TagId": 5386,
-    "TagIdEvtMsg": 13005,
-    "Unit": 5,
-    "DataFrmt": 2,
-    "Scale": 0.01,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      843,
-      309
-    ]
   },
   "6802_008E8400": {
     "Prio": 4,
@@ -29808,26 +28724,6 @@
       1639
     ]
   },
-  "6100_404E4200": {
-    "Prio": 2,
-    "TagId": 5300,
-    "TagIdEvtMsg": 12944,
-    "Unit": 14,
-    "DataFrmt": 3,
-    "Scale": 0.001,
-    "Typ": 0,
-    "WriteLevel": 5,
-    "TagHier": [
-      843,
-      1639
-    ],
-    "Min": true,
-    "Max": true,
-    "Sum": true,
-    "Avg": true,
-    "Cnt": true,
-    "SumD": true
-  },
   "6800_008E2D00": {
     "Prio": 4,
     "TagId": 200066,
@@ -29848,7 +28744,7 @@
     "TagIdEvtMsg": 200076,
     "Unit": 14,
     "DataFrmt": 2,
-    "Scale": 0.01,
+    "Scale": 1,
     "Typ": 0,
     "WriteLevel": 2,
     "TagHier": [
@@ -30633,7 +29529,6 @@
     "Prio": 2,
     "TagId": 4855,
     "TagIdEvtMsg": 12666,
-    "Unit": 4948,
     "DataFrmt": 2,
     "Scale": 0.01,
     "Typ": 0,
@@ -33970,20 +32865,6 @@
       1072
     ]
   },
-  "6802_08965D00": {
-    "Prio": 4,
-    "TagId": 5313,
-    "TagIdEvtMsg": 12955,
-    "DataFrmt": 18,
-    "Typ": 1,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      267,
-      2500,
-      1072
-    ]
-  },
   "6802_0092EA00": {
     "Prio": 4,
     "TagId": 2502,
@@ -33998,52 +32879,6 @@
       267,
       2500,
       1072
-    ]
-  },
-  "6802_00965B00": {
-    "Prio": 4,
-    "TagId": 5254,
-    "TagIdEvtMsg": 12953,
-    "Unit": 4508,
-    "DataFrmt": 3,
-    "Scale": 0.001,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      267,
-      2500,
-      1072
-    ]
-  },
-  "6802_08965E00": {
-    "Prio": 4,
-    "TagId": 5313,
-    "TagIdEvtMsg": 12956,
-    "DataFrmt": 18,
-    "Typ": 1,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      267,
-      2500,
-      5312
-    ]
-  },
-  "6802_00965C00": {
-    "Prio": 4,
-    "TagId": 5254,
-    "TagIdEvtMsg": 12954,
-    "Unit": 4508,
-    "DataFrmt": 3,
-    "Scale": 0.001,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      267,
-      2500,
-      5312
     ]
   },
   "6802_0895B800": {
@@ -34149,38 +32984,6 @@
       1079
     ]
   },
-  "6802_00963800": {
-    "Prio": 4,
-    "TagId": 5159,
-    "TagIdEvtMsg": 12861,
-    "Unit": 18,
-    "DataFrmt": 2,
-    "Scale": 0.01,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      267,
-      2500,
-      1079
-    ]
-  },
-  "6802_00963700": {
-    "Prio": 4,
-    "TagId": 5158,
-    "TagIdEvtMsg": 12860,
-    "Unit": 18,
-    "DataFrmt": 2,
-    "Scale": 0.01,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      267,
-      2500,
-      1079
-    ]
-  },
   "6802_4095AC00": {
     "Prio": 4,
     "TagId": 4486,
@@ -34213,43 +33016,11 @@
       1079
     ]
   },
-  "6802_40966400": {
-    "Prio": 4,
-    "TagId": 5354,
-    "TagIdEvtMsg": 12991,
-    "Unit": 1,
-    "DataFrmt": 2,
-    "Scale": 0.01,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      267,
-      2500,
-      1079
-    ]
-  },
   "6802_4095AB00": {
     "Prio": 4,
     "TagId": 4485,
     "TagIdEvtMsg": 12166,
     "Unit": 18,
-    "DataFrmt": 2,
-    "Scale": 0.01,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      267,
-      2500,
-      1079
-    ]
-  },
-  "6802_40966300": {
-    "Prio": 4,
-    "TagId": 5353,
-    "TagIdEvtMsg": 12990,
-    "Unit": 1,
     "DataFrmt": 2,
     "Scale": 0.01,
     "Typ": 0,
@@ -34277,20 +33048,6 @@
       1079
     ]
   },
-  "6802_08965900": {
-    "Prio": 4,
-    "TagId": 5313,
-    "TagIdEvtMsg": 12959,
-    "DataFrmt": 18,
-    "Typ": 1,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      267,
-      2500,
-      1079
-    ]
-  },
   "6802_0092E700": {
     "Prio": 4,
     "TagId": 2502,
@@ -34298,22 +33055,6 @@
     "Unit": 13,
     "DataFrmt": 7,
     "Scale": 1,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      267,
-      2500,
-      1079
-    ]
-  },
-  "6802_00965700": {
-    "Prio": 4,
-    "TagId": 5252,
-    "TagIdEvtMsg": 12957,
-    "Unit": 4508,
-    "DataFrmt": 3,
-    "Scale": 0.001,
     "Typ": 0,
     "WriteLevel": 2,
     "TagHier": [
@@ -34353,22 +33094,6 @@
       4490
     ]
   },
-  "6802_40966600": {
-    "Prio": 4,
-    "TagId": 5354,
-    "TagIdEvtMsg": 12993,
-    "Unit": 1,
-    "DataFrmt": 2,
-    "Scale": 0.01,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      267,
-      2500,
-      4490
-    ]
-  },
   "6802_4095AD00": {
     "Prio": 4,
     "TagId": 4485,
@@ -34385,36 +33110,6 @@
       4490
     ]
   },
-  "6802_40966500": {
-    "Prio": 4,
-    "TagId": 5353,
-    "TagIdEvtMsg": 12992,
-    "Unit": 1,
-    "DataFrmt": 2,
-    "Scale": 0.01,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      267,
-      2500,
-      4490
-    ]
-  },
-  "6802_08965A00": {
-    "Prio": 4,
-    "TagId": 5313,
-    "TagIdEvtMsg": 12960,
-    "DataFrmt": 18,
-    "Typ": 1,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      267,
-      2500,
-      4490
-    ]
-  },
   "6802_0095B000": {
     "Prio": 4,
     "TagId": 2502,
@@ -34422,22 +33117,6 @@
     "Unit": 13,
     "DataFrmt": 7,
     "Scale": 1,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      267,
-      2500,
-      4490
-    ]
-  },
-  "6802_00965800": {
-    "Prio": 4,
-    "TagId": 5252,
-    "TagIdEvtMsg": 12958,
-    "Unit": 4508,
-    "DataFrmt": 3,
-    "Scale": 0.001,
     "Typ": 0,
     "WriteLevel": 2,
     "TagHier": [
@@ -38121,40 +36800,6 @@
       4522
     ]
   },
-  "6802_00964B00": {
-    "Prio": 4,
-    "TagId": 5254,
-    "TagIdEvtMsg": 12907,
-    "Unit": 4508,
-    "DataFrmt": 2,
-    "Scale": 0.01,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      267,
-      1024,
-      4389,
-      4522
-    ],
-    "Deprecated": true
-  },
-  "6802_08964C00": {
-    "Prio": 4,
-    "TagId": 5255,
-    "TagIdEvtMsg": 12908,
-    "DataFrmt": 18,
-    "Typ": 1,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      267,
-      1024,
-      4389,
-      4522
-    ],
-    "Deprecated": true
-  },
   "6802_00958600": {
     "Prio": 4,
     "TagId": 4410,
@@ -38732,25 +37377,6 @@
     "Unit": 13,
     "DataFrmt": 0,
     "Scale": 1,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "GridGuard": true,
-    "TagHier": [
-      847,
-      267,
-      1024,
-      1025,
-      4522
-    ],
-    "Deprecated": true
-  },
-  "6802_00964800": {
-    "Prio": 4,
-    "TagId": 5230,
-    "TagIdEvtMsg": 12894,
-    "Unit": 13,
-    "DataFrmt": 2,
-    "Scale": 0.01,
     "Typ": 0,
     "WriteLevel": 2,
     "GridGuard": true,
@@ -40198,22 +38824,6 @@
       1049
     ]
   },
-  "6802_00965F00": {
-    "Prio": 4,
-    "TagId": 2042,
-    "TagIdEvtMsg": 12968,
-    "Unit": 1,
-    "DataFrmt": 2,
-    "Scale": 0.01,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      267,
-      1048,
-      1049
-    ]
-  },
   "6802_08953A00": {
     "Prio": 4,
     "TagId": 1068,
@@ -40229,40 +38839,6 @@
       1193,
       4522
     ]
-  },
-  "6802_00964900": {
-    "Prio": 4,
-    "TagId": 5252,
-    "TagIdEvtMsg": 12905,
-    "Unit": 4508,
-    "DataFrmt": 2,
-    "Scale": 0.01,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      267,
-      1048,
-      1193,
-      4522
-    ],
-    "Deprecated": true
-  },
-  "6802_08964A00": {
-    "Prio": 4,
-    "TagId": 5253,
-    "TagIdEvtMsg": 12906,
-    "DataFrmt": 18,
-    "Typ": 1,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      267,
-      1048,
-      1193,
-      4522
-    ],
-    "Deprecated": true
   },
   "6802_00953C00": {
     "Prio": 4,
@@ -41288,192 +39864,6 @@
       4998
     ]
   },
-  "6802_00963A00": {
-    "Prio": 4,
-    "TagId": 5185,
-    "TagIdEvtMsg": 12870,
-    "Unit": 13,
-    "DataFrmt": 2,
-    "Scale": 0.01,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      267,
-      1048,
-      5184
-    ]
-  },
-  "6802_08963900": {
-    "Prio": 4,
-    "TagId": 4411,
-    "TagIdEvtMsg": 12869,
-    "DataFrmt": 18,
-    "Typ": 1,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      267,
-      1048,
-      5184
-    ]
-  },
-  "6802_08963E00": {
-    "Prio": 4,
-    "TagId": 4828,
-    "TagIdEvtMsg": 12874,
-    "DataFrmt": 18,
-    "Typ": 1,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      267,
-      1048,
-      5184
-    ]
-  },
-  "6802_00963F00": {
-    "Prio": 4,
-    "TagId": 4829,
-    "TagIdEvtMsg": 12875,
-    "Unit": 13,
-    "DataFrmt": 2,
-    "Scale": 0.01,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      267,
-      1048,
-      5184
-    ]
-  },
-  "6802_00963C00": {
-    "Prio": 4,
-    "TagId": 5189,
-    "TagIdEvtMsg": 12872,
-    "Unit": 7,
-    "DataFrmt": 2,
-    "Scale": 0.01,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      267,
-      1048,
-      5184
-    ]
-  },
-  "6802_00963B00": {
-    "Prio": 4,
-    "TagId": 5188,
-    "TagIdEvtMsg": 12871,
-    "Unit": 7,
-    "DataFrmt": 2,
-    "Scale": 0.01,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      267,
-      1048,
-      5184
-    ]
-  },
-  "6802_00964300": {
-    "Prio": 4,
-    "TagId": 2009,
-    "TagIdEvtMsg": 12886,
-    "Unit": 7,
-    "DataFrmt": 3,
-    "Scale": 0.001,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      267,
-      1048,
-      5184
-    ]
-  },
-  "6802_00964400": {
-    "Prio": 4,
-    "TagId": 2008,
-    "TagIdEvtMsg": 12887,
-    "Unit": 7,
-    "DataFrmt": 3,
-    "Scale": 0.001,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      267,
-      1048,
-      5184
-    ]
-  },
-  "6802_00964100": {
-    "Prio": 4,
-    "TagId": 5187,
-    "TagIdEvtMsg": 12879,
-    "Unit": 7,
-    "DataFrmt": 2,
-    "Scale": 0.01,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      267,
-      1048,
-      5184
-    ]
-  },
-  "6802_00964000": {
-    "Prio": 4,
-    "TagId": 5186,
-    "TagIdEvtMsg": 12878,
-    "Unit": 7,
-    "DataFrmt": 2,
-    "Scale": 0.01,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      267,
-      1048,
-      5184
-    ]
-  },
-  "6802_08962B00": {
-    "Prio": 4,
-    "TagId": 4875,
-    "TagIdEvtMsg": 12881,
-    "DataFrmt": 18,
-    "Typ": 1,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      267,
-      1048,
-      5184
-    ]
-  },
-  "6802_00963D00": {
-    "Prio": 4,
-    "TagId": 1055,
-    "TagIdEvtMsg": 12873,
-    "Unit": 4508,
-    "DataFrmt": 0,
-    "Scale": 1,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      267,
-      1048,
-      5184
-    ]
-  },
   "6802_0095E600": {
     "Prio": 4,
     "TagId": 1607,
@@ -41564,21 +39954,6 @@
     "Prio": 4,
     "TagId": 4411,
     "TagIdEvtMsg": 12355,
-    "DataFrmt": 18,
-    "Typ": 1,
-    "WriteLevel": 2,
-    "GridGuard": true,
-    "TagHier": [
-      847,
-      267,
-      1048,
-      4512
-    ]
-  },
-  "6802_0895C000": {
-    "Prio": 4,
-    "TagId": 4484,
-    "TagIdEvtMsg": 12926,
     "DataFrmt": 18,
     "Typ": 1,
     "WriteLevel": 2,
@@ -41977,18 +40352,6 @@
       267
     ]
   },
-  "6802_08964D00": {
-    "Prio": 4,
-    "TagId": 5258,
-    "TagIdEvtMsg": 12909,
-    "DataFrmt": 18,
-    "Typ": 1,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      267
-    ]
-  },
   "6802_00922200": {
     "Prio": 4,
     "TagId": 1029,
@@ -42036,7 +40399,7 @@
     "Prio": 4,
     "TagId": 1055,
     "TagIdEvtMsg": 10479,
-    "Unit": 4508,
+    "Unit": 1,
     "DataFrmt": 0,
     "Scale": 1,
     "Typ": 0,
@@ -42107,7 +40470,7 @@
     "Prio": 4,
     "TagId": 3685,
     "TagIdEvtMsg": 10646,
-    "Unit": 4508,
+    "Unit": 1,
     "DataFrmt": 2,
     "Scale": 0.01,
     "Typ": 0,
@@ -42905,234 +41268,6 @@
       1230
     ]
   },
-  "6802_00966A00": {
-    "Prio": 4,
-    "TagId": 5361,
-    "TagIdEvtMsg": 12996,
-    "Unit": 13,
-    "DataFrmt": 2,
-    "Scale": 0.01,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      1080,
-      5359
-    ]
-  },
-  "6802_00966B00": {
-    "Prio": 4,
-    "TagId": 5362,
-    "TagIdEvtMsg": 12997,
-    "Unit": 13,
-    "DataFrmt": 2,
-    "Scale": 0.01,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      1080,
-      5359
-    ]
-  },
-  "6802_08966800": {
-    "Prio": 4,
-    "TagId": 4411,
-    "TagIdEvtMsg": 12972,
-    "DataFrmt": 18,
-    "Typ": 1,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      1080,
-      5359
-    ]
-  },
-  "6802_08966D00": {
-    "Prio": 4,
-    "TagId": 4828,
-    "TagIdEvtMsg": 12999,
-    "DataFrmt": 18,
-    "Typ": 1,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      1080,
-      5359
-    ]
-  },
-  "6802_00966E00": {
-    "Prio": 4,
-    "TagId": 4829,
-    "TagIdEvtMsg": 13000,
-    "Unit": 13,
-    "DataFrmt": 2,
-    "Scale": 0.01,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      1080,
-      5359
-    ]
-  },
-  "6802_00966C00": {
-    "Prio": 4,
-    "TagId": 5363,
-    "TagIdEvtMsg": 12998,
-    "Unit": 13,
-    "DataFrmt": 2,
-    "Scale": 0.01,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      1080,
-      5359
-    ]
-  },
-  "6802_00966900": {
-    "Prio": 4,
-    "TagId": 5360,
-    "TagIdEvtMsg": 12995,
-    "Unit": 13,
-    "DataFrmt": 2,
-    "Scale": 0.01,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      1080,
-      5359
-    ]
-  },
-  "6802_08965000": {
-    "Prio": 4,
-    "TagId": 4828,
-    "TagIdEvtMsg": 12933,
-    "DataFrmt": 18,
-    "Typ": 1,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      1080,
-      5283
-    ]
-  },
-  "6802_00965400": {
-    "Prio": 4,
-    "TagId": 4829,
-    "TagIdEvtMsg": 12937,
-    "Unit": 13,
-    "DataFrmt": 3,
-    "Scale": 0.001,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      1080,
-      5283
-    ]
-  },
-  "6802_08964F00": {
-    "Prio": 4,
-    "TagId": 5284,
-    "TagIdEvtMsg": 12932,
-    "DataFrmt": 18,
-    "Typ": 1,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      1080,
-      5283
-    ]
-  },
-  "6802_00965300": {
-    "Prio": 4,
-    "TagId": 5285,
-    "TagIdEvtMsg": 12936,
-    "Unit": 13,
-    "DataFrmt": 3,
-    "Scale": 0.001,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      1080,
-      5283
-    ]
-  },
-  "6802_08965100": {
-    "Prio": 4,
-    "TagId": 4908,
-    "TagIdEvtMsg": 12934,
-    "DataFrmt": 18,
-    "Typ": 1,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      1080,
-      5283
-    ]
-  },
-  "6802_00965500": {
-    "Prio": 4,
-    "TagId": 4907,
-    "TagIdEvtMsg": 12938,
-    "Unit": 13,
-    "DataFrmt": 3,
-    "Scale": 0.001,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      1080,
-      5283
-    ]
-  },
-  "6802_08964E00": {
-    "Prio": 4,
-    "TagId": 4381,
-    "TagIdEvtMsg": 12931,
-    "DataFrmt": 18,
-    "Typ": 1,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      1080,
-      5283
-    ]
-  },
-  "6802_00965200": {
-    "Prio": 4,
-    "TagId": 4382,
-    "TagIdEvtMsg": 12935,
-    "Unit": 13,
-    "DataFrmt": 3,
-    "Scale": 0.001,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      1080,
-      5283
-    ]
-  },
-  "6802_00964700": {
-    "Prio": 4,
-    "TagId": 5220,
-    "TagIdEvtMsg": 12890,
-    "Unit": 13,
-    "DataFrmt": 3,
-    "Scale": 0.001,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      1080,
-      2510
-    ]
-  },
   "6802_00962E00": {
     "Prio": 4,
     "TagId": 5089,
@@ -43185,36 +41320,6 @@
     "Unit": 13,
     "DataFrmt": 2,
     "Scale": 0.01,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      1080,
-      2510
-    ]
-  },
-  "6802_00964500": {
-    "Prio": 4,
-    "TagId": 5218,
-    "TagIdEvtMsg": 12888,
-    "Unit": 4314,
-    "DataFrmt": 3,
-    "Scale": 0.001,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      1080,
-      2510
-    ]
-  },
-  "6802_00964600": {
-    "Prio": 4,
-    "TagId": 5219,
-    "TagIdEvtMsg": 12889,
-    "Unit": 4314,
-    "DataFrmt": 3,
-    "Scale": 0.001,
     "Typ": 0,
     "WriteLevel": 2,
     "TagHier": [
@@ -43371,80 +41476,12 @@
       2509
     ]
   },
-  "6800_40966F00": {
-    "Prio": 4,
-    "TagId": 3590,
-    "TagIdEvtMsg": 13007,
-    "Unit": 1,
-    "DataFrmt": 2,
-    "Scale": 0.01,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      1080
-    ]
-  },
-  "6800_40967000": {
-    "Prio": 4,
-    "TagId": 1465,
-    "TagIdEvtMsg": 13008,
-    "Unit": 1,
-    "DataFrmt": 2,
-    "Scale": 0.01,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      1080
-    ]
-  },
   "6802_0892D500": {
     "Prio": 4,
     "TagId": 733,
     "TagIdEvtMsg": 11048,
     "DataFrmt": 18,
     "Typ": 1,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      1080
-    ]
-  },
-  "6802_08B22700": {
-    "Prio": 5,
-    "TagId": 5352,
-    "TagIdEvtMsg": 12989,
-    "DataFrmt": 18,
-    "Typ": 1,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      1080
-    ]
-  },
-  "6802_00965600": {
-    "Prio": 4,
-    "TagId": 5323,
-    "TagIdEvtMsg": 12974,
-    "Unit": 13,
-    "DataFrmt": 3,
-    "Scale": 0.001,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      1080
-    ]
-  },
-  "6802_00966700": {
-    "Prio": 4,
-    "TagId": 5358,
-    "TagIdEvtMsg": 12971,
-    "Unit": 1,
-    "DataFrmt": 2,
-    "Scale": 0.01,
-    "Typ": 0,
     "WriteLevel": 2,
     "TagHier": [
       847,
@@ -43881,39 +41918,12 @@
       1343
     ]
   },
-  "6A02_00964200": {
-    "Prio": 4,
-    "TagId": 5170,
-    "TagIdEvtMsg": 12882,
-    "DataFrmt": 0,
-    "Scale": 1,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      2113
-    ]
-  },
   "6800_0892D900": {
     "Prio": 4,
     "TagId": 2136,
     "TagIdEvtMsg": 11045,
     "DataFrmt": 18,
     "Typ": 1,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      2113
-    ]
-  },
-  "6802_00B22600": {
-    "Prio": 5,
-    "TagId": 5248,
-    "TagIdEvtMsg": 12899,
-    "Unit": 13,
-    "DataFrmt": 1,
-    "Scale": 0.1,
-    "Typ": 0,
     "WriteLevel": 2,
     "TagHier": [
       847,
@@ -44065,46 +42075,6 @@
       2113
     ]
   },
-  "6802_08966000": {
-    "Prio": 4,
-    "TagId": 1068,
-    "TagIdEvtMsg": 12965,
-    "DataFrmt": 18,
-    "Typ": 1,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      2113
-    ]
-  },
-  "6802_00966200": {
-    "Prio": 4,
-    "TagId": 4489,
-    "TagIdEvtMsg": 12967,
-    "Unit": 4508,
-    "DataFrmt": 2,
-    "Scale": 0.01,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      2113
-    ]
-  },
-  "6802_00966100": {
-    "Prio": 4,
-    "TagId": 4488,
-    "TagIdEvtMsg": 12966,
-    "Unit": 4508,
-    "DataFrmt": 2,
-    "Scale": 0.01,
-    "Typ": 0,
-    "WriteLevel": 2,
-    "TagHier": [
-      847,
-      2113
-    ]
-  },
   "6800_0092D700": {
     "Prio": 4,
     "TagId": 315,
@@ -44139,7 +42109,7 @@
     "DataFrmt": 0,
     "Scale": 1,
     "Typ": 0,
-    "WriteLevel": 2,
+    "WriteLevel": 1,
     "GridGuard": true,
     "TagHier": [
       847,
@@ -44152,7 +42122,7 @@
     "TagIdEvtMsg": 10029,
     "DataFrmt": 18,
     "Typ": 1,
-    "WriteLevel": 2,
+    "WriteLevel": 1,
     "GridGuard": true,
     "TagHier": [
       847,
@@ -44795,48 +42765,6 @@
     "Unit": 18,
     "DataFrmt": 0,
     "Scale": 1,
-    "Typ": 0,
-    "WriteLevel": 5,
-    "TagHier": [
-      848,
-      290,
-      3051
-    ],
-    "Min": true,
-    "Max": true,
-    "Sum": true,
-    "Avg": true,
-    "Cnt": true,
-    "SumD": true
-  },
-  "6100_40533D00": {
-    "Prio": 2,
-    "TagId": 5317,
-    "TagIdEvtMsg": 12951,
-    "Unit": 33,
-    "DataFrmt": 0,
-    "Scale": 1,
-    "Typ": 0,
-    "WriteLevel": 5,
-    "TagHier": [
-      848,
-      290,
-      3051
-    ],
-    "Min": true,
-    "Max": true,
-    "Sum": true,
-    "Avg": true,
-    "Cnt": true,
-    "SumD": true
-  },
-  "6100_40533C00": {
-    "Prio": 2,
-    "TagId": 5316,
-    "TagIdEvtMsg": 12950,
-    "Unit": 4508,
-    "DataFrmt": 2,
-    "Scale": 0.01,
     "Typ": 0,
     "WriteLevel": 5,
     "TagHier": [
@@ -46020,7 +43948,7 @@
     "Prio": 2,
     "TagId": 4982,
     "TagIdEvtMsg": 12752,
-    "DataFrmt": 0,
+    "DataFrmt": 1,
     "Scale": 1,
     "Typ": 0,
     "WriteLevel": 5,
@@ -46128,30 +44056,6 @@
     "Scale": 0.1,
     "Typ": 0,
     "WriteLevel": 2,
-    "TagHier": [
-      853,
-      4715
-    ]
-  },
-  "6800_08983100": {
-    "Prio": 4,
-    "TagId": 5172,
-    "TagIdEvtMsg": 12884,
-    "DataFrmt": 18,
-    "Typ": 1,
-    "WriteLevel": 1,
-    "TagHier": [
-      853,
-      4715
-    ]
-  },
-  "6800_08983000": {
-    "Prio": 4,
-    "TagId": 5171,
-    "TagIdEvtMsg": 12883,
-    "DataFrmt": 18,
-    "Typ": 1,
-    "WriteLevel": 1,
     "TagHier": [
       853,
       4715

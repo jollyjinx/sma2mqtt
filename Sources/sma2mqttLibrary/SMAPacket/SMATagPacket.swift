@@ -82,7 +82,8 @@ extension SMATagPacket: BinaryCodable
                                 _netPacket = try SMANetPacket(fromBinary: netpacketDecoder)
 
                             case .extendedEmeterPacket:
-                                let data = try netpacketDecoder.decode(Data.self, length: data.count - 2)
+                                JLog.info("Got packetype:\(packetType) - ignoring")
+                                let _ = try netpacketDecoder.decode(Data.self, length: data.count - 2)
                         }
                         guard netpacketDecoder.isAtEnd else { throw PacketError.notExpectedPacket("SMATagPacket type:\(tagType) too long") }
                     }
@@ -112,6 +113,7 @@ public extension SMATagPacket
     var isLastPacket: Bool { type == .end && data == Data(capacity: 4) }
 
     var obisvalues: [ObisValue] { _obisPacket?.obisvalues ?? [ObisValue]() }
+    var netPacket: SMANetPacket? { _netPacket }
     var netPacketValues: [SMANetPacketValue] { _netPacket?.values ?? [SMANetPacketValue]() }
 }
 

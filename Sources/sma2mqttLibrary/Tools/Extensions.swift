@@ -46,6 +46,28 @@ public extension Data
     }
 }
 
+extension String
+{
+    func hexStringToData() -> Data
+    {
+        let stringWithoutSpaces = self.replacingOccurrences(of: " ", with: "")
+            .replacingOccurrences(of: "\n", with: "")
+            .replacingOccurrences(of: "\t", with: "")
+
+        let uInt8Array = stride(from: 0, to: stringWithoutSpaces.count, by: 2)
+            .map
+            {
+                stringWithoutSpaces[
+                    stringWithoutSpaces.index(stringWithoutSpaces.startIndex, offsetBy: $0) ... stringWithoutSpaces.index(stringWithoutSpaces.startIndex, offsetBy: $0 + 1)
+                ]
+            }
+            .map { UInt8($0, radix: 16)! }
+        return Data(uInt8Array)
+    }
+}
+
+
+
 public extension Encodable
 {
     var json: String

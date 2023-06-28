@@ -139,15 +139,14 @@ Responses from the inverter have the same header with data then attached (e.g. a
     addr |addr | type| explanation
     ----- -----------------------------------
     0x00 | 00 | U8  | Length in 32bit words, to get length in bytes * 4
-    0x01 | 01 | U8  | Type        0xA0  1010 0000b    Dest.SysID != 0xF4
-         |    |     |             0xE0  1110 0000b    Dest.SysID == 0xF4 == 244 = 1111 0100
-         |    |     |                    -X-- ----     0 network address ?
-         |    |     |                                  1 group address ?
+    0x01 | 01 | U8  | Type only   0xYZ
+                                    Y: A = Request, E = Response
+                                    Z: 0 = network, 1 = group address
 
     0x02 | 02 | U16 | Destination SysID
     0x04 | 04 | U32 | Destination Serial number     or group 
-
-    0x08 | 08 | U8  | 0x00                             needs to be 0x00
+    0x08 | 08 | U8  | 0x00 always zero (padding)
+    
     0x09 | 09 | U8  | 0x00 sending does not seem to matter except for login
          |    |     |  receiving same value sent except bit 6
          |    |     |  0xA1 1010 0000b
@@ -156,25 +155,94 @@ Responses from the inverter have the same header with data then attached (e.g. a
                     |  From SB sessionprotocol bit7 addressing ( 0 = adr / 1 = group)
                     |                          bit6 acknoledge ( 0 = request / 1 = answer )
                     |                          bit 0-5 reserved
+          
+          'p9:0x00' => 504196,
+          'p9:0x01' => 1887147,
+          'p9:0x02' => 34,
+          'p9:0x03' => 6,
+          'p9:0xa0' => 399585,
+          'p9:0xa1' => 160432,
+          'p9:0xc0' => 14109,
+          'p9:0xc1' => 2,
+          'p9:0xc5' => 16871,   
+          'p9:0xe0' => 127697
+          'p9:0xe1' => 966354,
 
+                    
+                    
+                    
+                    
+                    
 
     0x0A | 10 | U16 |  Source SysID           Any: 0xFFFF
     0x0C | 12 | U32 |  Source Serial number   Any: 0xFFFF FFFF
-
-    0x10 | 16 | U16 |  ??ctrl      0x0000              sending 0xA0 0x01 0x03
-    0x12 | 18 | U16 |  Result:     0x0000 ok
-         |    |     |              0x0002  0000 0010b  incorrect command ?
-         |    |     |              0x0014              unkown command ?
-         |    |     |              0x0015  0000 1111b  no values 
-         |    |     |              0x0017  0001 0001b  not logged in
-         |    |     |              0x0102              login not possible (busy)?
-
-    0x14 |    | U16 | Bit 0-14 packet id
-         |    |     | bit 15   request / bit 15 needs to be set
-         |    |     |          response 0 - fail
-         |    |     |                   1 - ok
+    0x10 | 16 | U8  |  0x00 always zero (padding)
     
+    0x11 | 17 | U8  |  job number usually 1 or 0 but can be chose freely it seems
 
+    
+    0x12 | 18 | U16 |  Result:  0x0000 ok
+    
+          'reslt:0000' => 2981993,  ok 
+          'reslt:0002' => 38,
+          'reslt:0014' => 662745    
+          'reslt:0015' => 415136,
+          'reslt:0017' => 15705,    
+          'reslt:0018' => 6,
+          'reslt:0102' => 383,  invalid password
+          'reslt:ffff' => 427,
+
+         |    |     |           0x0002    0000 0010b  incorrect command ?
+         |    |     |           0x0014    0000 1110b
+         |    |     |           0x0015    0000 1111b  no values 
+         |    |     |           0x0017    0001 0001b  not logged in
+         |    |     |           0x0018    0001 0010b
+                                0x0100  1 0000 0000b    inv. password?
+         |    |     |           0x0102  1 0000 0010b   login not possible (busy)?
+         |    |     |           0xffff
+
+    0x14 | 20 | U16 | remaining packets to come count
+    
+    0x16 | 22 | U16 | packet id     Bit 0-14 packet id
+         |    |     |               bit 15 
+                                        request: 1
+                                        response: 0 - fail
+                                                  1 - ok
+
+
+
+    0x18 | 24 | U8  |  commannd ??ctrl 
+
+          'p24:0x00' => 501268
+          'p24:0x01' => 1668148,
+          'p24:0x0a' => 2987,
+          'p24:0x0c' => 16882,      
+          'p24:0x0d' => 525358,
+          'p24:0x0e' => 1361790,
+                                
+
+                
+    0x19 | 25 | U8  | parametercount ?  data type? 
+          'p25:0x00' => 572223,
+          'p25:0x01' => 806438,
+          'p25:0x02' => 2172375,
+          'p25:0x03' => 28,
+          'p25:0x04' => 525369
+                
+                                0x80
+
+                        0x00 keep alive packet ? 
+                        0x00
+                        0x01 16 bit values
+                        0x02 32 bit values
+                        0x04 value length next packet ? 
+                        0x02 && command == 0x000 - 
+                                      
+    0x1A | 26 | U16 | command    
+    
+    values follow
+
+    
 
 
 # Requests to Inverter

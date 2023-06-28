@@ -25,12 +25,13 @@ public actor SMADevice
 
     public var lastSeen = Date.distantPast
 
-    var loggedIn = false
     var scheme = "https"
     let httpClient: HTTPClient
+    private var sessionid: String?
 
     let udpEmitter: UDPEmitter?
-    var udpSerial: Int?
+    var udpSystemId: UInt16 = 0xFFFF
+    var udpSerial: UInt32 = 0xFFFF_FFFF
     var udpLoggedIn = false
     var udpSession: Int?
     var udpPacketCounter = 1
@@ -38,19 +39,10 @@ public actor SMADevice
     private var hasDeviceName = false
     public var name: String { willSet { hasDeviceName = true } }
 
-    private var sessionid: String?
     private var refreshTask: Task<Void, Error>?
     private var tagTranslator = SMATagTranslator.shared
 
-    public enum UserRight: String
-    {
-        case user = "usr"
-        case installer = "istl"
-        case service = "svc"
-        case developer = "dvlp"
-    }
-
-    public init(address: String, userright: UserRight = .user, password: String = "00000", publisher: SMAPublisher? = nil, refreshInterval: Int = 10, interestingPaths: [String] = [], requestAllObjects: Bool = false, udpEmitter: UDPEmitter? = nil) async throws
+    public init(address: String, userright: UserRight = .user, password: String = "00000", publisher: SMAPublisher? = nil, refreshInterval: Int = 1, interestingPaths: [String] = [], requestAllObjects: Bool = false, udpEmitter: UDPEmitter? = nil) async throws
     {
         self.address = address
         self.userright = userright
@@ -74,7 +66,8 @@ public actor SMADevice
                     do
                     {
                         try await Task.sleep(nanoseconds: UInt64(refreshInterval) * UInt64(NSEC_PER_SEC))
-                        try await self.queryInterestingObjects()
+//                        try await self.httpQueryInterestingObjects()
+                        try await self.udpQueryInterestingObjects()
                         errorcounter = 0
                     }
                     catch
@@ -91,27 +84,6 @@ public actor SMADevice
 
 public extension SMADevice
 {
-    func encodePassword(password: String, usertype: UInt8 = 0x88) -> [UInt8]
-    {
-        let paddedPassword = password.padding(toLength: 12, withPad: "\0", startingAt: 0)
-        let passwordData = Data(paddedPassword.utf8)
-
-        var encoded: [UInt8] = []
-        for byte in passwordData
-        {
-            let calculate = UInt8((Int(byte) + Int(usertype)) % 256)
-            encoded.append(calculate)
-        }
-
-        return encoded
-    }
-
-    func getPacketCounter() -> UInt16
-    {
-        udpPacketCounter = (udpPacketCounter + 1)
-        return UInt16(udpPacketCounter | 0x8000)
-    }
-
     func receivedUDPData(_ data: Data) async -> SMAPacket?
     {
         lastSeen = Date()
@@ -129,6 +101,37 @@ public extension SMADevice
         do
         {
             smaPacket = try SMAPacket(data: data)
+
+            if let netPacket = smaPacket.netPacket
+            {
+                udpLoggedIn = netPacket.isLoggedIn
+                udpSystemId = netPacket.header.sourceSystemId
+                udpSerial = netPacket.header.sourceSerial
+
+
+                for value in netPacket.values
+                {
+                    if 0xfffd == netPacket.header.u16command
+                    {
+                        continue
+                    }
+                    let objectID = String(format:"%04X_%02X%04X00",netPacket.header.u16command,value.type,value.address)
+                    JLog.trace("\(address): objectid:\(objectID)")
+
+                    if let simpleObject = tagTranslator.objectsAndPaths[objectID]
+                    {
+                        JLog.trace("\(address): objectid:\(objectID) name:\(simpleObject.json)")
+
+                        try? await publisher?.publish(to: name + "/" + simpleObject.path, payload: value.json, qos: .atMostOnce, retain: false)
+                    }
+                    else
+                    {
+                        JLog.error("\(address): objectid not known \(objectID)")
+                    }
+
+                }
+
+            }
         }
         catch
         {
@@ -150,7 +153,40 @@ public extension SMADevice
 
         return smaPacket
     }
+
+    func getNextPacketCounter() -> Int
+    {
+        udpPacketCounter = (udpPacketCounter + 1)
+        return udpPacketCounter
+    }
+
+    func udpQueryInterestingObjects() async throws
+    {
+        let packetcounter = getNextPacketCounter()
+
+        let packetToSend:String
+
+        if !udpLoggedIn
+        {
+            packetToSend = try SMAPacketGenerator.generateLoginPacket(packetcounter: packetcounter, password: password, userRight: .user)
+        }
+        else
+        {
+            let objectIDs = Array(objectsToQueryContinously)
+            let queryobject = objectIDs[(packetcounter % objectIDs.count)]
+
+            packetToSend = try SMAPacketGenerator.generatePacketForObjectID(packetcounter: packetcounter, objectID: queryobject,dstSystemId: udpSystemId,dstSerial: udpSerial)
+        }
+
+        JLog.trace("\(address): sending udp packet:\(packetToSend)")
+        await udpEmitter?.sendPacket(data: [UInt8](packetToSend.hexStringToData()), address: address,port: 9522)
+
+    }
+
 }
+
+
+
 
 extension SMADevice
 {
@@ -161,7 +197,10 @@ extension SMADevice
         case invalidDataError(String)
         case invalidHTTPResponseError
         case loginFailed
+        case packetGenerationError(String)
     }
+
+
 
     func findOutDeviceNameAndType() async throws
     {
@@ -196,6 +235,9 @@ extension SMADevice
             let definitionData = try await data(forPath: "/data/ObjectMetadata_Istl.json").bodyData
             let translationData = try await data(forPath: "/data/l10n/en-US.json").bodyData
 
+//            try definitionData.write(to: URL(filePath:"/Users/jolly/Desktop/\(address).definition.json"))
+//            try translationData.write(to:URL(filePath:"/Users/jolly/Desktop/\(address).translationData.json"))
+
             tagTranslator = SMATagTranslator(definitionData: definitionData, translationData: translationData)
         }
         catch
@@ -206,7 +248,7 @@ extension SMADevice
         JLog.debug("\(address):SMA device found - logging in now")
 
         // login now
-        sessionid = try await login()
+        sessionid = try await httpLogin()
         JLog.debug("\(address):Successfull login")
 
         // get first time data
@@ -247,18 +289,20 @@ extension SMADevice
         }
     }
 
-    func queryInterestingObjects() async throws
+
+    func httpQueryInterestingObjects() async throws
     {
         if sessionid == nil
         {
             JLog.debug("\(address):Will Login")
-            sessionid = try await login()
+            sessionid = try await httpLogin()
         }
         JLog.debug("\(address):Successfull login")
         try await getInformationDictionary(atPath: "/dyn/getValues.json", requestIds: Array(objectsToQueryContinously))
     }
 
-    func login() async throws -> String
+
+    func httpLogin() async throws -> String
     {
         JLog.debug("\(address):Login")
 
@@ -358,7 +402,7 @@ extension SMADevice
                 JLog.trace("\(address):working on objectId:\(objectId.key)")
 
                 let singleValue = PublishedValue(objectID: objectId.key, values: objectId.value.values, tagTranslator: tagTranslator)
-                let mqttPath = name.lowercased().replacing(#/[\\\/\s]+/#) { _ in "-" } + "/" + (tagTranslator.objectsAndPaths[objectId.key] ?? "unkown-id-\(objectId.key)")
+                let mqttPath = name.lowercased().replacing(#/[\\\/\s]+/#) { _ in "-" } + "/" + (tagTranslator.objectsAndPaths[objectId.key]?.path ?? "unkown-id-\(objectId.key)")
 
                 retrievedInformation[mqttPath] = singleValue
 

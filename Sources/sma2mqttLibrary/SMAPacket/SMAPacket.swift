@@ -52,6 +52,7 @@ extension SMAPacket: BinaryDecodable
 public extension SMAPacket
 {
     var obis: [ObisValue] { smaTagPackets.first(where: { $0.type == .net })?.obisvalues ?? [] }
+    var netPacket: SMANetPacket? { smaTagPackets.first(where: { $0.netPacket != nil })?.netPacket }
 }
 
 //

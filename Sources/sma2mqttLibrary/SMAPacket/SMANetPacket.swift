@@ -16,6 +16,12 @@ public struct SMANetPacket: Codable
     let directvalue: String?
 }
 
+extension SMANetPacket
+{
+    var isLoggedIn:Bool { get { return header.u16result == 0 } }
+}
+
+
 extension SMANetPacket: BinaryDecodable
 {
     public init(fromBinary decoder: BinaryDecoder) throws
@@ -37,13 +43,13 @@ extension SMANetPacket: BinaryDecodable
 
         let valuesize: Int
 
-        switch header.valuestype
+        switch header.u8valuestype
         {
             case 0x01, 0x04:
                 guard decoder.countToEnd >= 4 else { throw PacketError.decoding("Valueheader too short header:\(header) toEnd:\(decoder.countToEnd)") }
                 let startvalue = try Int(decoder.decode(UInt32.self).littleEndian)
                 valuesheader.append(startvalue)
-                valuesize = header.valuestype == 0x01 ? 16 : decoder.countToEnd
+                valuesize = header.u8valuestype == 0x01 ? 16 : decoder.countToEnd
 
             case 0x02:
                 guard decoder.countToEnd >= 8 else { throw PacketError.decoding("Valueheader too short header:\(header) toEnd:\(decoder.countToEnd)") }
@@ -74,7 +80,7 @@ extension SMANetPacket: BinaryDecodable
                 }
 
             case 0x00: valuesize = decoder.countToEnd // keepalive packet
-            default: throw PacketError.decoding("unknown valuestype:\(header.valuestype) header:\(header) toEnd:\(decoder.countToEnd)")
+            default: throw PacketError.decoding("unknown valuestype:\(header.u8valuestype) header:\(header) toEnd:\(decoder.countToEnd)")
         }
 
         if valuesize > 0
@@ -94,3 +100,5 @@ extension SMANetPacket: BinaryDecodable
         self.directvalue = directvalue
     }
 }
+
+
