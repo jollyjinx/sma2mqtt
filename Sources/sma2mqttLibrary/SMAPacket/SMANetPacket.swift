@@ -18,9 +18,8 @@ public struct SMANetPacket: Codable
 
 extension SMANetPacket
 {
-    var isLoggedIn:Bool { get { return header.u16result == 0 } }
+    var isLoggedIn: Bool { header.u16result == 0 }
 }
-
 
 extension SMANetPacket: BinaryDecodable
 {
@@ -79,8 +78,11 @@ extension SMANetPacket: BinaryDecodable
                     directvalue = String(data: data, encoding: .isoLatin1)!
                 }
 
-            case 0x00: valuesize = decoder.countToEnd // keepalive packet
-            default: throw PacketError.decoding("unknown valuestype:\(header.u8valuestype) header:\(header) toEnd:\(decoder.countToEnd)")
+            case 0x00:
+                valuesize = decoder.countToEnd
+
+            default:
+             throw PacketError.decoding("unknown valuestype:\(header.u8valuestype) header:\(header) toEnd:\(decoder.countToEnd)")
         }
 
         if valuesize > 0
@@ -100,5 +102,3 @@ extension SMANetPacket: BinaryDecodable
         self.directvalue = directvalue
     }
 }
-
-

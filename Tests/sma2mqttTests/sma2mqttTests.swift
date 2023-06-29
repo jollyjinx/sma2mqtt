@@ -13,7 +13,22 @@ final class sma2mqttTests: XCTestCase
         JLog.loglevel = .trace
     }
 
-    func testSMANetDecoding() throws
+    func testSMANetDecoding1() throws
+    {
+        let data = """
+
+        07 2c4a 08 8856 9c64 2e01 0000 6f24 0001 9f24 0000 a024 0000 dd24 0000 634a 0000 feff ff00 0000 0000
+
+
+        """.hexStringToData()
+        let binaryDecoder = BinaryDecoder(data: [UInt8](data))
+
+        let packet = try SMANetPacketValue(fromBinary: binaryDecoder)
+        JLog.debug("Packet:\(packet)")
+        XCTAssert(binaryDecoder.isAtEnd)
+    }
+
+    func testSMANetDecoding2() throws
     {
         let data =
             "0ea0 ffff ffff ffff 0001 1234 25f6 4321 0001 0000 0000 0180 0c04 fdff 0700 0000 8403 0000 4c20 cb51 0000 0000 dbb8 f4e9 fae7 ddfb edfa 8888"
@@ -24,6 +39,32 @@ final class sma2mqttTests: XCTestCase
         JLog.debug("Packet:\(packet)")
         XCTAssert(binaryDecoder.isAtEnd)
     }
+
+    func testSMANetDecoding3() throws
+    {
+        let data = """
+
+            0aa0
+            ffff ffff ffff 00
+            c5
+            6901 6d33 26b3 00
+            05
+            0000 0000 7ba7 0c00
+            fdff
+            4c 4f43 4b
+            4544 0000
+            
+            0000 0000
+
+        """
+                .hexStringToData()
+        let binaryDecoder = BinaryDecoder(data: [UInt8](data))
+
+        let packet = try SMANetPacket(fromBinary: binaryDecoder)
+        JLog.debug("Packet:\(packet)")
+        XCTAssert(binaryDecoder.isAtEnd)
+    }
+
 
     func testSMADecoding() throws
     {
@@ -65,7 +106,7 @@ final class sma2mqttTests: XCTestCase
         let dataString = try SMAPacketGenerator.generatePacketForObjectID(packetcounter: 1, objectID: "6180_08414E00")
         let data = dataString.hexStringToData()
 
-        let binaryDecoder = BinaryDecoder(data: [UInt8](data) )
+        let binaryDecoder = BinaryDecoder(data: [UInt8](data))
 
         let packet = try SMAPacket(fromBinary: binaryDecoder)
         JLog.debug("Packet:\(packet)")
@@ -74,7 +115,6 @@ final class sma2mqttTests: XCTestCase
         let packet2 = try SMAPacket(data: data)
         JLog.debug("Packet2:\(packet2)")
     }
-
 
     func testSHMWeird() throws
     {
@@ -123,7 +163,7 @@ final class sma2mqttTests: XCTestCase
     func testSMAFile() throws
     {
         JLog.debug("loading data")
-                let filedata = try Data(contentsOf: URL(fileURLWithPath:"/Users/jolly/Documents/GitHub/sma2mqtt/Temp/Reverseengineering/pcaps/vlan2.20220618-1.pcap"),options:.mappedRead)
+        let filedata = try Data(contentsOf: URL(fileURLWithPath: "/Users/jolly/Documents/GitHub/sma2mqtt/Temp/Reverseengineering/pcaps/vlan2.20220618-1.pcap"), options: .mappedRead)
 //                let filedata = try Data(contentsOf: URL(fileURLWithPath:"/Users/jolly/Downloads/FW3-11-11-R_SBS25-1VL-10/SBS2.5-1VL-10-V3.11.11.R.up2"),options:.mappedRead)
 //        let filedata = try Data(contentsOf: URL(fileURLWithPath:"/Users/jolly/Documents/GitHub/sma2mqtt/Temp/Reverseengineering/shm.20220615.pcap"),options: .mappedRead)
         JLog.debug("data loaded")
@@ -603,7 +643,6 @@ final class sma2mqttTests: XCTestCase
         XCTAssert(packetcounter == 27)
     }
 
-
     func testSMAPacketDecoding8() throws
     {
         let data = """
@@ -625,5 +664,4 @@ final class sma2mqttTests: XCTestCase
         let binaryDecoder = BinaryDecoder(data: [UInt8](data))
         let _ = try? SMAPacket(fromBinary: binaryDecoder)
     }
-
 }

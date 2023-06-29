@@ -87,5 +87,3 @@ extension SMANetPacketHeader: BinaryDecodable
         assert(Self.size == decoder.position - startposition)
     }
 }
-
-

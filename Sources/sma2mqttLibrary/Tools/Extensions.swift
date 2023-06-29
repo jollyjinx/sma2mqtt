@@ -50,7 +50,7 @@ extension String
 {
     func hexStringToData() -> Data
     {
-        let stringWithoutSpaces = self.replacingOccurrences(of: " ", with: "")
+        let stringWithoutSpaces = replacingOccurrences(of: " ", with: "")
             .replacingOccurrences(of: "\n", with: "")
             .replacingOccurrences(of: "\t", with: "")
 
@@ -65,8 +65,6 @@ extension String
         return Data(uInt8Array)
     }
 }
-
-
 
 public extension Encodable
 {

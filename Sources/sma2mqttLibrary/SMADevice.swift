@@ -108,29 +108,62 @@ public extension SMADevice
                 udpSystemId = netPacket.header.sourceSystemId
                 udpSerial = netPacket.header.sourceSerial
 
+//                let multipleValues = netPacket.values.count > 1
 
                 for value in netPacket.values
                 {
-                    if 0xfffd == netPacket.header.u16command
+                    if netPacket.header.u16command == 0xFFFD
                     {
                         continue
                     }
-                    let objectID = String(format:"%04X_%02X%04X00",netPacket.header.u16command,value.type,value.address)
+                    let objectID = String(format: "%04X_%02X%04X00", netPacket.header.u16command, value.type, value.address)
+
                     JLog.trace("\(address): objectid:\(objectID)")
 
                     if let simpleObject = tagTranslator.objectsAndPaths[objectID]
                     {
                         JLog.trace("\(address): objectid:\(objectID) name:\(simpleObject.json)")
 
-                        try? await publisher?.publish(to: name + "/" + simpleObject.path, payload: value.json, qos: .atMostOnce, retain: false)
+                        let path = name + simpleObject.path // "\(simpleObject.path)\(multipleValues ? ".\(value.number)" : "")"
+
+                        switch value.value
+                        {
+                            case .uint(let value):
+                                if let firstValue = value.first
+                                {
+                                    let resultValue = GetValuesResult.Value.intValue( Int(firstValue) )
+                                    let singleValue = PublishedValue(objectID: objectID, values: [resultValue], tagTranslator: tagTranslator)
+                                    try? await publisher?.publish(to: path, payload: singleValue.json, qos: .atMostOnce, retain: false)
+                                }
+                            case .int(let value):
+                                if let firstValue = value.first
+                                {
+                                    let resultValue = GetValuesResult.Value.intValue( Int(firstValue) )
+                                    let singleValue = PublishedValue(objectID: objectID, values: [resultValue], tagTranslator: tagTranslator)
+                                    try? await publisher?.publish(to: path, payload: singleValue.json, qos: .atMostOnce, retain: false)
+                                }
+
+                            case .string(let string):
+                                    let resultValue = GetValuesResult.Value.stringValue( string)
+                                    let singleValue = PublishedValue(objectID: objectID, values: [resultValue], tagTranslator: tagTranslator)
+                                    try? await publisher?.publish(to: path, payload: singleValue.json, qos: .atMostOnce, retain: false)
+
+                            case .tags(let tags):
+                                    let resultValue = GetValuesResult.Value.tagValues( tags.map{ Int($0) } )
+                                    let singleValue = PublishedValue(objectID: objectID, values: [resultValue], tagTranslator: tagTranslator)
+                                    try? await publisher?.publish(to: path, payload: singleValue.json, qos: .atMostOnce, retain: false)
+
+                            default:
+                                try? await publisher?.publish(to: path, payload: value.json, qos: .atMostOnce, retain: false)
+                                break
+                        }
+
                     }
                     else
                     {
                         JLog.error("\(address): objectid not known \(objectID)")
                     }
-
                 }
-
             }
         }
         catch
@@ -164,7 +197,7 @@ public extension SMADevice
     {
         let packetcounter = getNextPacketCounter()
 
-        let packetToSend:String
+        let packetToSend: String
 
         if !udpLoggedIn
         {
@@ -173,20 +206,15 @@ public extension SMADevice
         else
         {
             let objectIDs = Array(objectsToQueryContinously)
-            let queryobject = objectIDs[(packetcounter % objectIDs.count)]
+            let queryobject = objectIDs[packetcounter % objectIDs.count]
 
-            packetToSend = try SMAPacketGenerator.generatePacketForObjectID(packetcounter: packetcounter, objectID: queryobject,dstSystemId: udpSystemId,dstSerial: udpSerial)
+            packetToSend = try SMAPacketGenerator.generatePacketForObjectID(packetcounter: packetcounter, objectID: queryobject, dstSystemId: udpSystemId, dstSerial: udpSerial)
         }
 
         JLog.trace("\(address): sending udp packet:\(packetToSend)")
-        await udpEmitter?.sendPacket(data: [UInt8](packetToSend.hexStringToData()), address: address,port: 9522)
-
+        await udpEmitter?.sendPacket(data: [UInt8](packetToSend.hexStringToData()), address: address, port: 9522)
     }
-
 }
-
-
-
 
 extension SMADevice
 {
@@ -199,8 +227,6 @@ extension SMADevice
         case loginFailed
         case packetGenerationError(String)
     }
-
-
 
     func findOutDeviceNameAndType() async throws
     {
@@ -289,7 +315,6 @@ extension SMADevice
         }
     }
 
-
     func httpQueryInterestingObjects() async throws
     {
         if sessionid == nil
@@ -300,7 +325,6 @@ extension SMADevice
         JLog.debug("\(address):Successfull login")
         try await getInformationDictionary(atPath: "/dyn/getValues.json", requestIds: Array(objectsToQueryContinously))
     }
-
 
     func httpLogin() async throws -> String
     {

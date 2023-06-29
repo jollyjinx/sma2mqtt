@@ -13,7 +13,6 @@ import class Foundation.Bundle
 @testable import JLog
 @testable import sma2mqttLibrary
 
-
 struct DataSplitter: Sequence, IteratorProtocol
 {
     let data: Data

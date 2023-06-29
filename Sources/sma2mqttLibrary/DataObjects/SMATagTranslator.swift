@@ -8,7 +8,6 @@
 import Foundation
 import JLog
 
-
 struct SMATagTranslator
 {
     typealias ObjectIDString = String
@@ -17,10 +16,10 @@ struct SMATagTranslator
     let translations: [Int: String]
     let objectsAndPaths: [ObjectIDString: SimpleObject]
 
-    struct SimpleObject:Codable
+    struct SimpleObject: Codable
     {
-        let path:String
-        let format:Int
+        let path: String
+        let format: Int
     }
 
     static var shared: SMATagTranslator = .init(definitionData: nil, translationData: nil)
@@ -65,7 +64,7 @@ struct SMATagTranslator
 
             let simpleObject = SimpleObject(path: path, format: value.DataFrmt)
 
-            return (key,simpleObject)
+            return (key, simpleObject)
         })
 
         JLog.trace("Objects and Paths:\(objectsAndPaths.json)")

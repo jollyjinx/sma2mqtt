@@ -22,7 +22,7 @@ public struct SMANetPacketValue
         case uint = 0x00
         case int = 0x40
         case string = 0x10
-        case version = 0x08
+        case tags = 0x08
         case password = 0x51
 
         case unknown = 0x01
@@ -33,7 +33,7 @@ public struct SMANetPacketValue
         case uint([UInt32])
         case int([Int32])
         case string(String)
-        case version([UInt16])
+        case tags([UInt32])
         case password(Data)
         case unknown(Data)
     }
@@ -54,7 +54,7 @@ extension SMANetPacketValue: Codable
         {
             case address, topic, unit, title,
 
-                 anumber, value, time, date
+                 anumber, value, time, date, tags
         }
         var container = encoder.container(keyedBy: CodingKeys.self)
 
@@ -80,7 +80,7 @@ extension SMANetPacketValue: Codable
                 try container.encode(toEncode, forKey: CodingKeys.value)
 
             case let .string(value): try container.encode(value, forKey: CodingKeys.value)
-            case let .version(values): try container.encode(values, forKey: CodingKeys.value)
+            case let .tags(values): try container.encode(values, forKey: CodingKeys.tags)
             case let .password(value): try container.encode(value, forKey: CodingKeys.value)
             case let .unknown(value): try container.encode(value, forKey: CodingKeys.value)
         }
@@ -124,29 +124,26 @@ extension SMANetPacketValue: BinaryDecodable
                 }
                 value = .int(values)
 
-            case .string: // assert(decoder.countToEnd >= 32 )
-                var ok = true
-                let data = try decoder.decode(Data.self, length: decoder.countToEnd)
-                    .filter
-                    {
-                        ok = ok && ($0 != 0)
-                        return ok
-                    }
-                let string = String(data: data, encoding: .isoLatin1)!
-                value = .string(string)
-
-            case .version:
-                var values = [UInt16]()
+            case .tags:
+                var tags = [UInt32]()
 
                 while !decoder.isAtEnd
                 {
-                    let a = try decoder.decode(UInt16.self).littleEndian
-                    let b = try decoder.decode(UInt16.self).littleEndian
+                    let a = try decoder.decode(UInt32.self).littleEndian
 
-                    if a == 0xFFFE, b == 0x00FF { break }
-                    values.append(a)
+                    let lastPacket = 0x00_FFFFE
+                    if a == lastPacket { break }
+
+
+                    let flag = a>>24
+
+                    if flag == 1
+                    {
+                    let tag = 0x00FF_FFFF & a
+                    tags.append(tag)
+                    }
                 }
-                value = .version(values)
+                value = .tags(tags)
 
             case .password:
                 if decoder.isAtEnd
@@ -161,10 +158,24 @@ extension SMANetPacketValue: BinaryDecodable
                     value = .password(data)
                 }
 
-            case .unknown:
+            case .string, .unknown:
                 let data = try decoder.decode(Data.self, length: decoder.countToEnd)
-                value = .unknown(data)
-                JLog.info("unkown: \(String(format: "no:0x%02x code:0x%04x type:0x%02x", number, address, type))  time:\(date) data:\(data.hexDump) ")
+
+                var ok = true
+                let stringdata = data.filter
+                  {
+                        ok = ok && ($0 != 0)
+                        return ok
+                    }
+                if let string = String(data: stringdata, encoding:.isoLatin1), !string.isEmpty
+                {
+                    value = .string(string)
+                }
+                else
+                {
+                    value = .unknown(data)
+                    JLog.info("unkown: \(String(format: "no:0x%02x code:0x%04x type:0x%02x", number, address, type))  time:\(date) data:\(data.hexDump) ")
+                }
         }
         JLog.trace("Got Value: \(json)")
     }

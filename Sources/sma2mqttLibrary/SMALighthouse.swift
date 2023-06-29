@@ -8,7 +8,6 @@
 import Foundation
 import JLog
 
-
 public enum UserRight: String
 {
     case user = "usr"
@@ -16,7 +15,6 @@ public enum UserRight: String
     case service = "svc"
     case developer = "dvlp"
 }
-
 
 public actor SMALighthouse
 {
@@ -104,7 +102,6 @@ public actor SMALighthouse
     }
 
     public func shutdown() async throws { await mcastReceiver.shutdown() }
-
 
     var hassentlogin = false
     private func sendDiscoveryPacketIfNeeded() async throws
