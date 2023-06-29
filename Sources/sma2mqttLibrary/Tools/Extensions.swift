@@ -1,8 +1,5 @@
 //
-//  File.swift
-//  File
-//
-//  Created by Patrick Stein on 07.08.21.
+//  Extensions.swift
 //
 
 import Foundation

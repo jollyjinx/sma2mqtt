@@ -1,9 +1,6 @@
 //
 //  SMANetPacketHeader.swift
 //
-//
-//  Created by Patrick Stein on 19.06.23.
-//
 
 import BinaryCoder
 import Foundation

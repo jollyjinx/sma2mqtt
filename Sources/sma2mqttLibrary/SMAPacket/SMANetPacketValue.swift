@@ -1,9 +1,7 @@
 //
 //  SMANetPacketValue.swift
 //
-//
-//  Created by Patrick Stein on 01.06.2022.
-//
+
 import BinaryCoder
 import Foundation
 import JLog
@@ -131,16 +129,15 @@ extension SMANetPacketValue: BinaryDecodable
                 {
                     let a = try decoder.decode(UInt32.self).littleEndian
 
-                    let lastPacket = 0x00_FFFFE
+                    let lastPacket = 0x00FFFFE
                     if a == lastPacket { break }
 
-
-                    let flag = a>>24
+                    let flag = a >> 24
 
                     if flag == 1
                     {
-                    let tag = 0x00FF_FFFF & a
-                    tags.append(tag)
+                        let tag = 0x00FF_FFFF & a
+                        tags.append(tag)
                     }
                 }
                 value = .tags(tags)
@@ -163,11 +160,11 @@ extension SMANetPacketValue: BinaryDecodable
 
                 var ok = true
                 let stringdata = data.filter
-                  {
-                        ok = ok && ($0 != 0)
-                        return ok
-                    }
-                if let string = String(data: stringdata, encoding:.isoLatin1), !string.isEmpty
+                {
+                    ok = ok && ($0 != 0)
+                    return ok
+                }
+                if let string = String(data: stringdata, encoding: .isoLatin1), !string.isEmpty
                 {
                     value = .string(string)
                 }

@@ -1,3 +1,7 @@
+//
+//  sma2mqttTests.swift
+//
+
 import XCTest
 
 import class Foundation.Bundle
@@ -53,18 +57,17 @@ final class sma2mqttTests: XCTestCase
             fdff
             4c 4f43 4b
             4544 0000
-            
+
             0000 0000
 
         """
-                .hexStringToData()
+        .hexStringToData()
         let binaryDecoder = BinaryDecoder(data: [UInt8](data))
 
         let packet = try SMANetPacket(fromBinary: binaryDecoder)
         JLog.debug("Packet:\(packet)")
         XCTAssert(binaryDecoder.isAtEnd)
     }
-
 
     func testSMADecoding() throws
     {

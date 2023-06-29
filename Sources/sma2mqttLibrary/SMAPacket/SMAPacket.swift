@@ -1,3 +1,7 @@
+//
+//  SMAPacket.swift
+//
+
 import BinaryCoder
 import Foundation
 import JLog

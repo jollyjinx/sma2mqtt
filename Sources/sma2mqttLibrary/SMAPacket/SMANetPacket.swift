@@ -1,9 +1,7 @@
 //
-//  SMANetPacketHeader.swift
+//  SMANetPacket.swift
 //
-//
-//  Created by Patrick Stein on 01.06.2022.
-//
+
 import BinaryCoder
 import Foundation
 import JLog
@@ -82,7 +80,7 @@ extension SMANetPacket: BinaryDecodable
                 valuesize = decoder.countToEnd
 
             default:
-             throw PacketError.decoding("unknown valuestype:\(header.u8valuestype) header:\(header) toEnd:\(decoder.countToEnd)")
+                throw PacketError.decoding("unknown valuestype:\(header.u8valuestype) header:\(header) toEnd:\(decoder.countToEnd)")
         }
 
         if valuesize > 0

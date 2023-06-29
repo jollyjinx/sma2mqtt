@@ -1,9 +1,7 @@
 //
-//  ObisProtocol.swift
+//  ObisPacket.swift
 //
-//
-//  Created by Patrick Stein on 29.08.21.
-//
+
 import BinaryCoder
 import Foundation
 import JLog

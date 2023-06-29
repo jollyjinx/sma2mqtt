@@ -1,8 +1,5 @@
 //
-//  SunnyHomeManager.swift
-//
-//
-//  Created by Patrick Stein on 14.06.22.
+//  SMALighthouse.swift
 //
 
 import Foundation

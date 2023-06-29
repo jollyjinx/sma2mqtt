@@ -1,8 +1,5 @@
 //
-//  File.swift
-//
-//
-//  Created by Patrick Stein on 26.06.22.
+//  SMADataObject.swift
 //
 
 import Foundation

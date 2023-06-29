@@ -1,9 +1,6 @@
 //
 //  ObisDefinition.swift
 //
-//
-//  Created by Patrick Stein on 29.08.21.
-//
 
 import Foundation
 import JLog

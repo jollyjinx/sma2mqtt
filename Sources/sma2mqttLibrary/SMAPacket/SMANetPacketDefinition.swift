@@ -1,9 +1,6 @@
 //
 //  SMANetPacketDefinition.swift
 //
-//
-//  Created by Patrick Stein on 08.06.22.
-//
 
 import Foundation
 import JLog

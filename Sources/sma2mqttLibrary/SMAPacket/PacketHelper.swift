@@ -1,8 +1,5 @@
 //
-//  File.swift
-//
-//
-//  Created by Patrick Stein on 21.06.23.
+//  PacketHelper.swift
 //
 
 import BinaryCoder

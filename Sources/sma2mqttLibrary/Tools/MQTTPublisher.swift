@@ -1,9 +1,6 @@
 //
 //  MQTTPublisher.swift
 //
-//
-//  Created by Patrick Stein on 12.06.22.
-//
 
 import Foundation
 import JLog

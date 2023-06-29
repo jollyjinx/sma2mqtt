@@ -1,8 +1,5 @@
 //
-//  File.swift
-//
-//
-//  Created by Patrick Stein on 17.06.23.
+//  SMATagTranslator.swift
 //
 
 import Foundation

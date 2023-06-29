@@ -1,9 +1,6 @@
 //
 //  PublishedValue.swift
 //
-//
-//  Created by Patrick Stein on 18.06.23.
-//
 
 import Foundation
 import JLog

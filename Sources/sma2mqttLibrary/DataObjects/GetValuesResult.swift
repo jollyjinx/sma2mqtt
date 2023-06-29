@@ -1,8 +1,5 @@
 //
-//  File.swift
-//
-//
-//  Created by Patrick Stein on 18.06.23.
+//  GetValuesResult.swift
 //
 
 import Foundation

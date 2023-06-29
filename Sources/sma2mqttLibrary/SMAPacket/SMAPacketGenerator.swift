@@ -1,8 +1,5 @@
 //
-//  File.swift
-//
-//
-//  Created by Patrick Stein on 27.06.23.
+//  SMAPacketGenerator.swift
 //
 
 import Foundation

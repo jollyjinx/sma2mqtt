@@ -1,8 +1,5 @@
 //
-//  File.swift
-//
-//
-//  Created by Patrick Stein on 27.06.22.
+//  SMADevice.swift
 //
 
 import AsyncHTTPClient
@@ -128,36 +125,34 @@ public extension SMADevice
 
                         switch value.value
                         {
-                            case .uint(let value):
+                            case let .uint(value):
                                 if let firstValue = value.first
                                 {
-                                    let resultValue = GetValuesResult.Value.intValue( Int(firstValue) )
+                                    let resultValue = GetValuesResult.Value.intValue(Int(firstValue))
                                     let singleValue = PublishedValue(objectID: objectID, values: [resultValue], tagTranslator: tagTranslator)
                                     try? await publisher?.publish(to: path, payload: singleValue.json, qos: .atMostOnce, retain: false)
                                 }
-                            case .int(let value):
+                            case let .int(value):
                                 if let firstValue = value.first
                                 {
-                                    let resultValue = GetValuesResult.Value.intValue( Int(firstValue) )
+                                    let resultValue = GetValuesResult.Value.intValue(Int(firstValue))
                                     let singleValue = PublishedValue(objectID: objectID, values: [resultValue], tagTranslator: tagTranslator)
                                     try? await publisher?.publish(to: path, payload: singleValue.json, qos: .atMostOnce, retain: false)
                                 }
 
-                            case .string(let string):
-                                    let resultValue = GetValuesResult.Value.stringValue( string)
-                                    let singleValue = PublishedValue(objectID: objectID, values: [resultValue], tagTranslator: tagTranslator)
-                                    try? await publisher?.publish(to: path, payload: singleValue.json, qos: .atMostOnce, retain: false)
+                            case let .string(string):
+                                let resultValue = GetValuesResult.Value.stringValue(string)
+                                let singleValue = PublishedValue(objectID: objectID, values: [resultValue], tagTranslator: tagTranslator)
+                                try? await publisher?.publish(to: path, payload: singleValue.json, qos: .atMostOnce, retain: false)
 
-                            case .tags(let tags):
-                                    let resultValue = GetValuesResult.Value.tagValues( tags.map{ Int($0) } )
-                                    let singleValue = PublishedValue(objectID: objectID, values: [resultValue], tagTranslator: tagTranslator)
-                                    try? await publisher?.publish(to: path, payload: singleValue.json, qos: .atMostOnce, retain: false)
+                            case let .tags(tags):
+                                let resultValue = GetValuesResult.Value.tagValues(tags.map { Int($0) })
+                                let singleValue = PublishedValue(objectID: objectID, values: [resultValue], tagTranslator: tagTranslator)
+                                try? await publisher?.publish(to: path, payload: singleValue.json, qos: .atMostOnce, retain: false)
 
                             default:
                                 try? await publisher?.publish(to: path, payload: value.json, qos: .atMostOnce, retain: false)
-                                break
                         }
-
                     }
                     else
                     {

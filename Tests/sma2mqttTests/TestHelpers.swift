@@ -1,8 +1,5 @@
 //
-//  File.swift
-//
-//
-//  Created by Patrick Stein on 13.06.22.
+//  TestHelpers.swift
 //
 
 import XCTest
