@@ -107,21 +107,24 @@ public extension SMADevice
 
                 let multipleValues = netPacket.values.count > 1
 
-                for value in netPacket.values
+                if netPacket.header.u16command == 0xFFFD
                 {
-                    if netPacket.header.u16command == 0xFFFD
+                    return nil
+                }
+
+                let objectIDs = netPacket.values.map { String(format: "%04X_%02X%04X00", netPacket.header.u16command, $0.type, $0.address) }
+
+                if let objectID = objectIDs.first(where: { tagTranslator.objectsAndPaths[$0] != nil }),
+                   let simpleObject = tagTranslator.objectsAndPaths[objectID]
+                {
+                    JLog.trace("\(address): objectid:\(objectID) name:\(simpleObject.json)")
+
+                    let path = name + "/\(simpleObject.path)"
+                    var resultValues = [GetValuesResult.Value]()
+
+                    for value in netPacket.values
                     {
-                        continue
-                    }
-                    let objectID = String(format: "%04X_%02X%04X00", netPacket.header.u16command, value.type, value.address)
-
-                    JLog.trace("\(address): objectid:\(objectID)")
-
-                    if let simpleObject = tagTranslator.objectsAndPaths[objectID]
-                    {
-                        JLog.trace("\(address): objectid:\(objectID) name:\(simpleObject.json)")
-
-                        let path = name + "/\(simpleObject.path)\(multipleValues ? ".\(value.number)" : "")"
+                        JLog.trace("\(address): objectid:\(objectID)")
 
                         switch value.value
                         {
@@ -129,35 +132,34 @@ public extension SMADevice
                                 if let firstValue = value.first as? UInt32
                                 {
                                     let resultValue = GetValuesResult.Value.intValue(Int(firstValue))
-                                    let singleValue = PublishedValue(objectID: objectID, values: [resultValue], tagTranslator: tagTranslator)
-                                    try? await publisher?.publish(to: path, payload: singleValue.json, qos: .atMostOnce, retain: false)
+                                    resultValues.append(resultValue)
                                 }
                             case let .int(value):
                                 if let firstValue = value.first as? Int32
                                 {
                                     let resultValue = GetValuesResult.Value.intValue(Int(firstValue))
-                                    let singleValue = PublishedValue(objectID: objectID, values: [resultValue], tagTranslator: tagTranslator)
-                                    try? await publisher?.publish(to: path, payload: singleValue.json, qos: .atMostOnce, retain: false)
+                                    resultValues.append(resultValue)
                                 }
 
                             case let .string(string):
                                 let resultValue = GetValuesResult.Value.stringValue(string)
-                                let singleValue = PublishedValue(objectID: objectID, values: [resultValue], tagTranslator: tagTranslator)
-                                try? await publisher?.publish(to: path, payload: singleValue.json, qos: .atMostOnce, retain: false)
+                                resultValues.append(resultValue)
 
                             case let .tags(tags):
                                 let resultValue = GetValuesResult.Value.tagValues(tags.map { Int($0) })
-                                let singleValue = PublishedValue(objectID: objectID, values: [resultValue], tagTranslator: tagTranslator)
-                                try? await publisher?.publish(to: path, payload: singleValue.json, qos: .atMostOnce, retain: false)
+                                resultValues.append(resultValue)
 
                             default:
-                                try? await publisher?.publish(to: path, payload: value.json, qos: .atMostOnce, retain: false)
+                                try? await publisher?.publish(to: path + ".\(value.number)", payload: value.json, qos: .atMostOnce, retain: false)
                         }
                     }
-                    else
-                    {
-                        JLog.error("\(address): objectid not known \(objectID)")
-                    }
+
+                    let singleValue = PublishedValue(objectID: objectID, values: resultValues, tagTranslator: tagTranslator)
+                    try? await publisher?.publish(to: path, payload: singleValue.json, qos: .atMostOnce, retain: false)
+                }
+                else if !objectIDs.isEmpty
+                {
+                    JLog.error("\(address): objectIDs not known \(objectIDs)")
                 }
             }
         }
