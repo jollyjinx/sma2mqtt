@@ -105,7 +105,7 @@ public extension SMADevice
                 udpSystemId = netPacket.header.sourceSystemId
                 udpSerial = netPacket.header.sourceSerial
 
-//                let multipleValues = netPacket.values.count > 1
+                let multipleValues = netPacket.values.count > 1
 
                 for value in netPacket.values
                 {
@@ -121,19 +121,19 @@ public extension SMADevice
                     {
                         JLog.trace("\(address): objectid:\(objectID) name:\(simpleObject.json)")
 
-                        let path = name + simpleObject.path // "\(simpleObject.path)\(multipleValues ? ".\(value.number)" : "")"
+                        let path = name + "/\(simpleObject.path)\(multipleValues ? ".\(value.number)" : "")"
 
                         switch value.value
                         {
                             case let .uint(value):
-                                if let firstValue = value.first
+                                if let firstValue = value.first as? UInt32
                                 {
                                     let resultValue = GetValuesResult.Value.intValue(Int(firstValue))
                                     let singleValue = PublishedValue(objectID: objectID, values: [resultValue], tagTranslator: tagTranslator)
                                     try? await publisher?.publish(to: path, payload: singleValue.json, qos: .atMostOnce, retain: false)
                                 }
                             case let .int(value):
-                                if let firstValue = value.first
+                                if let firstValue = value.first as? Int32
                                 {
                                     let resultValue = GetValuesResult.Value.intValue(Int(firstValue))
                                     let singleValue = PublishedValue(objectID: objectID, values: [resultValue], tagTranslator: tagTranslator)

@@ -28,8 +28,8 @@ public struct SMANetPacketValue
 
     enum PacketValue: Codable
     {
-        case uint([UInt32])
-        case int([Int32])
+        case uint([UInt32?])
+        case int([Int32?])
         case string(String)
         case tags([UInt32])
         case password(Data)
@@ -70,11 +70,11 @@ extension SMANetPacketValue: Codable
         switch value
         {
             case let .uint(values):
-                let toEncode = values.map { $0 == .max ? nil : (hasFactor ? Decimal($0) / factor! : Decimal($0)) }
+                let toEncode = values.map { $0 == nil ? nil : (hasFactor ? Decimal($0!) / factor! : Decimal($0!)) }
                 try container.encode(toEncode, forKey: CodingKeys.value)
 
             case let .int(values):
-                let toEncode = values.map { $0 == .min ? nil : (hasFactor ? Decimal($0) / factor! : Decimal($0)) }
+                let toEncode = values.map { $0 == nil ? nil : (hasFactor ? Decimal($0!) / factor! : Decimal($0!)) }
                 try container.encode(toEncode, forKey: CodingKeys.value)
 
             case let .string(value): try container.encode(value, forKey: CodingKeys.value)
@@ -103,22 +103,22 @@ extension SMANetPacketValue: BinaryDecodable
         switch valuetype
         {
             case .uint:
-                var values = [UInt32]()
+                var values = [UInt32?]()
                 while !decoder.isAtEnd
                 {
                     let value = try decoder.decode(UInt32.self)
 
-                    values.append(value)
+                    values.append(value == UInt32.max ? nil : value)
                 }
                 value = .uint(values)
 
             case .int:
-                var values = [Int32]()
+                var values = [Int32?]()
                 while !decoder.isAtEnd
                 {
                     let value = try decoder.decode(Int32.self)
 
-                    values.append(value)
+                    values.append(value == Int32.min ? nil : value)
                 }
                 value = .int(values)
 
