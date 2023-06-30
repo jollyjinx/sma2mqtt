@@ -105,8 +105,6 @@ public extension SMADevice
                 udpSystemId = netPacket.header.sourceSystemId
                 udpSerial = netPacket.header.sourceSerial
 
-                let multipleValues = netPacket.values.count > 1
-
                 if netPacket.header.u16command == 0xFFFD
                 {
                     return nil
