@@ -29,7 +29,7 @@ public actor SMALighthouse
     {
         case inProgress(Task<SMADevice, Error>)
         case ready(SMADevice)
-        case failed
+        case failed(Date)
     }
 
     private var smaDeviceCache = [String: SMADeviceCacheEntry]()
@@ -73,7 +73,11 @@ public actor SMALighthouse
                     return smaDevice
                 case let .inProgress(task):
                     return try? await task.value
-                case .failed:
+                case let .failed(date):
+                    if date.timeIntervalSinceNow < -60
+                    {
+                        smaDeviceCache.removeValue(forKey: remoteAddress)
+                    }
                     return nil
             }
         }
@@ -93,7 +97,7 @@ public actor SMALighthouse
         {
             JLog.error("\(remoteAddress): was not able to initialize:\(error) - ignoring address")
 
-            smaDeviceCache[remoteAddress] = .failed
+            smaDeviceCache[remoteAddress] = .failed( Date() )
             return nil
         }
     }
