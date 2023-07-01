@@ -105,17 +105,9 @@ public actor SMALighthouse
     {
         guard Date().timeIntervalSince(lastDiscoveryRequestDate) > disoveryRequestInterval else { return }
 
-//        let data: [UInt8] = [0x53, 0x4D, 0x41, 0x00, 0x00, 0x04, 0x02, 0xA0, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00]
-//        await mcastReceiver.sendPacket(data: data, address: mcastAddress, port: mcastPort)
-//        lastDiscoveryRequestDate = Date()
-
-        let loginPacket = try SMAPacketGenerator.generateLoginPacket(packetcounter: 0, password: password, userRight: .user)
-
-        if !hassentlogin
-        {
-            await mcastReceiver.sendPacket(data: [UInt8](loginPacket.hexStringToData()), address: mcastAddress, port: mcastPort)
-        }
-        hassentlogin = true
+        let dicoveryPacket = SMAPacketGenerator.generateDiscoveryPacket()
+        await mcastReceiver.sendPacket(data: [UInt8](dicoveryPacket.hexStringToData()), address: mcastAddress, port: mcastPort)
+        lastDiscoveryRequestDate = Date()
     }
 
     public func receiveNext() async throws
