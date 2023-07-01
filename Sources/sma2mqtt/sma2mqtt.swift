@@ -50,17 +50,17 @@ extension Logger.Level: ExpressibleByArgument {}
     @Option(name: .long, help: "Array of path:interval values we are interested in") var interestingPathsAndValues: [String] = [
         "dc-side/dc-measurements/power:1",
         "ac-side/grid-measurements/power:1",
-        "ac-side/measured-values/daily-yield:1",
+        "ac-side/measured-values/daily-yield:30",
         "immediate/feedin:1",
         "immediate/usage:1",
 
 //                                                                                                      "immediate/gridfrequency",
-        "battery/state-of-charge:10",
+        "battery/state-of-charge:20",
 //                                                                                                      "battery/battery-charge",
 //                                                                                                      "battery/present-battery-charge",
 //                                                                                                      "battery/present-battery-discharge",
-        "battery/battery/temperature:10",
-        "battery/battery/battery-charge/battery-charge:10",
+        "battery/battery/temperature:30",
+        "battery/battery/battery-charge/battery-charge:20",
 //        "temperatures",
         "temperature:30",
     ]

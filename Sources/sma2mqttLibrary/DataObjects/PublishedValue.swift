@@ -50,6 +50,22 @@ public struct PublishedValue: Encodable
                 }
 
             case .intValue:
+                var newscale = Decimal(1)
+
+                if let unit = objectDefinition?.Unit
+                {
+                    var unitString = tagTranslator.translate(tag: unit)
+
+                    switch unitString
+                    {
+                        case "Wh":
+                            unitString = "kWh"
+                            newscale = 0.001
+
+                        default: break
+                    }
+                    try container.encode(unitString, forKey: .unit)
+                }
                 let decimalValues: [Decimal?] = values.map
                 {
                     if case let .intValue(value) = $0,
@@ -57,9 +73,9 @@ public struct PublishedValue: Encodable
                     {
                         if let scale = objectDefinition?.Scale, scale != Decimal(1)
                         {
-                            return Decimal(value) * scale
+                            return Decimal(value) * scale * newscale
                         }
-                        return Decimal(value)
+                        return Decimal(value) * newscale
                     }
                     return nil
                 }
@@ -70,11 +86,6 @@ public struct PublishedValue: Encodable
                 else
                 {
                     try container.encode(decimalValues.first, forKey: .value)
-                }
-                if let unit = objectDefinition?.Unit
-                {
-                    let unitString = tagTranslator.translate(tag: unit)
-                    try container.encode(unitString, forKey: .unit)
                 }
 
             case let .tagValues(values):
