@@ -25,41 +25,55 @@ public extension Data
 {
     var hexDump: String
     {
-        var string = ""
-
-        for (offset, value) in enumerated()
-        {
-            string += String(format: "%02x", value)
-            if (offset + 1) % 2 == 0 { string += " " }
-        }
-        return string
+        toHexString(octetGrouped: true)
     }
 
+    private static let hexAlphabet = Array("0123456789abcdef".utf8)
     func toHexString(octetGrouped: Bool = false) -> String
     {
-        let formatString = octetGrouped ? "%02hhx " : "%02hhx"
-        let string = map { String(format: formatString, $0) }.joined()
-        return string
+        let returnString = String(unsafeUninitializedCapacity: 2 * count)
+        { ptr -> Int in
+            var p = ptr.baseAddress!
+            for byte in self
+            {
+                p[0] = Self.hexAlphabet[Int(byte / 16)]
+                p[1] = Self.hexAlphabet[Int(byte % 16)]
+                p += 2
+            }
+            return 2 * self.count
+        }
+        if !octetGrouped
+        {
+            return returnString
+        }
+
+        var counter = 0
+        return returnString.map { counter += 1; return counter % 4 == 0 ? "\($0) " : "\($0)" }.joined()
     }
 }
 
 extension String
 {
+    static let hex2UInt8: [UInt8: UInt8] = Dictionary(uniqueKeysWithValues: "0123456789abcdefABCDEF".utf8.map { ($0, UInt8(String(format: "%c", $0), radix: 16)!) })
+
     func hexStringToData() -> Data
     {
-        let stringWithoutSpaces = replacingOccurrences(of: " ", with: "")
-            .replacingOccurrences(of: "\n", with: "")
-            .replacingOccurrences(of: "\t", with: "")
-
-        let uInt8Array = stride(from: 0, to: stringWithoutSpaces.count, by: 2)
-            .map
+        var second = true
+        var last: UInt8 = 0
+        return Data(utf8.compactMap
+        {
+            if let nibble = Self.hex2UInt8[$0]
             {
-                stringWithoutSpaces[
-                    stringWithoutSpaces.index(stringWithoutSpaces.startIndex, offsetBy: $0) ... stringWithoutSpaces.index(stringWithoutSpaces.startIndex, offsetBy: $0 + 1)
-                ]
+                second.toggle()
+                if second
+                {
+                    return last << 4 | nibble
+                }
+                last = nibble
             }
-            .map { UInt8($0, radix: 16)! }
-        return Data(uInt8Array)
+            return nil
+        }
+        )
     }
 }
 

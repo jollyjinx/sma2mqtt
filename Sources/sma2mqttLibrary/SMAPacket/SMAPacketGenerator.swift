@@ -4,6 +4,7 @@
 
 import Foundation
 import JLog
+import RegexBuilder
 
 struct SMAPacketGenerator {}
 
@@ -67,10 +68,9 @@ extension SMAPacketGenerator
         return smapacket // .hexStringToData()
     }
 
+    private static let regex: Regex = { #/([a-fA-F\d]{2})([a-fA-F\d]{2})_([a-fA-F\d]{2})([a-fA-F\d]{2})([a-fA-F\d]{2})([a-fA-F\d]{2})/# }()
     static func objectID2Command(objectId: String) throws -> String
     {
-        let regex = #/([a-fA-F\d]{2})([a-fA-F\d]{2})_([a-fA-F\d]{2})([a-fA-F\d]{2})([a-fA-F\d]{2})([a-fA-F\d]{2})/#
-
         if let match = objectId.firstMatch(of: regex)
         {
             let (_, a, b, c, d, e, f) = match.output
