@@ -29,7 +29,7 @@ extension Logger.Level: ExpressibleByArgument {}
 
     @Option(name: .long, help: "MQTT Server password") var mqttPassword: String = ""
 
-    @Option(name: .shortAndLong, help: "Interval to send updates to mqtt Server.") var interval: Double = 1.0
+    @Option(name: .shortAndLong, help: "Interval to send updates to mqtt Server.") var emitInterval: Double = 1.0
 
     #if DEBUG
         @Option(name: .shortAndLong, help: "MQTT Server topic.") var basetopic: String = "example/sma/"
@@ -47,22 +47,22 @@ extension Logger.Level: ExpressibleByArgument {}
 
     @Option(name: .long, help: "Inverter Password.") var inverterPassword: String = "0000"
 
-    @Option(name: .long, help: "Paths we are interested to update") var interestingPaths: [String] = [
-        "dc-side/dc-measurements/power",
-        "ac-side/grid-measurements/power",
-        "ac-side/measured-values/daily-yield",
-        "immediate/feedin",
-        "immediate/usage",
+    @Option(name: .long, help: "Array of path:interval values we are interested in") var interestingPathsAndValues: [String] = [
+        "dc-side/dc-measurements/power:1",
+        "ac-side/grid-measurements/power:1",
+        "ac-side/measured-values/daily-yield:1",
+        "immediate/feedin:1",
+        "immediate/usage:1",
 
 //                                                                                                      "immediate/gridfrequency",
-        "battery/state-of-charge",
+        "battery/state-of-charge:10",
 //                                                                                                      "battery/battery-charge",
 //                                                                                                      "battery/present-battery-charge",
 //                                                                                                      "battery/present-battery-discharge",
-        "battery/battery/temperature",
-        "battery/battery/battery-charge/battery-charge",
+        "battery/battery/temperature:10",
+        "battery/battery/battery-charge/battery-charge:10",
 //        "temperatures",
-//        "temperature",
+        "temperature:30",
     ]
     func run() async throws
     {
@@ -74,7 +74,9 @@ extension Logger.Level: ExpressibleByArgument {}
             JLog.info("Loglevel: \(logLevel)")
         }
 
-        let mqttPublisher = try await MQTTPublisher(hostname: mqttServername, port: Int(mqttPort), username: mqttUsername, password: mqttPassword, emitInterval: interval, baseTopic: basetopic)
+        let mqttPublisher = try await MQTTPublisher(hostname: mqttServername, port: Int(mqttPort), username: mqttUsername, password: mqttPassword, emitInterval: emitInterval, baseTopic: basetopic)
+
+        let interestingPaths = Dictionary(uniqueKeysWithValues: interestingPathsAndValues.compactMap { let kv = $0.split(separator: ":"); return (String(kv[0]), Int(kv[1])) as? (String, Int) })
 
         let sunnyHome = try await SMALighthouse(mqttPublisher: mqttPublisher,
                                                 multicastAddress: mcastAddress,

@@ -15,9 +15,30 @@ public actor SMADevice
     let userright: UserRight
     let password: String
     let publisher: SMAPublisher?
-    let interestingPaths: [String]
 
-    var objectsToQueryContinously = Set<String>()
+    let refreshInterval: Int
+    let interestingPaths: [String: Int]
+
+    struct QueryObject: Hashable
+    {
+        let objectid: String
+        let interval: Int
+    }
+
+    struct QueryElement: Hashable, Comparable
+    {
+        let objectid: String
+        let nextReadDate: Date
+
+        static func < (lhs: Self, rhs: Self) -> Bool { lhs.nextReadDate < rhs.nextReadDate }
+        static func <= (lhs: Self, rhs: Self) -> Bool { lhs.nextReadDate <= rhs.nextReadDate }
+        static func >= (lhs: Self, rhs: Self) -> Bool { lhs.nextReadDate >= rhs.nextReadDate }
+        static func > (lhs: Self, rhs: Self) -> Bool { lhs.nextReadDate > rhs.nextReadDate }
+    }
+
+    var objectsToQueryContinously = [String: QueryObject]()
+    var objectsToQueryNext = [QueryElement]()
+
     let requestAllObjects: Bool
 
     public var lastSeen = Date.distantPast
@@ -39,12 +60,15 @@ public actor SMADevice
     private var refreshTask: Task<Void, Error>?
     private var tagTranslator = SMATagTranslator.shared
 
-    public init(address: String, userright: UserRight = .user, password: String = "00000", publisher: SMAPublisher? = nil, refreshInterval: Int = 1, interestingPaths: [String] = [], requestAllObjects: Bool = false, udpEmitter: UDPEmitter? = nil) async throws
+    public init(address: String, userright: UserRight = .user, password: String = "00000", publisher: SMAPublisher? = nil, refreshInterval: Int = 30, interestingPaths: [String: Int] = [:], requestAllObjects: Bool = false, udpEmitter: UDPEmitter? = nil) async throws
     {
         self.address = address
         self.userright = userright
         self.password = password
         self.publisher = publisher
+
+        self.refreshInterval = refreshInterval
+
         self.interestingPaths = interestingPaths
         self.requestAllObjects = requestAllObjects
         self.udpEmitter = udpEmitter
@@ -62,15 +86,14 @@ public actor SMADevice
                 {
                     do
                     {
-                        try await Task.sleep(nanoseconds: UInt64(refreshInterval) * UInt64(NSEC_PER_SEC))
-//                        try await self.httpQueryInterestingObjects()
-                        try await self.udpQueryInterestingObjects()
+                        try await self.workOnNextPacket()
                         errorcounter = 0
                     }
                     catch
                     {
                         JLog.error("\(address): Failed to query interesting objects: \(error)")
                         errorcounter += 1
+                        try? await Task.sleep(for: .seconds(1))
                     }
                 }
                 JLog.error("\(address): too many erros")
@@ -116,6 +139,7 @@ public extension SMADevice
                    let simpleObject = tagTranslator.objectsAndPaths[objectID]
                 {
                     JLog.trace("\(address): objectid:\(objectID) name:\(simpleObject.json)")
+                    justRetrievedObject(objectID: objectID)
 
                     let path = name + "/\(simpleObject.path)"
                     var resultValues = [GetValuesResult.Value]()
@@ -182,13 +206,45 @@ public extension SMADevice
         return smaPacket
     }
 
+    internal func getNextRequest() throws -> QueryElement
+    {
+        guard let queryElement = objectsToQueryNext.min() else { throw DeviceError.packetGenerationError("no packets to wait for") }
+
+        let newElement = QueryElement(objectid: queryElement.objectid, nextReadDate: Date(timeIntervalSinceNow: 5.0))
+        objectsToQueryNext = objectsToQueryNext.map { $0.objectid == queryElement.objectid ? newElement : $0 }
+
+        return queryElement
+    }
+
+    func justRetrievedObject(objectID: String)
+    {
+        if let object = objectsToQueryContinously[objectID]
+        {
+            let newElement = QueryElement(objectid: object.objectid, nextReadDate: Date(timeIntervalSinceNow: Double(object.interval)))
+            objectsToQueryNext = objectsToQueryNext.map { $0.objectid == objectID ? newElement : $0 }
+        }
+    }
+
+    func workOnNextPacket() async throws
+    {
+        let objectToQuery = try getNextRequest()
+
+        let timeToWait = objectToQuery.nextReadDate.timeIntervalSinceNow
+
+        if timeToWait > 0
+        {
+            try await Task.sleep(for: .seconds(timeToWait))
+        }
+        try await udpQueryObject(objectID: objectToQuery.objectid)
+    }
+
     func getNextPacketCounter() -> Int
     {
         udpPacketCounter = (udpPacketCounter + 1)
         return udpPacketCounter
     }
 
-    func udpQueryInterestingObjects() async throws
+    func udpQueryObject(objectID: String) async throws
     {
         let packetcounter = getNextPacketCounter()
 
@@ -200,10 +256,7 @@ public extension SMADevice
         }
         else
         {
-            let objectIDs = Array(objectsToQueryContinously)
-            let queryobject = objectIDs[packetcounter % objectIDs.count]
-
-            packetToSend = try SMAPacketGenerator.generatePacketForObjectID(packetcounter: packetcounter, objectID: queryobject, dstSystemId: udpSystemId, dstSerial: udpSerial)
+            packetToSend = try SMAPacketGenerator.generatePacketForObjectID(packetcounter: packetcounter, objectID: objectID, dstSystemId: udpSystemId, dstSerial: udpSerial)
         }
 
         JLog.trace("\(address): sending udp packet:\(packetToSend)")
@@ -256,9 +309,6 @@ extension SMADevice
             let definitionData = try await data(forPath: "/data/ObjectMetadata_Istl.json").bodyData
             let translationData = try await data(forPath: "/data/l10n/en-US.json").bodyData
 
-//            try definitionData.write(to: URL(filePath:"/Users/jolly/Desktop/\(address).definition.json"))
-//            try translationData.write(to:URL(filePath:"/Users/jolly/Desktop/\(address).translationData.json"))
-
             tagTranslator = SMATagTranslator(definitionData: definitionData, translationData: translationData)
         }
         catch
@@ -278,36 +328,8 @@ extension SMADevice
             name = deviceName
         }
 
-        if true
-        {
-            try await getInformationDictionary(atPath: "/dyn/getDashValues.json")
-            try await getInformationDictionary(atPath: "/dyn/getAllOnlValues.json")
-
-            if requestAllObjects
-            {
-                var validatedObjectids = objectsToQueryContinously
-
-                for key in tagTranslator.devicenameObjectIDs
-                {
-                    do
-                    {
-                        try await getInformationDictionary(atPath: "/dyn/getValues.json", requestIds: [key])
-
-                        if objectsToQueryContinously.contains(key)
-                        {
-                            validatedObjectids.insert(key)
-                        }
-                    }
-                    catch
-                    {
-                        JLog.error("\(address):request failed for key:\(key)")
-                    }
-                    try await Task.sleep(nanoseconds: UInt64(0.05 * Double(NSEC_PER_SEC)))
-                }
-                JLog.trace("\(address):validated ids:\(validatedObjectids)")
-                objectsToQueryContinously = validatedObjectids
-            }
-        }
+        try await getInformationDictionary(atPath: "/dyn/getDashValues.json")
+        try await getInformationDictionary(atPath: "/dyn/getAllOnlValues.json")
     }
 
     func httpQueryInterestingObjects() async throws
@@ -318,7 +340,7 @@ extension SMADevice
             sessionid = try await httpLogin()
         }
         JLog.debug("\(address):Successfull login")
-        try await getInformationDictionary(atPath: "/dyn/getValues.json", requestIds: Array(objectsToQueryContinously))
+        try await getInformationDictionary(atPath: "/dyn/getValues.json", requestIds: Array(objectsToQueryContinously.keys))
     }
 
     func httpLogin() async throws -> String
@@ -389,9 +411,16 @@ extension SMADevice
         }
     }
 
-    func pathIsInteresting(_ path: String) -> Bool
+    func pathIsInteresting(_ path: String) -> Int?
     {
-        interestingPaths.first(where: { path.hasSuffix($0) }) != nil
+        for interestingPath in interestingPaths
+        {
+            if path.hasSuffix(interestingPath.key)
+            {
+                return interestingPath.value
+            }
+        }
+        return nil
     }
 
     func _getInformationDictionary(atPath path: String, requestIds: [String] = [String]()) async throws -> [String: PublishedValue]
@@ -425,26 +454,22 @@ extension SMADevice
 
                 retrievedInformation[mqttPath] = singleValue
 
-                let isInteresting: Bool
+                let interval = pathIsInteresting(mqttPath)
 
-                if objectsToQueryContinously.contains(objectId.key)
+                if let interval
                 {
-                    isInteresting = true
-                }
-                else if pathIsInteresting(mqttPath)
-                {
-                    isInteresting = true
-                    objectsToQueryContinously.insert(objectId.key)
-                    JLog.debug("\(address):objectsToQueryContinously:\(objectsToQueryContinously)")
-                }
-                else
-                {
-                    isInteresting = false
+                    let queryObject = objectsToQueryContinously[objectId.key] ?? QueryObject(objectid: objectId.key, interval: interval)
+
+                    if interval <= queryObject.interval
+                    {
+                        objectsToQueryContinously[objectId.key] = queryObject
+                        objectsToQueryNext.append(QueryElement(objectid: objectId.key, nextReadDate: Date(timeIntervalSinceNow: Double(min(interval, 5)))))
+                    }
                 }
 
                 do
                 {
-                    if hasDeviceName, isInteresting
+                    if hasDeviceName, interval != nil
                     {
                         try await publisher?.publish(to: mqttPath, payload: singleValue.json, qos: .atMostOnce, retain: true)
                     }
