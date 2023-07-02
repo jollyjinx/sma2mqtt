@@ -328,8 +328,14 @@ extension SMADevice
             name = deviceName
         }
 
-        try await getInformationDictionary(atPath: "/dyn/getDashValues.json")
-        try await getInformationDictionary(atPath: "/dyn/getAllOnlValues.json")
+        for objectid in tagTranslator.smaObjectDefinitions.keys
+        {
+            addObjectToQueryContinouslyIfNeeded(objectid: objectid)
+        }
+//        try await getInformationDictionary(atPath: "/dyn/getDashValues.json")
+//        try await getInformationDictionary(atPath: "/dyn/getAllOnlValues.json")
+
+        try? await logout()
     }
 
     func httpQueryInterestingObjects() async throws
@@ -423,6 +429,33 @@ extension SMADevice
         return nil
     }
 
+    func objectIdIsInteresting(_ objectid:String) -> Int?
+    {
+        let path =  "/" + (tagTranslator.objectsAndPaths[objectid]?.path ?? "unkown-id-\(objectid)")
+
+        return pathIsInteresting(path)
+    }
+
+    @discardableResult
+    func addObjectToQueryContinouslyIfNeeded(objectid:String) -> Bool
+    {
+        JLog.trace("\(address):working on objectId:\(objectid)")
+
+        if let interval = objectIdIsInteresting(objectid)
+        {
+            let queryObject = objectsToQueryContinously[objectid] ?? QueryObject(objectid: objectid, interval: interval)
+
+            if interval <= queryObject.interval
+            {
+                objectsToQueryContinously[objectid] = queryObject
+                objectsToQueryNext.append(QueryElement(objectid: objectid, nextReadDate: Date(timeIntervalSinceNow: Double(min(interval, 5)))))
+            }
+            return true
+        }
+        return false
+    }
+
+
     func _getInformationDictionary(atPath path: String, requestIds: [String] = [String]()) async throws -> [String: PublishedValue]
     {
         let headers = [("Content-Type", "application/json")]
@@ -454,22 +487,10 @@ extension SMADevice
 
                 retrievedInformation[mqttPath] = singleValue
 
-                let interval = pathIsInteresting(mqttPath)
-
-                if let interval
-                {
-                    let queryObject = objectsToQueryContinously[objectId.key] ?? QueryObject(objectid: objectId.key, interval: interval)
-
-                    if interval <= queryObject.interval
-                    {
-                        objectsToQueryContinously[objectId.key] = queryObject
-                        objectsToQueryNext.append(QueryElement(objectid: objectId.key, nextReadDate: Date(timeIntervalSinceNow: Double(min(interval, 5)))))
-                    }
-                }
-
                 do
                 {
-                    if hasDeviceName, interval != nil
+                    if  hasDeviceName,
+                        addObjectToQueryContinouslyIfNeeded(objectid: objectId.key)
                     {
                         try await publisher?.publish(to: mqttPath, payload: singleValue.json, qos: .atMostOnce, retain: true)
                     }
@@ -478,6 +499,7 @@ extension SMADevice
                 {
                     JLog.error("\(address):could not convert to json error:\(error) singleValue:\(singleValue)")
                 }
+
             }
         }
         return retrievedInformation

@@ -74,11 +74,12 @@ public actor SMALighthouse
                 case let .inProgress(task):
                     return try? await task.value
                 case let .failed(date):
-                    if date.timeIntervalSinceNow < -60
+                    if date.timeIntervalSinceNow > -30
                     {
-                        smaDeviceCache.removeValue(forKey: remoteAddress)
+                        return nil
                     }
-                    return nil
+                    JLog.info("renabling:\(remoteAddress)")
+                    smaDeviceCache.removeValue(forKey: remoteAddress)
             }
         }
 
