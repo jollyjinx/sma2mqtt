@@ -1,6 +1,17 @@
 .build/
+.build-linux/
 .swiftpm/
 Package.resolved
 Reverseengineering/
 Documentation/
 perl5/
+.local
+.swiftpm
+.cache
+.bash_history
+docker
+
+Temp/
+JNX/
+perl5/
+

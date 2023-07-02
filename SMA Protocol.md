@@ -9,43 +9,54 @@ I did not find any thorough documentation on the SMA UDP Protocol, so I started 
 - SBSpot [SBSpot](https://github.com/SBFspot/SBFspot) seems to have a few things correct
 - SMA old Protocol [smadat-11-ze2203.pdf](http://test.sma.de/dateien/1995/SMADAT-11-ZE2203.pdf)
 - SMA [YASDI](https://www.sma.de/en/products/monitoring-control/yasdi.html)
-
-## SMA Protocol
-
-Sma Protocol starts with 'SMA\0' and then packets in big-endian order follow.
-
-    addr | type   | explanation
-    -----------------------------------
-    0x00 | U32    | 0x534D4100 == 'SMA\0'  Magic Number
-    0x04 | U16    | length of packet
-    0x06 | U16    | Tag     0xABBC   A = 0 , B = Tag ID, C = 0
-         |        |         0x0000 = 0x00: End of packets
-         |        |         0x0010 = 0x01: SMA Net Version 1
-         |        |         0x0200 = 0x20: End of discovery request ?
-         |        |         0x02A0 = 0x2A: Discovery Request  
-         |        |         0x02C0 = 0x2C: Group number
-    0x08 | U8*len | packet content
+- Objects http(s)://inverter/data/ObjectMetadata_Istl.json
+- Translation http(s)://inverter/data/l10n/en-US.json
+- Python Webclient [SMAPY][https://github.com/jonkerj/smapy]
 
 
+# SMA Protocol Packet
 
-### End of packets 0x0000
+Sma Protocol starts with 'SMA\0' and then tag packets follow until a tag end packet
 
     addr | type   | explanation
     -----------------------------------
-    0x00 | U16    | 0x0000 end of transmission
+    0x00 | U8     | 0x53    S
+    0x01 | U8     | 0x4D    M
+    0x02 | U8     | 0x41    A
+    0x03 | U8     | 0x0     \0
+
+    one or more Tag Packets follow
+    until End Tag Packet
+
+# SMA Tag Packet 
+
+Tag packet start with a , then a tag in big-endian order follow until the end tag packet (8 bytes of zeros)
+
+    0x00 | U16    | length of packet
+    0x02 | U16    | Tag
+    0x03 |        | Data
+    ...           | ...
+    0x03 + length | Data
+    
+A SMA Tag seems to have a internal structure of 0xABBC   A = 0 , B = Tag ID, C = 0
+
+0x0000  | end marker usually 2 bytes content 
+        | content
+        | U16 | 0x0000 - END of SMA Packets
+        |     | 0x0001 - More Tag Packets follow   
+        |    
+0x0010  | SMA Net Version Version 1 Packet
+0x0020  | Unkown, value: 0x0000 0001
+0x0030  | IP Address of source ( 4 bytes )
+0x0040  | Unkown, value : 0x0000 0002
+0x0070  | Unkown, value : 0xef0c = 239 12 -MCast ?
+0x0080  | Unkown, value : 0x00
+0x0200  | Discovery Request 
+0x02A0  | Group Packet 
+0x02C0  | Group Number
 
 
-
-### End of discovery 0x0200
-
-
-    addr | type   | explanation
-    -----------------------------------
-    0x00 | U16    | 0x0200 end of discovery request ?
-
-
-
-### Discovery Request 0x02a0
+## SMA Tag 0x200: Discovery Request
 
 Discovery request has 4 bytes of data containing 0xff.
     
@@ -54,7 +65,6 @@ Discovery request has 4 bytes of data containing 0xff.
     0x00 | U32    | 0xFFFF FFFF requesting discovery reply
          |        | 0x0000 0001 normal request
 
-
     A full discovery request looks like this:
     
     addr | type   | value       | explanation
@@ -62,11 +72,11 @@ Discovery request has 4 bytes of data containing 0xff.
     0x00 | U32    | 0x534D4100  | 'SMA\0'  Magic Number
     -----|--------|-------------|-------
     0x04 | U16    | 0x0004      | length of packet
-    0x06 | U16    | 0x02a0      | tag ( Discovery Request )
-    0x08 | U32    | 0xFFFF FFFF | requesting discovery reply
+    0x06 | U16    | 0x02a0      | tag Group
+    0x08 | U32    | 0xFFFF FFFF | to all groups ? 
     -----|--------|-------------|-------
     0x0C | U16    | 0x0000      | length of packet
-    0x0E | U16    | 0x0200      | tag ( Discovery End? )
+    0x0E | U16    | 0x0200      | tag: discovery request )
     -----|--------|-------------|-------
     0x10 | U16    | 0x0000      | length of packet
     0x12 | U16    | 0x0000      | tag ( End of packets )
@@ -80,16 +90,18 @@ Discovery request has 4 bytes of data containing 0xff.
          |        |                  0xFF03 bluethooth ?
 
 
-# SMA Net Version 1 0x0010
+## SMA Tag 0x0010 : SMA Net Version 1
 
     addr | type   | explanation
     -----|--------|--------------------
-    0x00 | U16    | Protocol ID:    0x6069 Sunny Home Manger
-         |        |                 0x6065 Inverter Communication
+    0x00 | U16    | Protocol ID:
+         |        |    0x6069 Sunny Home Manger
+         |        |    0x6065 Inverter Communication
+         |        |    0x0001 ? Version ? followed by a 0x0003 as data          
     0x02 | length | Data
 
 
-## 0x6069 Protocol: Sunny Home Manger
+## SMA Tag 0x0010 SubTag 0x6069: Sunny Home Manger Protocol
 
 The information on  the Sunny Home Manger protocol 0x6069 [EMETER-Protokoll-T1-de-10.pdf](https://www.sma.de/fileadmin/content/global/Partner/Documents/SMA_Labs/EMETER-Protokoll-TI-en-10.pdf) is enough to figure it out. 
 Exact values I figured out can be found in [Obis.swift](Sources/sma2mqtt/Obis.swift)
@@ -102,7 +114,7 @@ Exact values I figured out can be found in [Obis.swift](Sources/sma2mqtt/Obis.sw
     0x0A |        |   0x6069 data packets follow:
 
 
-## 0x6069 data packets (Big Endian)
+### Data Packets (Big Endian)
 
     addr | type    | explanation
     -----|---------|--------------------
@@ -116,48 +128,121 @@ Exact values I figured out can be found in [Obis.swift](Sources/sma2mqtt/Obis.sw
 
 
 
-## 0x6065 Protocol: Inverter Communication (Little Endian)
+## SMA Tag 0x0010 SubTag 0x6065: Inverter Communication (Little Endian)
 
-Warning this protocol uses little endian format. Requests and responses share the same header format. 
+Beware, this protocol uses little endian format. Requests and responses share the same header format. 
 Requests to the inverter send the header followed by a command (e.g. logon, logoff, data request ).
 Responses from the inverter have the same header with data then attached (e.g. ac-power values ).
 
 ### 0x6065 Protocol Header
 
-    addr | type| explanation
-    -----------------------------------
-    0x00 | U8  | Length in 32bit words, to get length in bytes * 4
-    0x01 | U8  | Type        0xA0  1010 0000b    Dest.SysID != 0xF4
-         |     |             0xE0  1110 0000b    Dest.SysID == 0xF4 == 244 = 1111 0100
-         |     |                    -X-- ----     0 network address ?
-         |     |                                  1 group address ?
+    addr |addr | type| explanation
+    ----- -----------------------------------
+    0x00 | 00 | U8  | Length in 32bit words, to get length in bytes * 4
+    0x01 | 01 | U8  | Type only   0xYZ
+                                    Y: A = Request, E = Response
+                                    Z: 0 = network, 1 = group address
 
-    0x02 | U16 | Source SysID
-    0x04 | U32 | Source Serial number
+    0x02 | 02 | U16 | Destination SysID
+    0x04 | 04 | U32 | Destination Serial number     or group 
+    0x08 | 08 | U8  | 0x00 always zero (padding)
+    
+    0x09 | 09 | U8  | 0x00 sending does not seem to matter except for login
+         |    |     |  receiving same value sent except bit 6
+         |    |     |  0xA1 1010 0000b
+         |    |     |  0xE0 1110 0000b          e0 means failed
+         |    |     |       -X-- ----           0 ok, 1, failed
+                    |  From SB sessionprotocol bit7 addressing ( 0 = adr / 1 = group)
+                    |                          bit6 acknoledge ( 0 = request / 1 = answer )
+                    |                          bit 0-5 reserved
+          
+          'p9:0x00' => 504196,
+          'p9:0x01' => 1887147,
+          'p9:0x02' => 34,
+          'p9:0x03' => 6,
+          'p9:0xa0' => 399585,
+          'p9:0xa1' => 160432,
+          'p9:0xc0' => 14109,
+          'p9:0xc1' => 2,
+          'p9:0xc5' => 16871,   
+          'p9:0xe0' => 127697
+          'p9:0xe1' => 966354,
 
-    0x08 | U8  | 0x00                        needs to be 0x00
-    0x09 | U8  | 0x00 sending does not seem to matter except for login
-         |     |  receiving same value sent except bit 6
-         |     |  0xA1 1010 0000b
-         |     |  0xE0 1110 0000b          e0 means failed
-         |     |       -X-- ----           0 ok, 1, failed
+                    
+                    
+                    
+                    
+                    
+
+    0x0A | 10 | U16 |  Source SysID           Any: 0xFFFF
+    0x0C | 12 | U32 |  Source Serial number   Any: 0xFFFF FFFF
+    0x10 | 16 | U8  |  0x00 always zero (padding)
+    
+    0x11 | 17 | U8  |  job number usually 1 or 0 but can be chose freely it seems
+
+    
+    0x12 | 18 | U16 |  Result:  0x0000 ok
+    
+          'reslt:0000' => 2981993,  ok 
+          'reslt:0002' => 38,
+          'reslt:0014' => 662745    
+          'reslt:0015' => 415136,
+          'reslt:0017' => 15705,    
+          'reslt:0018' => 6,
+          'reslt:0102' => 383,  invalid password
+          'reslt:ffff' => 427,
+
+         |    |     |           0x0002    0000 0010b  incorrect command ?
+         |    |     |           0x0014    0000 1110b
+         |    |     |           0x0015    0000 1111b  no values 
+         |    |     |           0x0017    0001 0001b  not logged in
+         |    |     |           0x0018    0001 0010b
+                                0x0100  1 0000 0000b    inv. password?
+         |    |     |           0x0102  1 0000 0010b   login not possible (busy)?
+         |    |     |           0xffff
+
+    0x14 | 20 | U16 | remaining packets to come count
+    
+    0x16 | 22 | U16 | packet id     Bit 0-14 packet id
+         |    |     |               bit 15 
+                                        request: 1
+                                        response: 0 - fail
+                                                  1 - ok
 
 
-    0x0A | U16 |  Destination SysID           Any: 0xFFFF
-    0x0C | U32 |  Destination Serial number   Any: 0xFFFF FFFF
 
-    0x10 | U16 |  ??ctrl      0x0000              sending 0xA0 0x01 0x03
-    0x12 | U16 |  Result:     0x0000 ok
-         |     |              0x0002  0000 0010b  incorrect command ?
-         |     |              0x0014              unkown command ?
-         |     |              0x0015  0000 1111b  no values
-         |     |              0x0017  0001 0001b  not logged in
-         |     |              0x0102              login not possible (busy)?
+    0x18 | 24 | U8  |  commannd ??ctrl 
 
-    0x14 | U16 | Bit 0-14 packet id
-         |     | bit 15   request / bit 15 needs to be set
-         |     |          response 0 - fail
-         |     |                    1 - ok
+          'p24:0x00' => 501268
+          'p24:0x01' => 1668148,
+          'p24:0x0a' => 2987,
+          'p24:0x0c' => 16882,      
+          'p24:0x0d' => 525358,
+          'p24:0x0e' => 1361790,
+                                
+
+                
+    0x19 | 25 | U8  | parametercount ?  data type? 
+          'p25:0x00' => 572223,
+          'p25:0x01' => 806438,
+          'p25:0x02' => 2172375,
+          'p25:0x03' => 28,
+          'p25:0x04' => 525369
+                
+                                0x80
+
+                        0x00 keep alive packet ? 
+                        0x00
+                        0x01 16 bit values
+                        0x02 32 bit values
+                        0x04 value length next packet ? 
+                        0x02 && command == 0x000 - 
+                                      
+    0x1A | 26 | U16 | command    
+    
+    values follow
+
+    
 
 
 # Requests to Inverter
@@ -210,12 +295,16 @@ I've not seen any response from a logout.
 
     addr | type| explanation
     -----------------------------------
-    0x16 | U8  | ?? flags maybe usually 0x01
+    0x16 | U8  | ?? flags maybe usually 0x01, 0x0C , 0x0D,
          |     |    flags   0000 0000b
          |     |            ---- ---Xb  0 = request
          |     |                        1 = answer
          |     |            ---- X--0b  8 -> response 9 as if adding one to the request
-    0x17 | U8  | ?? usually 02
+    0x17 | U8  | values seen: 00 , 01 , 02, 04
+         |     | 00 packet data directly following address 0x1A
+         |     | 01 address 0x1A contains packet count
+         |     | 02 address 0x1A contains start , 0x20 contains end
+         |     | 04 ?
     0x18 | U16 | Command used in request 
          |     |    0x0000 keep alive ? contains no data option 1 & 2 : 0x0000 0000 & 0x0000 00ff
          |     |                        can contain 56 static bytes as well 

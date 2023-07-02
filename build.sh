@@ -16,8 +16,8 @@ programname=sma2mqtt
 releasepath=release
 if [[ ! -d "$packagedir" ]];
 then
-	echo "$packagedir does not exist."
-	exit 1
+        echo "$packagedir does not exist."
+        exit 1
 fi
 
 cd "$packagedir"
@@ -29,8 +29,8 @@ cat >"buildandstart.sh" <<EOF
 executable="$buildpath/$releasepath/$programname"
 if [[ ! -x "\$executable" ]];
 then
-	echo "Did not find executable \$executable - building"
-	swift build -c release --build-path="$buildpath"
+        echo "Did not find executable \$executable - building"
+        swift build -c release --build-path="$buildpath"
 fi
 echo "Executing \$executable"
 exec "\$executable" --interval 0
@@ -68,4 +68,3 @@ docker run \
         swiftlang/swift:nightly-5.6-focal
 
 docker network connect mqtt-net "$programname"
-
