@@ -5,19 +5,18 @@
 import ArgumentParser
 import Foundation
 import JLog
-import Logging
 import sma2mqttLibrary
 
-extension Logger.Level: ExpressibleByArgument {}
+extension JLog.Level: ExpressibleByArgument {}
 #if DEBUG
-    let defaultLoglevel: Logger.Level = .debug
+    let defaultLoglevel: JLog.Level = .debug
 #else
-    let defaultLoglevel: Logger.Level = .notice
+    let defaultLoglevel: JLog.Level = .notice
 #endif
 
 @main struct sma2mqtt: AsyncParsableCommand
 {
-    @Option(help: "Set the log level.") var logLevel: Logger.Level = defaultLoglevel
+    @Option(help: "Set the log level.") var logLevel: JLog.Level = defaultLoglevel
 
     @Flag(name: .long, help: "send json output to stdout") var json: Bool = false
 
@@ -48,7 +47,6 @@ extension Logger.Level: ExpressibleByArgument {}
     @Option(name: .long, help: "Inverter Password.") var inverterPassword: String = "0000"
 
     @Option(name: .long, help: "Array of path:interval values we are interested in") var interestingPathsAndValues: [String] = [
-
         "dc-side/dc-measurements/power:1",
         "ac-side/grid-measurements/power:1",
         "ac-side/measured-values/daily-yield:30",
