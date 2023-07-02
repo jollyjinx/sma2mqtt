@@ -48,21 +48,18 @@ extension Logger.Level: ExpressibleByArgument {}
     @Option(name: .long, help: "Inverter Password.") var inverterPassword: String = "0000"
 
     @Option(name: .long, help: "Array of path:interval values we are interested in") var interestingPathsAndValues: [String] = [
+
         "dc-side/dc-measurements/power:1",
         "ac-side/grid-measurements/power:1",
         "ac-side/measured-values/daily-yield:30",
+
         "immediate/feedin:1",
         "immediate/usage:1",
 
-//                                                                                                      "immediate/gridfrequency",
         "battery/state-of-charge:20",
-//                                                                                                      "battery/battery-charge",
-//                                                                                                      "battery/present-battery-charge",
-//                                                                                                      "battery/present-battery-discharge",
         "battery/battery/temperature:30",
         "battery/battery/battery-charge/battery-charge:20",
-//        "temperatures",
-        "temperature:30",
+//        "*:0", // all once
     ]
     func run() async throws
     {
@@ -76,7 +73,16 @@ extension Logger.Level: ExpressibleByArgument {}
 
         let mqttPublisher = try await MQTTPublisher(hostname: mqttServername, port: Int(mqttPort), username: mqttUsername, password: mqttPassword, emitInterval: emitInterval, baseTopic: basetopic)
 
-        let interestingPaths = Dictionary(uniqueKeysWithValues: interestingPathsAndValues.compactMap { let kv = $0.split(separator: ":"); return (String(kv[0]), Int(kv[1])) as? (String, Int) })
+        let interestingPaths = Dictionary(uniqueKeysWithValues: interestingPathsAndValues.compactMap
+        {
+            let kv = $0.split(separator: ":")
+            if kv.count == 2,
+               let (path, interval) = (String(kv[0]), Int(kv[1])) as? (String, Int)
+            {
+                return (path, interval)
+            }
+            return nil
+        })
 
         let sunnyHome = try await SMALighthouse(mqttPublisher: mqttPublisher,
                                                 multicastAddress: mcastAddress,

@@ -98,7 +98,7 @@ public actor SMALighthouse
         {
             JLog.error("\(remoteAddress): was not able to initialize:\(error) - ignoring address")
 
-            smaDeviceCache[remoteAddress] = .failed( Date() )
+            smaDeviceCache[remoteAddress] = .failed(Date())
             return nil
         }
     }

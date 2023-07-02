@@ -220,8 +220,15 @@ public extension SMADevice
     {
         if let object = objectsToQueryContinously[objectID]
         {
-            let newElement = QueryElement(objectid: object.objectid, nextReadDate: Date(timeIntervalSinceNow: Double(object.interval)))
-            objectsToQueryNext = objectsToQueryNext.map { $0.objectid == objectID ? newElement : $0 }
+            if object.interval != 0
+            {
+                let newElement = QueryElement(objectid: object.objectid, nextReadDate: Date(timeIntervalSinceNow: Double(object.interval)))
+                objectsToQueryNext = objectsToQueryNext.map { $0.objectid == objectID ? newElement : $0 }
+            }
+            else
+            {
+                objectsToQueryNext.removeAll(where: { $0.objectid == objectID })
+            }
         }
     }
 
@@ -421,7 +428,7 @@ extension SMADevice
     {
         for interestingPath in interestingPaths
         {
-            if path.hasSuffix(interestingPath.key)
+            if path.hasSuffix(interestingPath.key) || interestingPath.key == "*"
             {
                 return interestingPath.value
             }
@@ -429,15 +436,15 @@ extension SMADevice
         return nil
     }
 
-    func objectIdIsInteresting(_ objectid:String) -> Int?
+    func objectIdIsInteresting(_ objectid: String) -> Int?
     {
-        let path =  "/" + (tagTranslator.objectsAndPaths[objectid]?.path ?? "unkown-id-\(objectid)")
+        let path = "/" + (tagTranslator.objectsAndPaths[objectid]?.path ?? "unkown-id-\(objectid)")
 
         return pathIsInteresting(path)
     }
 
     @discardableResult
-    func addObjectToQueryContinouslyIfNeeded(objectid:String) -> Bool
+    func addObjectToQueryContinouslyIfNeeded(objectid: String) -> Bool
     {
         JLog.trace("\(address):working on objectId:\(objectid)")
 
@@ -454,7 +461,6 @@ extension SMADevice
         }
         return false
     }
-
 
     func _getInformationDictionary(atPath path: String, requestIds: [String] = [String]()) async throws -> [String: PublishedValue]
     {
@@ -489,8 +495,8 @@ extension SMADevice
 
                 do
                 {
-                    if  hasDeviceName,
-                        addObjectToQueryContinouslyIfNeeded(objectid: objectId.key)
+                    if hasDeviceName,
+                       addObjectToQueryContinouslyIfNeeded(objectid: objectId.key)
                     {
                         try await publisher?.publish(to: mqttPath, payload: singleValue.json, qos: .atMostOnce, retain: true)
                     }
@@ -499,7 +505,6 @@ extension SMADevice
                 {
                     JLog.error("\(address):could not convert to json error:\(error) singleValue:\(singleValue)")
                 }
-
             }
         }
         return retrievedInformation
