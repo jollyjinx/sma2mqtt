@@ -48,6 +48,7 @@ public actor MQTTPublisher: SMAPublisher
             {
                 _ = self.mqttClient.connect()
             }
+            JLog.debug("publish:\(topic) payload:\(payload)")
             _ = self.mqttClient.publish(to: topic, payload: byteBuffer, qos: qos, retain: retain)
         }
     }

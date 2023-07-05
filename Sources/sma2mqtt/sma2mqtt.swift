@@ -51,13 +51,10 @@ extension JLog.Level: ExpressibleByArgument {}
         "ac-side/grid-measurements/power:1",
         "ac-side/measured-values/daily-yield:30",
 
-        "immediate/feedin:1",
-        "immediate/usage:1",
-
         "battery/state-of-charge:20",
         "battery/battery/temperature:30",
-        "battery/battery/battery-charge/battery-charge:20",
-//        "*:0", // all once
+        "battery/battery-charge/battery-charge:20",
+//        "*:600", // all once
     ]
     func run() async throws
     {

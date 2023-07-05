@@ -35,10 +35,12 @@ let package = Package(
         .target(
             name: "sma2mqttLibrary",
             dependencies: [
+                "CNative",
                 .product(name: "BinaryCoder", package: "BinaryCoder"),
                 .product(name: "AsyncHTTPClient", package: "async-http-client"),
                 .product(name: "MQTTNIO", package: "mqtt-nio"),
                 .product(name: "JLog", package: "JLog"),
+
             ],
             resources: [
                 .copy("Obis/Resources/obisdefinition.json"),
@@ -46,6 +48,10 @@ let package = Package(
                 .copy("DataObjects/Resources/sma.data.Translation_Names.json"),
                 .copy("SMAPacket/Resources/SMANetPacketDefinitions.json"),
             ]
+        ),
+        .target(
+            name: "CNative",
+            dependencies: []
         ),
         .testTarget(
             name: "sma2mqttTests",

@@ -22,6 +22,7 @@ public actor SMADevice
     struct QueryObject: Hashable
     {
         let objectid: String
+        let path:String
         let interval: Int
     }
 
@@ -38,6 +39,8 @@ public actor SMADevice
 
     var objectsToQueryContinously = [String: QueryObject]()
     var objectsToQueryNext = [QueryElement]()
+    var lastRequestSentDate = Date.distantPast
+    let minimumRequestInterval =  1.0 / 20.0    // 1 / maximumRequestsPerSecond
 
     let requestAllObjects: Bool
 
@@ -47,6 +50,7 @@ public actor SMADevice
     let httpClient: HTTPClient
     private var sessionid: String?
 
+    let udpReceiver: UDPReceiver
     let udpEmitter: UDPEmitter?
     var udpSystemId: UInt16 = 0xFFFF
     var udpSerial: UInt32 = 0xFFFF_FFFF
@@ -60,7 +64,7 @@ public actor SMADevice
     private var refreshTask: Task<Void, Error>?
     private var tagTranslator = SMATagTranslator.shared
 
-    public init(address: String, userright: UserRight = .user, password: String = "00000", publisher: SMAPublisher? = nil, refreshInterval: Int = 30, interestingPaths: [String: Int] = [:], requestAllObjects: Bool = false, udpEmitter: UDPEmitter? = nil) async throws
+    public init(address: String, userright: UserRight = .user, password: String = "00000", publisher: SMAPublisher? = nil, refreshInterval: Int = 30, interestingPaths: [String: Int] = [:], requestAllObjects: Bool = false, bindAddress:String = "0.0.0.0", udpEmitter: UDPEmitter? = nil) async throws
     {
         self.address = address
         self.userright = userright
@@ -72,6 +76,10 @@ public actor SMADevice
         self.interestingPaths = interestingPaths
         self.requestAllObjects = requestAllObjects
         self.udpEmitter = udpEmitter
+
+        self.udpReceiver = try UDPReceiver(bindAddress: bindAddress, listenPort: 0)
+
+
         name = address
         hasDeviceName = false
 
@@ -114,7 +122,7 @@ public extension SMADevice
             return nil
         }
 
-        JLog.trace("received udp packet:\(data.hexDump)")
+        JLog.debug("\(address):received udp packet:\(data.hexDump)")
 
         let smaPacket: SMAPacket
 
@@ -199,7 +207,7 @@ public extension SMADevice
         {
             if obisvalue.mqtt != .invisible
             {
-                try? await publisher?.publish(to: name + "/" + obisvalue.topic, payload: obisvalue.json, qos: .atLeastOnce, retain: obisvalue.mqtt == .retained)
+                try? await publisher?.publish(to: name + "/" + obisvalue.topic, payload: obisvalue.json, qos: .atMostOnce, retain: obisvalue.mqtt == .retained)
             }
         }
 
@@ -236,12 +244,16 @@ public extension SMADevice
     {
         let objectToQuery = try getNextRequest()
 
-        let timeToWait = objectToQuery.nextReadDate.timeIntervalSinceNow
+        let nextReadDate = max( objectToQuery.nextReadDate , lastRequestSentDate + minimumRequestInterval )
+
+        let timeToWait = nextReadDate.timeIntervalSinceNow
 
         if timeToWait > 0
         {
             try await Task.sleep(for: .seconds(timeToWait))
         }
+        lastRequestSentDate = Date()
+        
         try await udpQueryObject(objectID: objectToQuery.objectid)
     }
 
@@ -267,7 +279,9 @@ public extension SMADevice
         }
 
         JLog.trace("\(address): sending udp packet:\(packetToSend)")
-        await udpEmitter?.sendPacket(data: [UInt8](packetToSend.hexStringToData()), address: address, port: 9522)
+        let packet = try await udpReceiver.sendReceivePacket(data: [UInt8](packetToSend.hexStringToData()), address: address, port: 9522, receiveTimeout: 1.0)
+
+        let _ = await receivedUDPData(packet.data)
     }
 }
 
@@ -335,12 +349,13 @@ extension SMADevice
             name = deviceName
         }
 
+        try await getInformationDictionary(atPath: "/dyn/getDashValues.json")
+        try await getInformationDictionary(atPath: "/dyn/getAllOnlValues.json")
+
         for objectid in tagTranslator.smaObjectDefinitions.keys
         {
             addObjectToQueryContinouslyIfNeeded(objectid: objectid)
         }
-//        try await getInformationDictionary(atPath: "/dyn/getDashValues.json")
-//        try await getInformationDictionary(atPath: "/dyn/getAllOnlValues.json")
 
         try? await logout()
     }
@@ -436,11 +451,15 @@ extension SMADevice
         return nil
     }
 
-    func objectIdIsInteresting(_ objectid: String) -> Int?
+    func objectIdIsInteresting(_ objectid: String) -> (path:String,interval:Int?)
     {
         let path = "/" + (tagTranslator.objectsAndPaths[objectid]?.path ?? "unkown-id-\(objectid)")
 
-        return pathIsInteresting(path)
+        let interval = pathIsInteresting(path)
+
+        JLog.debug("\(address):\(objectid) \(path) interval:\( interval ?? -1 )")
+
+        return (path:path,interval:interval)
     }
 
     @discardableResult
@@ -448,9 +467,18 @@ extension SMADevice
     {
         JLog.trace("\(address):working on objectId:\(objectid)")
 
-        if let interval = objectIdIsInteresting(objectid)
+        let (path,interval) = objectIdIsInteresting(objectid)
+
+        if let interval
         {
-            let queryObject = objectsToQueryContinously[objectid] ?? QueryObject(objectid: objectid, interval: interval)
+            if let inuse = objectsToQueryContinously.values.first(where:{ $0.path == path })
+            {
+                JLog.notice("\(address): Won't query objectid:\(objectid) - object with same path:\(inuse.objectid) path:\(inuse.path)")
+                return false
+            }
+            JLog.debug("\(address): adding to objectsToQueryContinously objectid:\(objectid) path:\(path) interval:\(interval)")
+
+            let queryObject = objectsToQueryContinously[objectid] ?? QueryObject(objectid: objectid, path:path, interval: interval)
 
             if interval <= queryObject.interval
             {
@@ -498,7 +526,7 @@ extension SMADevice
                     if hasDeviceName,
                        addObjectToQueryContinouslyIfNeeded(objectid: objectId.key)
                     {
-                        try await publisher?.publish(to: mqttPath, payload: singleValue.json, qos: .atMostOnce, retain: true)
+                        try await publisher?.publish(to: mqttPath, payload: singleValue.json, qos: .atMostOnce, retain: false)
                     }
                 }
                 catch

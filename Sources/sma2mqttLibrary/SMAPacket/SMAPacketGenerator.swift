@@ -21,6 +21,8 @@ extension SMAPacketGenerator
         return try generateCommandPacket(packetcounter: packetcounter, command: command, dstSystemId: dstSystemId, dstSerial: dstSerial)
     }
 
+    private static let localhostname = Host.current().names.filter({ $0 != "localhost" }).sorted(by: { $0.count < $1.count  }).first ?? "localhost"
+
     static func generateCommandPacket(packetcounter: Int, command: String, dstSystemId: UInt16 = 0xFFFF, dstSerial: UInt32 = 0xFFFF_FFFF) throws -> String
     {
         let jobid = String(format: "%02x", 1)
@@ -30,7 +32,7 @@ extension SMAPacketGenerator
         let dstSysidString = String(format: "%02x%02x", dstSystemId & 0xFF, (dstSystemId & 0xFF00) >> 8)
         let dstSerialString = String(format: "%02x%02x%02x%02x", dstSerial & 0xFF, (dstSerial >> 8) & 0xFF, (dstSerial >> 16) & 0xFF, (dstSerial >> 24) & 0xFF)
 
-        let ownid = String(format: "%04x", generateRandomNumber())
+        let ownidString = String(format: "%04x", Self.localhostname.hashValue & 0xFFFF )
         let header = """
         534d 4100
             0004 02a0 0000 0001
@@ -41,7 +43,7 @@ extension SMAPacketGenerator
                 A0
                 \(dstSysidString) \(dstSerialString) 00
                 01
-                1234 \(ownid) 4321 00
+                1234 \(ownidString) 4321 00
                 \(jobid)
                 \(result)
                 \(remainingpackets)

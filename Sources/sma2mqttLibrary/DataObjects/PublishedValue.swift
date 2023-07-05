@@ -23,11 +23,13 @@ public struct PublishedValue: Encodable
 
     public func encode(to encoder: Encoder) throws
     {
-        enum CodingKeys: String, CodingKey { case unit, value, scale, id, prio, write, event }
+        enum CodingKeys: String, CodingKey { case unit, value, scale, id, prio, write, event,date }
         var container = encoder.container(keyedBy: CodingKeys.self)
 
         let objectDefinition = tagTranslator.smaObjectDefinitions[objectID]
         let compacted = values.compactMap { $0 }
+        try container.encode(objectID, forKey: .id)
+//        try container.encode(Date(), forKey: .date)
 
         switch compacted.first
         {
