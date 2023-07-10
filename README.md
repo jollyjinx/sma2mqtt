@@ -4,18 +4,22 @@ Tools to get SMA live data feed published to MQTT.
 
 ## sma2mqtt
 
-__sma2mqtt__ reads data from Sunny HomeManager and publishes the data to MQTT.
+__sma2mqtt__ recognizes SMA devices in the local network (inverters and Sunny HomeManager) find out which data are there to be published and publishes the data to a mqtt server.
 __sma2mqtt__ joins the SMA multicast and listens to the announcements that Sunny HomeManager does in that group. It works only inside the local network as multicast only works there.
 
 Inside the repository is a *build.sh* shell script that creates a docker container with __sma2mqtt__ inside. You need to adjust it to your needs, as your docker setup is probably different than mine.
 
 Output of __sma2mqtt__ will look like this on a mqtt broker:
 
-![SunnyManager mqtt example](Images/sunnymanager.mqtt.short.png)
-
-Or if you change the obisdefinitions to show all values it will look more like this:
-
 ![SunnyManager mqtt example](Images/sunnymanager.mqtt.long.png)
+
+## Docker usage
+
+I've built an docker image for a raspberry pi which you can directly use:
+```
+docker run --name "sma2mqtt" --net service16  jollyjinx/sma2mqtt:latest sma2mqtt --inverter-password MySimplePassword --log-level
+```
+I'm using *--net* option here as I'm using a seperate network for my sma devices. Otherwise you need to open port 9522 for the container.
 
 
 ## Future
@@ -38,7 +42,7 @@ OPTIONS:
                           MQTT Server username (default: mqtt)
   --mqtt-password <mqtt-password>
                           MQTT Server password
-  -i, --interval <interval>
+  -e, --emit-interval <emit-interval>
                           Interval to send updates to mqtt Server. (default: 1.0)
   -b, --basetopic <basetopic>
                           MQTT Server topic. (default: sma/)
@@ -51,50 +55,10 @@ OPTIONS:
                           Multicast Group Port number. (default: 9522)
   --inverter-password <inverter-password>
                           Inverter Password. (default: 0000)
-  --interesting-paths <interesting-paths>
-                          Paths we are interested to update (default: dc-side/dc-measurements/power, ac-side/grid-measurements/power, ac-side/measured-values/daily-yield, immediate/feedin, immediate/usage, battery/state-of-charge, battery/battery/temperature,
-                          battery/battery/battery-charge/battery-charge, temperatures)
+  --interesting-paths-and-values <interesting-paths-and-values>
+                          Array of path:interval values we are interested in (default: dc-side/dc-measurements/power:1, ac-side/grid-measurements/power:1, ac-side/measured-values/daily-yield:30, battery/state-of-charge:20, battery/battery/temperature:30,
+                          battery/battery-charge/battery-charge:20)
   -h, --help              Show help information.
 
 ```
-
-
-### Example 
-
-Start with --json option which will print the json that is sent to the mqtt server to stdout. jq is used just for formatting.
-```
-$./sma2mqtt --json |jq . 
-{
-  "id": "1:4.4.0",
-  "title": "Reactive Feedin",
-  "topic": "immediate/reactivefeedin",
-  "value": 103.4,
-  "unit": "W"
-}
-{
-  "id": "1:4.8.0",
-  "title": "Reactive Feedin Counter",
-  "topic": "counter/reactivefeedin",
-  "value": 3544.3821,
-  "unit": "kWh"
-}
-{
-  "id": "1:9.4.0",
-  "title": "Apparent Usage",
-  "topic": "immediate/apparentusage",
-  "value": 104.8,
-  "unit": "W"
-}
-{
-  "id": "1:9.8.0",
-  "title": "Apparent Usage Counter",
-  "topic": "counter/apparentusage",
-  "value": 4246.7811,
-  "unit": "kWh"
-}
-.
-.
-.
-```
-
 
