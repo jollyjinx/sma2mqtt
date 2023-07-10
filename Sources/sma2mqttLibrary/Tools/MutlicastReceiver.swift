@@ -15,7 +15,7 @@ import JLog
 
 public protocol UDPEmitter
 {
-    func sendPacket(data: [UInt8], address: String, port: UInt16) async
+    func sendPacket(data: [UInt8], packetcounter: Int, address: String, port: UInt16) async
 }
 
 public struct Packet
@@ -154,7 +154,7 @@ actor MulticastReceiver: UDPEmitter
         }
     }
 
-    func sendPacket(data: [UInt8], address: String, port: UInt16)
+    func sendPacket(data: [UInt8], packetcounter _: Int, address: String, port: UInt16)
     {
         var destinationAddress = sockaddr_in()
 

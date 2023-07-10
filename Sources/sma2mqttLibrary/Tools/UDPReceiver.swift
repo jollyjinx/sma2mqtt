@@ -1,5 +1,5 @@
 //
-//  MutlicastReceiver.swift
+//  UDPReceiver.swift
 //
 
 import Foundation
@@ -7,11 +7,11 @@ import JLog
 
 import CNative
 
-//public struct Packet
-//{
+// public struct Packet
+// {
 //    let data: Data
 //    let sourceAddress: String
-//}
+// }
 
 private enum UDPReceiverError: Error
 {
@@ -27,6 +27,7 @@ private enum UDPReceiverError: Error
     case addressStringConversionFailed(Int32)
     case timeoutErrorOuter
     case timeoutErrorRecv
+    case timeoutErrorReceived([SMAPacket])
 }
 
 class UDPReceiver: UDPEmitter
@@ -35,7 +36,6 @@ class UDPReceiver: UDPEmitter
     private let bufferSize: Int
     private var isListening: Bool = true
     private var readSet = fd_set()
-
 
     init(bindAddress: String, listenPort: UInt16, bufferSize: Int = 65536) throws
     {
@@ -103,9 +103,8 @@ class UDPReceiver: UDPEmitter
         close(socketFileDescriptor)
     }
 
-    func receiveNextPacket(from address:String = "0.0.0.0",port:UInt16 = 0,timeout:Double) async throws -> Packet
+    func receiveNextPacket(from address: String = "0.0.0.0", port: UInt16 = 0, timeout: Double) async throws -> Packet
     {
-
         let socket = socketFileDescriptor
         return try await withUnsafeThrowingContinuation
         { continuation in
@@ -118,15 +117,15 @@ class UDPReceiver: UDPEmitter
                 socketAddress.sin_addr.s_addr = inet_addr(address)
 
                 var socketAddressLength = socklen_t(MemoryLayout<sockaddr_in>.size)
-                JLog.debug("recvfrom")
+                JLog.trace("recvfrom")
 
                 let seconds = time_t(timeout)
-                var timeout = timeval(tv_sec: seconds, tv_usec: suseconds_t( (timeout - Double(seconds)) * Double(USEC_PER_SEC) ))
-                var readset:fd_set = fd_set()
+                var timeout = timeval(tv_sec: seconds, tv_usec: suseconds_t((timeout - Double(seconds)) * Double(USEC_PER_SEC)))
+                var readset: fd_set = .init()
 
                 SWIFT_FD_SET(socket, &readset)
 
-                let rv = select(socket+1, &readset, nil, nil, &timeout)
+                let rv = select(socket + 1, &readset, nil, nil, &timeout)
                 guard rv > 0 else { return continuation.resume(throwing: UDPReceiverError.timeoutErrorRecv) }
 
                 let receiveBuffer = UnsafeMutablePointer<UInt8>.allocate(capacity: self.bufferSize)
@@ -146,7 +145,7 @@ class UDPReceiver: UDPEmitter
         }
     }
 
-    func sendPacket(data: [UInt8], address: String, port: UInt16)
+    func sendPacket(data: [UInt8], packetcounter: Int, address: String, port: UInt16)
     {
         var destinationAddress = sockaddr_in()
 
@@ -167,33 +166,42 @@ class UDPReceiver: UDPEmitter
         }
         else
         {
-            JLog.debug("Sent Packet successfull to:\(address):\(port) sent:\(sent) == \(data.count)")
+            JLog.debug("Sent Packet to:\(address):\(port) packetcounter:\(String(format: "0x%04x", packetcounter)) sent:\(sent) == \(data.count)")
         }
     }
 
-
-    func sendReceivePacket(data: [UInt8], address: String, port: UInt16,receiveTimeout:Double) async throws -> Packet
+    func sendReceivePacket(data: [UInt8], packetcounter: Int, address: String, port: UInt16, receiveTimeout: Double) async throws -> [SMAPacket]
     {
-
-        sendPacket(data: data, address: address, port: port)
+        sendPacket(data: data, packetcounter: packetcounter, address: address, port: port)
         let startDate = Date()
 
-        let endTime = Date.init(timeIntervalSinceNow: receiveTimeout)
+        let endTime = Date(timeIntervalSinceNow: receiveTimeout)
+        var smaPackets = [SMAPacket]()
 
-        while( endTime.timeIntervalSinceNow > 0 )
+        while endTime.timeIntervalSinceNow > 0
         {
-            let packet = try await receiveNextPacket(from:address,port:port,timeout:receiveTimeout)
-
-            if packet.sourceAddress == address
-            {
-                JLog.debug("\(address):answered in \(startDate.timeIntervalSinceNow * -1000.0)ms")
-                return packet
-            }
+            guard let packet = try? await receiveNextPacket(from: address, port: port, timeout: receiveTimeout),
+                  let smaPacket = try? SMAPacket(data: packet.data),
+                  packet.sourceAddress == address,
+                  let packetid = smaPacket.netPacket?.header.packetId
             else
             {
-                JLog.notice("received packet from\(packet.sourceAddress) expected from:\(address) - ignoring")
+                continue
             }
+
+            smaPackets.append(smaPacket)
+
+            guard packetid == packetcounter
+            else
+            {
+                JLog.debug("packet from:\(address) packetcounter:\(String(format: "0x%04x", packetid)) - received wrong packet \(packetid) != \(packetcounter)")
+                continue
+            }
+            JLog.debug("packet from:\(address) packetcounter:\(String(format: "0x%04x", packetid)) received in \(String(format: "%.1fms", startDate.timeIntervalSinceNow * -1000.0))")
+            return smaPackets
         }
-        throw UDPReceiverError.timeoutErrorRecv
+        JLog.notice("packet from:\(address) packetcounter:\(String(format: "0x%04x", packetcounter)) missing - did not arrive in time \(endTime.timeIntervalSinceNow + receiveTimeout)")
+
+        return smaPackets
     }
 }

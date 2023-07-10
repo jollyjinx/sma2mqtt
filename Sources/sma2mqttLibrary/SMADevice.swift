@@ -5,6 +5,7 @@
 import AsyncHTTPClient
 import Foundation
 import JLog
+import NIOCore
 import NIOFoundationCompat
 import NIOHTTP1
 import RegexBuilder
@@ -22,7 +23,7 @@ public actor SMADevice
     struct QueryObject: Hashable
     {
         let objectid: String
-        let path:String
+        let path: String
         let interval: Int
     }
 
@@ -40,7 +41,8 @@ public actor SMADevice
     var objectsToQueryContinously = [String: QueryObject]()
     var objectsToQueryNext = [QueryElement]()
     var lastRequestSentDate = Date.distantPast
-    let minimumRequestInterval =  1.0 / 20.0    // 1 / maximumRequestsPerSecond
+    let udpMinimumRequestInterval = 1.0 / 20.0 // 1 / maximumRequestsPerSecond
+    let udpRequestTimeout = 1.5
 
     let requestAllObjects: Bool
 
@@ -49,6 +51,7 @@ public actor SMADevice
     var scheme = "https"
     let httpClient: HTTPClient
     private var sessionid: String?
+    let httpTimeout: NIOCore.TimeAmount = .seconds(5)
 
     let udpReceiver: UDPReceiver
     let udpEmitter: UDPEmitter?
@@ -64,7 +67,7 @@ public actor SMADevice
     private var refreshTask: Task<Void, Error>?
     private var tagTranslator = SMATagTranslator.shared
 
-    public init(address: String, userright: UserRight = .user, password: String = "00000", publisher: SMAPublisher? = nil, refreshInterval: Int = 30, interestingPaths: [String: Int] = [:], requestAllObjects: Bool = false, bindAddress:String = "0.0.0.0", udpEmitter: UDPEmitter? = nil) async throws
+    public init(address: String, userright: UserRight = .user, password: String = "00000", publisher: SMAPublisher? = nil, refreshInterval: Int = 30, interestingPaths: [String: Int] = [:], requestAllObjects: Bool = false, bindAddress: String = "0.0.0.0", udpEmitter: UDPEmitter? = nil) async throws
     {
         self.address = address
         self.userright = userright
@@ -77,8 +80,7 @@ public actor SMADevice
         self.requestAllObjects = requestAllObjects
         self.udpEmitter = udpEmitter
 
-        self.udpReceiver = try UDPReceiver(bindAddress: bindAddress, listenPort: 0)
-
+        udpReceiver = try UDPReceiver(bindAddress: bindAddress, listenPort: 0)
 
         name = address
         hasDeviceName = false
@@ -101,7 +103,7 @@ public actor SMADevice
                     {
                         JLog.error("\(address): Failed to query interesting objects: \(error)")
                         errorcounter += 1
-                        try? await Task.sleep(for: .seconds(1))
+                        //  try? await Task.sleep(for: .seconds(1))
                     }
                 }
                 JLog.error("\(address): too many erros")
@@ -124,79 +126,74 @@ public extension SMADevice
 
         JLog.debug("\(address):received udp packet:\(data.hexDump)")
 
-        let smaPacket: SMAPacket
+        guard let smaPacket = try? SMAPacket(data: data) else { return nil }
 
-        do
+        return await receivedSMAPacket(smaPacket)
+    }
+
+    func receivedSMAPacket(_ smaPacket: SMAPacket) async -> SMAPacket?
+    {
+        if let netPacket = smaPacket.netPacket
         {
-            smaPacket = try SMAPacket(data: data)
+            udpLoggedIn = netPacket.isLoggedIn
+            udpSystemId = netPacket.header.sourceSystemId
+            udpSerial = netPacket.header.sourceSerial
 
-            if let netPacket = smaPacket.netPacket
+            if netPacket.header.u16command == 0xFFFD
             {
-                udpLoggedIn = netPacket.isLoggedIn
-                udpSystemId = netPacket.header.sourceSystemId
-                udpSerial = netPacket.header.sourceSerial
-
-                if netPacket.header.u16command == 0xFFFD
-                {
-                    return nil
-                }
-
-                let objectIDs = netPacket.values.map { String(format: "%04X_%02X%04X00", netPacket.header.u16command, $0.type, $0.address) }
-
-                if let objectID = objectIDs.first(where: { tagTranslator.objectsAndPaths[$0] != nil }),
-                   let simpleObject = tagTranslator.objectsAndPaths[objectID]
-                {
-                    JLog.trace("\(address): objectid:\(objectID) name:\(simpleObject.json)")
-                    justRetrievedObject(objectID: objectID)
-
-                    let path = name + "/\(simpleObject.path)"
-                    var resultValues = [GetValuesResult.Value]()
-
-                    for value in netPacket.values
-                    {
-                        JLog.trace("\(address): objectid:\(objectID)")
-
-                        switch value.value
-                        {
-                            case let .uint(value):
-                                if let firstValue = value.first as? UInt32
-                                {
-                                    let resultValue = GetValuesResult.Value.intValue(Int(firstValue))
-                                    resultValues.append(resultValue)
-                                }
-                            case let .int(value):
-                                if let firstValue = value.first as? Int32
-                                {
-                                    let resultValue = GetValuesResult.Value.intValue(Int(firstValue))
-                                    resultValues.append(resultValue)
-                                }
-
-                            case let .string(string):
-                                let resultValue = GetValuesResult.Value.stringValue(string)
-                                resultValues.append(resultValue)
-
-                            case let .tags(tags):
-                                let resultValue = GetValuesResult.Value.tagValues(tags.map { Int($0) })
-                                resultValues.append(resultValue)
-
-                            default:
-                                try? await publisher?.publish(to: path + ".\(value.number)", payload: value.json, qos: .atMostOnce, retain: false)
-                        }
-                    }
-
-                    let singleValue = PublishedValue(objectID: objectID, values: resultValues, tagTranslator: tagTranslator)
-                    try? await publisher?.publish(to: path, payload: singleValue.json, qos: .atMostOnce, retain: false)
-                }
-                else if !objectIDs.isEmpty
-                {
-                    JLog.error("\(address): objectIDs not known \(objectIDs)")
-                }
+                return nil
             }
-        }
-        catch
-        {
-            JLog.error("\(address):did not decode :\(error) \(data.hexDump)")
-            return nil
+
+            let objectIDs = netPacket.values.map { String(format: "%04X_%02X%04X00", netPacket.header.u16command, $0.type, $0.address) }
+
+            if let objectID = objectIDs.first(where: { tagTranslator.objectsAndPaths[$0] != nil }),
+               let simpleObject = tagTranslator.objectsAndPaths[objectID]
+            {
+                JLog.debug("\(address): objectid:\(objectID) name:\(simpleObject.json)")
+                justRetrievedObject(objectID: objectID)
+
+                let path = name + "/\(simpleObject.path)"
+                var resultValues = [GetValuesResult.Value]()
+
+                for value in netPacket.values
+                {
+                    JLog.trace("\(address): objectid:\(objectID)")
+
+                    switch value.value
+                    {
+                        case let .uint(value):
+                            if let firstValue = value.first as? UInt32
+                            {
+                                let resultValue = GetValuesResult.Value.intValue(Int(firstValue))
+                                resultValues.append(resultValue)
+                            }
+                        case let .int(value):
+                            if let firstValue = value.first as? Int32
+                            {
+                                let resultValue = GetValuesResult.Value.intValue(Int(firstValue))
+                                resultValues.append(resultValue)
+                            }
+
+                        case let .string(string):
+                            let resultValue = GetValuesResult.Value.stringValue(string)
+                            resultValues.append(resultValue)
+
+                        case let .tags(tags):
+                            let resultValue = GetValuesResult.Value.tagValues(tags.map { Int($0) })
+                            resultValues.append(resultValue)
+
+                        default:
+                            try? await publisher?.publish(to: path + ".\(value.number)", payload: value.json, qos: .atMostOnce, retain: false)
+                    }
+                }
+
+                let singleValue = PublishedValue(objectID: objectID, values: resultValues, tagTranslator: tagTranslator)
+                try? await publisher?.publish(to: path, payload: singleValue.json, qos: .atMostOnce, retain: false)
+            }
+            else if !objectIDs.isEmpty
+            {
+                JLog.error("\(address): objectIDs not known \(objectIDs)")
+            }
         }
 
         JLog.trace("\(address): received \(smaPacket)")
@@ -244,7 +241,7 @@ public extension SMADevice
     {
         let objectToQuery = try getNextRequest()
 
-        let nextReadDate = max( objectToQuery.nextReadDate , lastRequestSentDate + minimumRequestInterval )
+        let nextReadDate = max(objectToQuery.nextReadDate, lastRequestSentDate + udpMinimumRequestInterval)
 
         let timeToWait = nextReadDate.timeIntervalSinceNow
 
@@ -253,7 +250,7 @@ public extension SMADevice
             try await Task.sleep(for: .seconds(timeToWait))
         }
         lastRequestSentDate = Date()
-        
+
         try await udpQueryObject(objectID: objectToQuery.objectid)
     }
 
@@ -279,9 +276,17 @@ public extension SMADevice
         }
 
         JLog.trace("\(address): sending udp packet:\(packetToSend)")
-        let packet = try await udpReceiver.sendReceivePacket(data: [UInt8](packetToSend.hexStringToData()), address: address, port: 9522, receiveTimeout: 1.0)
+        let packets = try await udpReceiver.sendReceivePacket(data: [UInt8](packetToSend.hexStringToData()), packetcounter: packetcounter, address: address, port: 9522, receiveTimeout: udpRequestTimeout)
 
-        let _ = await receivedUDPData(packet.data)
+        if !packets.isEmpty
+        {
+            lastSeen = Date()
+        }
+
+        for packet in packets
+        {
+            _ = await receivedSMAPacket(packet)
+        }
     }
 }
 
@@ -451,15 +456,15 @@ extension SMADevice
         return nil
     }
 
-    func objectIdIsInteresting(_ objectid: String) -> (path:String,interval:Int?)
+    func objectIdIsInteresting(_ objectid: String) -> (path: String, interval: Int?)
     {
         let path = "/" + (tagTranslator.objectsAndPaths[objectid]?.path ?? "unkown-id-\(objectid)")
 
         let interval = pathIsInteresting(path)
 
-        JLog.debug("\(address):\(objectid) \(path) interval:\( interval ?? -1 )")
+        JLog.trace("\(address):\(objectid) \(path) interval:\(interval ?? -1)")
 
-        return (path:path,interval:interval)
+        return (path: path, interval: interval)
     }
 
     @discardableResult
@@ -467,18 +472,18 @@ extension SMADevice
     {
         JLog.trace("\(address):working on objectId:\(objectid)")
 
-        let (path,interval) = objectIdIsInteresting(objectid)
+        let (path, interval) = objectIdIsInteresting(objectid)
 
         if let interval
         {
-            if let inuse = objectsToQueryContinously.values.first(where:{ $0.path == path })
+            if let inuse = objectsToQueryContinously.values.first(where: { $0.path == path })
             {
                 JLog.notice("\(address): Won't query objectid:\(objectid) - object with same path:\(inuse.objectid) path:\(inuse.path)")
                 return false
             }
             JLog.debug("\(address): adding to objectsToQueryContinously objectid:\(objectid) path:\(path) interval:\(interval)")
 
-            let queryObject = objectsToQueryContinously[objectid] ?? QueryObject(objectid: objectid, path:path, interval: interval)
+            let queryObject = objectsToQueryContinously[objectid] ?? QueryObject(objectid: objectid, path: path, interval: interval)
 
             if interval <= queryObject.interval
             {
@@ -575,7 +580,7 @@ extension SMADevice
             request.body = .bytes(requestBody)
         }
 
-        let response = try await httpClient.execute(request, timeout: .seconds(5))
+        let response = try await httpClient.execute(request, timeout: httpTimeout)
 
         JLog.trace("\(address):url:\(url) got response: \(response)")
         lastSeen = Date()

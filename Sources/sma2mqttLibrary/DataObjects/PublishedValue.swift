@@ -23,7 +23,7 @@ public struct PublishedValue: Encodable
 
     public func encode(to encoder: Encoder) throws
     {
-        enum CodingKeys: String, CodingKey { case unit, value, scale, id, prio, write, event,date }
+        enum CodingKeys: String, CodingKey { case unit, value, scale, id, prio, write, event, date }
         var container = encoder.container(keyedBy: CodingKeys.self)
 
         let objectDefinition = tagTranslator.smaObjectDefinitions[objectID]

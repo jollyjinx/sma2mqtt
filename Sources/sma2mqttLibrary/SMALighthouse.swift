@@ -111,7 +111,7 @@ public actor SMALighthouse
         guard Date().timeIntervalSince(lastDiscoveryRequestDate) > disoveryRequestInterval else { return }
 
         let dicoveryPacket = SMAPacketGenerator.generateDiscoveryPacket()
-        await mcastReceiver.sendPacket(data: [UInt8](dicoveryPacket.hexStringToData()), address: mcastAddress, port: mcastPort)
+        await mcastReceiver.sendPacket(data: [UInt8](dicoveryPacket.hexStringToData()), packetcounter: 0, address: mcastAddress, port: mcastPort)
         lastDiscoveryRequestDate = Date()
     }
 
