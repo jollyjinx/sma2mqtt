@@ -175,10 +175,10 @@ class UDPReceiver: UDPEmitter
         sendPacket(data: data, packetcounter: packetcounter, address: address, port: port)
         let startDate = Date()
 
-        let endTime = Date(timeIntervalSinceNow: receiveTimeout)
+        let endDate = Date(timeIntervalSinceNow: receiveTimeout)
         var smaPackets = [SMAPacket]()
 
-        while endTime.timeIntervalSinceNow > 0
+        while endDate.timeIntervalSinceNow > 0
         {
             guard let packet = try? await receiveNextPacket(from: address, port: port, timeout: receiveTimeout),
                   let smaPacket = try? SMAPacket(data: packet.data),
@@ -197,10 +197,8 @@ class UDPReceiver: UDPEmitter
                 JLog.debug("packet from:\(address) packetcounter:\(String(format: "0x%04x", packetid)) - received wrong packet \(packetid) != \(packetcounter)")
                 continue
             }
-            JLog.debug("packet from:\(address) packetcounter:\(String(format: "0x%04x", packetid)) received in \(String(format: "%.1fms", startDate.timeIntervalSinceNow * -1000.0))")
-            return smaPackets
         }
-        JLog.notice("packet from:\(address) packetcounter:\(String(format: "0x%04x", packetcounter)) missing - did not arrive in time \(endTime.timeIntervalSinceNow + receiveTimeout)")
+        JLog.notice("packet from:\(address) packetcounter:\(String(format: "0x%04x", packetcounter)) missing - did not arrive in time \(String(format: "%.2fs", -startDate.timeIntervalSinceNow))")
 
         return smaPackets
     }
