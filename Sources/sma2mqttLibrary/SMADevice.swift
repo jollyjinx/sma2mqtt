@@ -41,12 +41,12 @@ public actor SMADevice
     var objectsToQueryContinously = [String: QueryObject]()
     var objectsToQueryNext = [QueryElement]()
     var lastRequestSentDate = Date.distantPast
-    let udpMinimumRequestInterval = 1.0 / 20.0 // 1 / maximumRequestsPerSecond
+    let udpMinimumRequestInterval = 1.0 / 10.0 // 1 / maximumRequestsPerSecond
     let udpRequestTimeout = 5.0
 
     let requestAllObjects: Bool
 
-    public var lastSeen = Date.distantPast
+    public var lastRequestReceived = Date.distantPast
 
     var scheme = "https"
     let httpClient: HTTPClient
@@ -63,6 +63,7 @@ public actor SMADevice
 
     private var hasDeviceName = false
     public var name: String { willSet { hasDeviceName = true } }
+    var isHomeManager = false
 
     private var refreshTask: Task<Void, Error>?
     private var tagTranslator = SMATagTranslator.shared
@@ -116,15 +117,20 @@ public extension SMADevice
 {
     func receivedUDPData(_ data: Data) async -> SMAPacket?
     {
-        lastSeen = Date()
         guard !data.isEmpty
         else
         {
             JLog.error("\(address):received empty packet")
             return nil
         }
-
         JLog.debug("\(address):received udp packet:\(data.hexDump)")
+
+        if isHomeManager && lastRequestReceived.timeIntervalSinceNow > -1.0
+        {
+            JLog.debug("\(address): isHomeManager and received already at\(lastRequestReceived) - ignoring")
+            return nil
+        }
+        lastRequestReceived = Date()
 
         guard let smaPacket = try? SMAPacket(data: data) else { return nil }
 
@@ -280,7 +286,7 @@ public extension SMADevice
 
         if !packets.isEmpty
         {
-            lastSeen = Date()
+            lastRequestReceived = Date()
         }
 
         for packet in packets
@@ -324,6 +330,7 @@ extension SMADevice
 
                 JLog.debug("\(address):SMA device found: Sunny Home Manager, version:\(version)")
                 name = "sunnymanager"
+                isHomeManager = true
                 return
             }
             JLog.debug("\(address):legal no match")
@@ -591,7 +598,7 @@ extension SMADevice
         let response = try await httpClient.execute(request, timeout: httpTimeout)
 
         JLog.trace("\(address):url:\(url) got response: \(response)")
-        lastSeen = Date()
+        lastRequestReceived = Date()
 
         if response.status == .ok
         {
