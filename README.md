@@ -1,32 +1,26 @@
-# SMA SpeedWire and Home Manager
+## sma2mqtt Overview
 
-Tools to get SMA live data feed published to MQTT.
+The __sma2mqtt__ tool is designed to discover SMA devices, such as inverters and Sunny HomeManagers, on a local network. It identifies the data these devices can publish and subsequently delivers this information to an MQTT server.
 
-## sma2mqtt
+Within the local network, __sma2mqtt__ joins the SMA multicast to listen to announcements from Sunny HomeManager. Please note, this functionality is strictly limited to the local network due to the inherent restrictions of multicast.
 
-__sma2mqtt__ recognizes SMA devices in the local network (inverters and Sunny HomeManager) find out which data are there to be published and publishes the data to a mqtt server.
-__sma2mqtt__ joins the SMA multicast and listens to the announcements that Sunny HomeManager does in that group. It works only inside the local network as multicast only works there.
+The repository includes a build.sh shell script that constructs a Docker container encapsulating the __sma2mqtt__ tool. It's likely necessary to adjust this script to suit the specifics of individual Docker setups.
 
-Inside the repository is a *build.sh* shell script that creates a docker container with __sma2mqtt__ inside. You need to adjust it to your needs, as your docker setup is probably different than mine.
-
-Output of __sma2mqtt__ will look like this on a mqtt broker:
+Upon execution, __sma2mqtt__ produces output similar to this on an MQTT broker:
 
 <img src="Images/sunnymanager.mqtt.long.png" width="50%" alt="SunnyManager mqtt example"/>
 
-## Docker usage
+## Docker Container Use
 
-I've built an docker image for a raspberry pi which you can directly use:
+A Docker image, specifically engineered for 64-bit ARM architecture, is available. This image is compatible with a range of devices, including the Raspberry Pi, Apple Silicon Macs, and other 64-bit ARM computers. It can be employed directly using the following command:
 ```
 docker run --name "sma2mqtt" --net service16  jollyjinx/sma2mqtt:latest sma2mqtt --inverter-password MySimplePassword --log-level
 ```
-I'm using *--net* option here as I'm using a seperate network for my sma devices. Otherwise you need to open port 9522 for the container.
+
+The --net option is included in this command to specify a separate network for SMA devices. If there is no dedicated network in use, port 9522 should be open for the container.
 
 
-## Future
-
-I use __sma2mqtt__ in 'production' and it works fine. Inverter values are currently read out via modbus, but I started reversing the [SMA inverter protocol](SMA%20Protocol.md) to get __sma2mqtt__ read values from all SMA products via UDP. SMA Speedwire protocol seems to be more stable and faster than Modbus, that's why I want to switch.
-
-### Usage
+## Usage
 
 
 ```
