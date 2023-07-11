@@ -34,7 +34,7 @@ public struct PublishedValue: Encodable
             try container.encode(objectID, forKey: .id)
             try container.encode(Date(), forKey: .date)
         }
-        
+
         switch compacted.first
         {
             case .stringValue:

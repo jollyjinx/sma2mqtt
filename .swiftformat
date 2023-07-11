@@ -1,5 +1,5 @@
 --header "\n {file}\n"
-#--swiftversion 5.8
+--swiftversion 5.8
 --indentcase true
 #--maxwidth none
 --allman true
