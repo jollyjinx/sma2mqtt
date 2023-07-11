@@ -16,7 +16,7 @@ let package = Package(
         .library(name: "sma2mqttLibrary", targets: ["sma2mqttLibrary"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/nicklockwood/SwiftFormat", branch: "master"),
+        .package(url: "https://github.com/nicklockwood/SwiftFormat", .upToNextMajor(from: "0.51.12")),
         .package(url: "https://github.com/apple/swift-argument-parser", .upToNextMajor(from: "1.2.2")),
         .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.18.0"),
         .package(url: "https://github.com/swift-server-community/mqtt-nio", .upToNextMajor(from: "2.8.0")),

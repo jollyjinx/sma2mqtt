@@ -264,13 +264,15 @@ public extension SMADevice
     {
         let packetcounter = getNextPacketCounter()
 
-        let packetToSend: String = if !udpLoggedIn
+        let packetToSend: String
+
+        if !udpLoggedIn
         {
-            try SMAPacketGenerator.generateLoginPacket(packetcounter: packetcounter, password: password, userRight: .user)
+            packetToSend = try SMAPacketGenerator.generateLoginPacket(packetcounter: packetcounter, password: password, userRight: .user)
         }
         else
         {
-            try SMAPacketGenerator.generatePacketForObjectID(packetcounter: packetcounter, objectID: objectID, dstSystemId: udpSystemId, dstSerial: udpSerial)
+            packetToSend = try SMAPacketGenerator.generatePacketForObjectID(packetcounter: packetcounter, objectID: objectID, dstSystemId: udpSystemId, dstSerial: udpSerial)
         }
 
         JLog.trace("\(address): sending udp packet:\(packetToSend)")
