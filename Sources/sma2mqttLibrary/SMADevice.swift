@@ -378,23 +378,31 @@ extension SMADevice
 
     func httpLogin() async throws -> String
     {
-        JLog.debug("\(address):Login")
-
-        let headers = [("Content-Type", "application/json"), ("Connection", "keep-alive")]
-        let loginBody = try JSONSerialization.data(withJSONObject: ["right": userright.rawValue, "pass": password], options: [])
-        let response = try await data(forPath: "/dyn/login.json", headers: .init(headers), httpMethod: .POST, requestBody: loginBody)
-
-        let decoder = JSONDecoder()
-        let loginResult = try decoder.decode([String: [String: String]].self, from: response.bodyData)
-
-        guard let sid = loginResult["result"]?["sid"] as? String
-        else
+        do
         {
-            JLog.debug("\(address):Login failed: \(response)")
+            JLog.debug("\(address):Login")
 
+            let headers = [("Content-Type", "application/json"), ("Connection", "keep-alive")]
+            let loginBody = try JSONSerialization.data(withJSONObject: ["right": userright.rawValue, "pass": password], options: [])
+            let response = try await data(forPath: "/dyn/login.json", headers: .init(headers), httpMethod: .POST, requestBody: loginBody)
+
+            let decoder = JSONDecoder()
+            let loginResult = try decoder.decode([String: [String: String]].self, from: response.bodyData)
+
+            guard let sid = loginResult["result"]?["sid"] as? String
+            else
+            {
+                JLog.debug("\(address):Login failed: session missing \(response)")
+
+                throw DeviceError.loginFailed
+            }
+            return sid
+        }
+        catch
+        {
+            JLog.debug("\(address):Login failed: \(error)")
             throw DeviceError.loginFailed
         }
-        return sid
     }
 
     func getDeviceName() async throws -> String?
