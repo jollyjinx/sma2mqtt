@@ -28,9 +28,13 @@ public struct PublishedValue: Encodable
 
         let objectDefinition = tagTranslator.smaObjectDefinitions[objectID]
         let compacted = values.compactMap { $0 }
-        try container.encode(objectID, forKey: .id)
-//        try container.encode(Date(), forKey: .date)
 
+        if JLog.loglevel <= .debug
+        {
+            try container.encode(objectID, forKey: .id)
+            try container.encode(Date(), forKey: .date)
+        }
+        
         switch compacted.first
         {
             case .stringValue:

@@ -36,6 +36,7 @@ class UDPReceiver: UDPEmitter
     private let bufferSize: Int
     private var isListening: Bool = true
     private var readSet = fd_set()
+    private var lastPacketLost = false
 
     init(bindAddress: String, listenPort: UInt16, bufferSize: Int = 65536) throws
     {
@@ -198,9 +199,17 @@ class UDPReceiver: UDPEmitter
                 continue
             }
             JLog.debug("packet from:\(address) packetcounter:\(String(format: "0x%04x", packetid)) received in \(String(format: "%.1fms", startDate.timeIntervalSinceNow * -1000.0))")
+
+            if lastPacketLost
+            {
+                JLog.notice("packet from:\(address) packetcounter:\(String(format: "0x%04x", packetid)) received in \(String(format: "%.1fms - back on track", startDate.timeIntervalSinceNow * -1000.0))")
+            }
+            lastPacketLost = false
             return smaPackets
         }
         JLog.notice("packet from:\(address) packetcounter:\(String(format: "0x%04x", packetcounter)) missing - did not arrive in time \(String(format: "%.2fs", -startDate.timeIntervalSinceNow))")
+
+        lastPacketLost = true
 
         return smaPackets
     }
