@@ -42,7 +42,7 @@ public actor SMADevice
     var objectsToQueryNext = [QueryElement]()
     var lastRequestSentDate = Date.distantPast
     let udpMinimumRequestInterval = 1.0 / 20.0 // 1 / maximumRequestsPerSecond
-    let udpRequestTimeout = 1.5
+    let udpRequestTimeout = 5.0
 
     let requestAllObjects: Bool
 

@@ -11,5 +11,9 @@ COPY --from=builder /root/.build/release/sma2mqtt_sma2mqttLibrary.resources ./sm
 CMD ["./sma2mqtt"]
 
 #docker build . --file sma2mqtt.product.dockerfile --tag jollyjinx/sma2mqtt:latest
+#docker push jollyjinx/sma2mqtt:latest
 #docker build . --file sma2mqtt.product.dockerfile --tag sma2mqtt
 #docker run --name sma2mqtt sma2mqtt
+#docker build . --file sma2mqtt.product.dockerfile --tag jollyjinx/sma2mqtt:development
+#docker push jollyjinx/sma2mqtt:development
+

@@ -197,6 +197,8 @@ class UDPReceiver: UDPEmitter
                 JLog.debug("packet from:\(address) packetcounter:\(String(format: "0x%04x", packetid)) - received wrong packet \(packetid) != \(packetcounter)")
                 continue
             }
+            JLog.debug("packet from:\(address) packetcounter:\(String(format: "0x%04x", packetid)) received in \(String(format: "%.1fms", startDate.timeIntervalSinceNow * -1000.0))")
+            return smaPackets
         }
         JLog.notice("packet from:\(address) packetcounter:\(String(format: "0x%04x", packetcounter)) missing - did not arrive in time \(String(format: "%.2fs", -startDate.timeIntervalSinceNow))")
 
