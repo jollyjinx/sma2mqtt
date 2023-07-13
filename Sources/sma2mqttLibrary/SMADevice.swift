@@ -59,7 +59,7 @@ public actor SMADevice
     var udpSerial: UInt32 = 0xFFFF_FFFF
     var udpLoggedIn = false
     var udpSession: Int?
-    var udpPacketCounter = 1
+    var udpPacketCounter = 0x0000
 
     private var hasDeviceName = false
     public var name: String { willSet { hasDeviceName = true } }
@@ -125,7 +125,7 @@ public extension SMADevice
         }
         JLog.debug("\(address):received udp packet:\(data.hexDump)")
 
-        if isHomeManager && lastRequestReceived.timeIntervalSinceNow > -1.0
+        if isHomeManager, lastRequestReceived.timeIntervalSinceNow > -1.0
         {
             JLog.debug("\(address): isHomeManager and received already at\(lastRequestReceived) - ignoring")
             return nil
@@ -262,7 +262,7 @@ public extension SMADevice
 
     func getNextPacketCounter() -> Int
     {
-        udpPacketCounter = (udpPacketCounter + 1)
+        udpPacketCounter = (udpPacketCounter + 1) % 0x8000
         return udpPacketCounter
     }
 
@@ -281,7 +281,7 @@ public extension SMADevice
             packetToSend = try SMAPacketGenerator.generatePacketForObjectID(packetcounter: packetcounter, objectID: objectID, dstSystemId: udpSystemId, dstSerial: udpSerial)
         }
 
-        JLog.trace("\(address): sending udp packet:\(packetToSend)")
+        JLog.trace("\(address): sending udp packetcounter:\(String(format: "0x04x", packetcounter)) packet:\(packetToSend)")
         let packets = try await udpReceiver.sendReceivePacket(data: [UInt8](packetToSend.hexStringToData()), packetcounter: packetcounter, address: address, port: 9522, receiveTimeout: udpRequestTimeout)
 
         if !packets.isEmpty

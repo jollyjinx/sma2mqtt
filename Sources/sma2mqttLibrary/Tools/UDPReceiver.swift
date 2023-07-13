@@ -181,12 +181,27 @@ class UDPReceiver: UDPEmitter
 
         while endDate.timeIntervalSinceNow > 0
         {
-            guard let packet = try? await receiveNextPacket(from: address, port: port, timeout: receiveTimeout),
-                  let smaPacket = try? SMAPacket(data: packet.data),
-                  packet.sourceAddress == address,
+            guard let packet = try? await receiveNextPacket(from: address, port: port, timeout: receiveTimeout)
+            else
+            {
+                JLog.debug("packet from:\(address) packetcounter:\(String(format: "0x%04x", packetcounter)) did not arrive in time \(String(format: "%.2fs", -startDate.timeIntervalSinceNow))")
+                continue
+            }
+
+            guard packet.sourceAddress == address
+            else
+            {
+                JLog.debug("packet from:\(packet.sourceAddress) wrong address expected:\(address) data:\(packet.data.hexDump)")
+                continue
+            }
+
+            JLog.debug("packet from:\(address) data:\(packet.data.hexDump)")
+
+            guard let smaPacket = try? SMAPacket(data: packet.data),
                   let packetid = smaPacket.netPacket?.header.packetId
             else
             {
+                JLog.debug("packet from:\(address) could not be decoded data:\(packet.data.hexDump)")
                 continue
             }
 
@@ -195,7 +210,7 @@ class UDPReceiver: UDPEmitter
             guard packetid == packetcounter
             else
             {
-                JLog.debug("packet from:\(address) packetcounter:\(String(format: "0x%04x", packetid)) - received wrong packet \(packetid) != \(packetcounter)")
+                JLog.debug("packet from:\(address) packetcounter:\(String(format: "0x%04x", packetid)) - received wrong packet \(String(format: "0x%04x", packetid)) != \(String(format: "0x%04x", packetcounter))")
                 continue
             }
             JLog.debug("packet from:\(address) packetcounter:\(String(format: "0x%04x", packetid)) received in \(String(format: "%.1fms", startDate.timeIntervalSinceNow * -1000.0))")

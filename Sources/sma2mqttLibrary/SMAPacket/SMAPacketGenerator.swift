@@ -33,6 +33,7 @@ extension SMAPacketGenerator
         let dstSerialString = String(format: "%02x%02x%02x%02x", dstSerial & 0xFF, (dstSerial >> 8) & 0xFF, (dstSerial >> 16) & 0xFF, (dstSerial >> 24) & 0xFF)
 
         let ownidString = String(format: "%04x", Self.localhostname.hashValue & 0xFFFF)
+
         let header = """
         534d 4100
             0004 02a0 0000 0001

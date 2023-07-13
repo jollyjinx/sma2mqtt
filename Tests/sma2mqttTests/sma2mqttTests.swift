@@ -19,69 +19,63 @@ final class sma2mqttTests: XCTestCase
 
     func testSMANetDecoding1() throws
     {
-        let data = """
+        let packets = [
+            "07 2c4a 08 8856 9c64 2e01 0000 6f24 0001 9f24 0000 a024 0000 dd24 0000 634a 0000 feff ff00 0000 0000",
+            "0ea0 ffff ffff ffff 0001 1234 25f6 4321 0001 0000 0000 0180 0c04 fdff 0700 0000 8403 0000 4c20 cb51 0000 0000 dbb8 f4e9 fae7 ddfb edfa 8888",
+            " 0aa0  ffff ffff ffff 00   c5  6901 6d33 26b3 00   05   0000 0000 7ba7 0c00   fdff    4c 4f43 4b      4544 0000        0000 0000",
+        ]
 
-        07 2c4a 08 8856 9c64 2e01 0000 6f24 0001 9f24 0000 a024 0000 dd24 0000 634a 0000 feff ff00 0000 0000
+        for packet in packets
+        {
+            let data = packet.hexStringToData()
+            let binaryDecoder = BinaryDecoder(data: [UInt8](data))
+            let packet = try SMANetPacketValue(fromBinary: binaryDecoder)
 
-
-        """.hexStringToData()
-        let binaryDecoder = BinaryDecoder(data: [UInt8](data))
-
-        let packet = try SMANetPacketValue(fromBinary: binaryDecoder)
-        JLog.debug("Packet:\(packet)")
-        XCTAssert(binaryDecoder.isAtEnd)
-    }
-
-    func testSMANetDecoding2() throws
-    {
-        let data =
-            "0ea0 ffff ffff ffff 0001 1234 25f6 4321 0001 0000 0000 0180 0c04 fdff 0700 0000 8403 0000 4c20 cb51 0000 0000 dbb8 f4e9 fae7 ddfb edfa 8888"
-                .hexStringToData()
-        let binaryDecoder = BinaryDecoder(data: [UInt8](data))
-
-        let packet = try SMANetPacket(fromBinary: binaryDecoder)
-        JLog.debug("Packet:\(packet)")
-        XCTAssert(binaryDecoder.isAtEnd)
-    }
-
-    func testSMANetDecoding3() throws
-    {
-        let data = """
-
-            0aa0
-            ffff ffff ffff 00
-            c5
-            6901 6d33 26b3 00
-            05
-            0000 0000 7ba7 0c00
-            fdff
-            4c 4f43 4b
-            4544 0000
-
-            0000 0000
-
-        """
-        .hexStringToData()
-        let binaryDecoder = BinaryDecoder(data: [UInt8](data))
-
-        let packet = try SMANetPacket(fromBinary: binaryDecoder)
-        JLog.debug("Packet:\(packet)")
-        XCTAssert(binaryDecoder.isAtEnd)
+            JLog.debug("Packet:\(packet)")
+            XCTAssert(binaryDecoder.isAtEnd)
+        }
     }
 
     func testSMADecoding() throws
     {
-        let data =
-            "534d4100 0004 02a0 00000001 0046 0010 6065 11 e0 07050102030400a19901f6 a22fb3 0001 0000 0000f1b10102005400000000010000000101260068d50f613b975300000000000122260068d50f61b81f000000000000 0000 0000"
-                .hexStringToData()
-        let binaryDecoder = BinaryDecoder(data: [UInt8](data))
+        let packets = [
+            //            "534d4100 0004 02a0 00000001 0046 0010 6065 11 e0 07050102030400a19901f6 a22fb3 0001 0000 0000f1b10102005400000000010000000101260068d50f613b975300000000000122260068d50f61b81f000000000000 0000 0000",
+//            "534d 4100 0004 02a0 0000 0001 0026 0010 6065 09a0 1234 9503 4321 00e0 9901 f6a2 2fb3 0001 1400 0000 ad81 0102 a072 0067 4900 ff67 4900 0000 0000",
+//            "534d 4100 0004 02a0 0000 0001 0002 0000 0001 0004 0010 0001 0003 0004 0020 0000 0001 0004 0030 0a70 100e 0004 0040 0000 0000 0002 0070 ef0c 0001 0080 0000 0000 00",
+            "534d 4100 0004 02a0 0000 0001 002e 0010 6065    0b  e0  1234 9503 4321 00  01  9901 f6a2 2fb3 00  00   0000   0000  ae81  0d 04 fdff    0700 0000 8403 0000 4c20 cb51 0000 0000 0000 0000",
+            "534d 4100 0004 02a0 0000 0001 0026 0010 6065    09  a0  1234 9503 4321 00  e0  9901 f6a2 2fb3 00  01   1400   0000  af81  01 02 5271    005b 4940 ff5b 4940 0000 0000",
+            "534d 4100 0004 02a0 0000 0001 002e 0010 6065    0b  e0  1234 9503 4321 00  01  9901 f6a2 2fb3 00  00   0000   0000  b081  0d 04 fdff    0700 0000 8403 0000 4c20 cb51 0000 0000 0000 0000",
+            "534d 4100 0004 02a0 0000 0001 0026 0010 6065    09  a0  1234 9503 4321 00  e0  9901 f6a2 2fb3 00  01   1500   0000  b181  01 02 0061    005a 2900 ff5a 2900 0000 0000",
+            "534d 4100 0004 02a0 0000 0001 002e 0010 6065    0b  e0  1234 9503 4321 00  01  9901 f6a2 2fb3 00  00   0000   0000  b281  0d 04 fdff    0700 0000 8403 0000 4c20 cb51 0000 0000 0000 0000",
 
-        let packet = try SMAPacket(fromBinary: binaryDecoder)
-        JLog.debug("Packet:\(packet)")
-        XCTAssert(binaryDecoder.isAtEnd)
+//            """
+//                534d 4100
+//                0004 02a0 0000 0001
+//                0002 0000 0001
+//                0004 0010 0001 0003
+//                0004 0020 0000 0001
+//                0004 0030 0a70 100e
+//                0004 0040 0000 0000
+//                0002 0070 ef0c
+//                0001 0080 00
+//                00 0000 00
+//            """
+        ]
 
-        let packet2 = try SMAPacket(data: data)
-        JLog.debug("Packet2:\(packet2)")
+        for packet in packets
+        {
+            JLog.debug("Working on:\n\n\(packet)\n")
+
+            let data = packet.hexStringToData()
+            let binaryDecoder = BinaryDecoder(data: [UInt8](data))
+            let smaPacket = try SMAPacket(fromBinary: binaryDecoder)
+
+            JLog.debug("SMAPacket:\(smaPacket)")
+
+            JLog.debug("NetPacketValues:\n\(smaPacket.netPacket?.values.map(\.json).joined(separator: "\n") ?? "")")
+
+            XCTAssert(binaryDecoder.isAtEnd)
+        }
     }
 
     func testSMAPacketGeneration() throws
