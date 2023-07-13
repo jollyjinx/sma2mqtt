@@ -14,11 +14,6 @@ public struct SMANetPacket: Codable
     let directvalue: String?
 }
 
-extension SMANetPacket
-{
-    var isLoggedIn: Bool { header.u16result == 0 }
-}
-
 extension SMANetPacket: BinaryDecodable
 {
     public init(fromBinary decoder: BinaryDecoder) throws

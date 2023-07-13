@@ -94,7 +94,7 @@ extension SMAPacketGenerator
     static func generateLoginPacket(packetcounter: Int, password: String, userRight: UserRight, dstSystemId: UInt16 = 0xFFFF, dstSerial: UInt32 = 0xFFFF_FFFF) throws -> String
     {
         let encodedPassword = encodePassword(password: password, userRight: userRight)
-        let passwordCommand = "0C04 fdff 07000000 84030000 4c20cb51 00000000 " + encodedPassword
+        let passwordCommand = "0C 04 fdff 0700 0000 84030000 4c20cb51 00000000 " + encodedPassword
         return try generateCommandPacket(packetcounter: packetcounter, command: passwordCommand, dstSystemId: dstSystemId, dstSerial: dstSerial)
     }
 

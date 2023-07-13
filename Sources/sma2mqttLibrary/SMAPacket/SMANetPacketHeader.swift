@@ -42,6 +42,12 @@ extension SMANetPacketHeader // calculated
 //    private var followingdatasize: Int { (Int(quaterlength) * 4) - Self.size }
 }
 
+extension SMANetPacketHeader
+{
+    var resultIsOk: Bool { u16result == 0x00 }
+    var invalidRequest: Bool { u16result == 0x15 || u16result == 0x14 }
+}
+
 extension SMANetPacketHeader: BinaryDecodable
 {
     enum SMANetPacketHeaderDecodingError: Error { case decoding(String) }

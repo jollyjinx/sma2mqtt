@@ -43,6 +43,7 @@ public actor SMADevice
     var lastRequestSentDate = Date.distantPast
     let udpMinimumRequestInterval = 1.0 / 10.0 // 1 / maximumRequestsPerSecond
     let udpRequestTimeout = 5.0
+    var currentRequestedObjectID: String = "UNKNOWN"
 
     let requestAllObjects: Bool
 
@@ -127,7 +128,7 @@ public extension SMADevice
 
         if isHomeManager, lastRequestReceived.timeIntervalSinceNow > -1.0
         {
-            JLog.debug("\(address): isHomeManager and received already at\(lastRequestReceived) - ignoring")
+            JLog.debug("\(address): isHomeManager and received already at:\(lastRequestReceived) - ignoring")
             return nil
         }
         lastRequestReceived = Date()
@@ -141,12 +142,59 @@ public extension SMADevice
     {
         if let netPacket = smaPacket.netPacket
         {
-            udpLoggedIn = netPacket.isLoggedIn
-            udpSystemId = netPacket.header.sourceSystemId
-            udpSerial = netPacket.header.sourceSerial
+            JLog.debug("\(address): received netPacket: objectid:\(currentRequestedObjectID) result:\(String(format: "0x%04x", netPacket.header.u16result)) command:\(String(format: "0x%04x", netPacket.header.u16command)) packetid:\(String(format: "0x%04x", netPacket.header.packetId))")
+
+            if udpPacketCounter != (0x7FFF & netPacket.header.packetId)
+            {
+                JLog.notice("\(address): received netPacket: we did not await:\(String(format: "0x%04x", udpPacketCounter)) packet command:\(String(format: "0x%04x", netPacket.header.u16command)) packetid:\(String(format: "0x%04x", netPacket.header.packetId))")
+                return nil
+            }
 
             if netPacket.header.u16command == 0xFFFD
             {
+                if currentRequestedObjectID == "LOGIN"
+                {
+                    guard netPacket.header.resultIsOk
+                    else
+                    {
+                        JLog.error("\(address): login failed.")
+                        udpLoggedIn = false
+                        return nil
+                    }
+                    JLog.notice("\(address): login success.")
+                    udpLoggedIn = true
+                    udpSystemId = netPacket.header.sourceSystemId
+                    udpSerial = netPacket.header.sourceSerial
+                    return nil
+                }
+                JLog.debug("\(address): login required")
+                udpLoggedIn = false
+                return nil
+            }
+
+            if !udpLoggedIn
+            {
+                JLog.error("\(address): received correct packet even though we are logged out - ignoring.")
+                return nil
+            }
+
+            if netPacket.header.invalidRequest
+            {
+                JLog.notice("\(address):removing invalid request objectId:\(currentRequestedObjectID) : \(tagTranslator.objectsAndPaths[currentRequestedObjectID]?.path ?? "unknown")")
+
+                udpLoggedIn = false
+
+                objectsToQueryNext = objectsToQueryNext.compactMap { $0.objectid == currentRequestedObjectID ? nil : $0 }
+                objectsToQueryContinously.removeValue(forKey: currentRequestedObjectID)
+
+                return nil
+            }
+
+            if !netPacket.header.resultIsOk
+            {
+                JLog.debug("\(address): result not ok. logging out. objectId:\(currentRequestedObjectID) : \(tagTranslator.objectsAndPaths[currentRequestedObjectID]?.path ?? "unknown")")
+
+                udpLoggedIn = false
                 return nil
             }
 
@@ -275,13 +323,18 @@ public extension SMADevice
         if !udpLoggedIn
         {
             packetToSend = try SMAPacketGenerator.generateLoginPacket(packetcounter: packetcounter, password: password, userRight: .user)
+            JLog.debug("\(address): sending login packetcounter:\(String(format: "0x%04x", packetcounter))")
+            currentRequestedObjectID = "LOGIN"
         }
         else
         {
             packetToSend = try SMAPacketGenerator.generatePacketForObjectID(packetcounter: packetcounter, objectID: objectID, dstSystemId: udpSystemId, dstSerial: udpSerial)
+            JLog.debug("\(address): sending udp packetcounter:\(String(format: "0x%04x", packetcounter)) objectid:\(objectID) loggedIn:\(udpLoggedIn)")
+            currentRequestedObjectID = objectID
         }
 
-        JLog.trace("\(address): sending udp packetcounter:\(String(format: "0x04x", packetcounter)) packet:\(packetToSend)")
+        JLog.trace("\(address): sending udp packetcounter:\(String(format: "0x%04x", packetcounter)) packet:\(packetToSend)")
+
         let packets = try await udpReceiver.sendReceivePacket(data: [UInt8](packetToSend.hexStringToData()), packetcounter: packetcounter, address: address, port: 9522, receiveTimeout: udpRequestTimeout)
 
         if !packets.isEmpty
