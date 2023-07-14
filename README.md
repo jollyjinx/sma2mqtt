@@ -14,7 +14,7 @@ Upon execution, __sma2mqtt__ produces output on MQTT similar to the one shown on
 
 A Docker image, specifically engineered for 64-bit ARM architecture, is available. This image is compatible with a range of devices, including the Raspberry Pi, Apple Silicon Macs, and other 64-bit ARM computers. It can be employed directly using the following command:
 ```
-docker run --name "sma2mqtt" --net service16  jollyjinx/sma2mqtt:latest sma2mqtt --inverter-password MySimplePassword --log-level
+docker run --name "sma2mqtt" --net service16  jollyjinx/sma2mqtt:latest sma2mqtt --inverter-password MySimplePassword
 ```
 
 The --net option is included in this command to specify a separate network for SMA devices. If there is no dedicated network in use, port 9522 should be open for the container.
