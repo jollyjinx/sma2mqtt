@@ -6,9 +6,9 @@ Within the local network, __sma2mqtt__ joins the SMA multicast to listen to anno
 
 The repository includes a build.sh shell script that constructs a Docker container encapsulating the __sma2mqtt__ tool. It's likely necessary to adjust this script to suit the specifics of individual Docker setups.
 
-Upon execution, __sma2mqtt__ produces output similar to this on an MQTT broker:
+Upon execution, __sma2mqtt__ produces output on MQTT similar to the one shown on the left, which in turn can be used to drive a node-red dashboard shown on the right.
 
-<img src="Images/sunnymanager.mqtt.long.png" width="50%" alt="SunnyManager mqtt example"/>
+<img src="Images/mqtt-explorer.png" width="50%" alt="MQTT Explorer Screenshot"/><img src="Images/node-red-dashboard.png" width="50%" alt="Node-Red Dashboard Screenshot"/>
 
 ## Docker Container Use
 
@@ -56,3 +56,4 @@ OPTIONS:
 
 ```
 
+The option __--interesting-paths-and-values__ is currently defaulted to the things I like to see, but you probably have different needs. To find out what your inverter supports you can use the catch all argument __\*:600__ which will show all paths your inverter supports.

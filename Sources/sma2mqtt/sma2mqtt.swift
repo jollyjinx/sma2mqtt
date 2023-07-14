@@ -47,8 +47,8 @@ extension JLog.Level: ExpressibleByArgument {}
     @Option(name: .long, help: "Inverter Password.") var inverterPassword: String = "0000"
 
     @Option(name: .long, help: "Array of path:interval values we are interested in") var interestingPathsAndValues: [String] = [
-        "dc-side/dc-measurements/power:5",
-        "ac-side/grid-measurements/power:5",
+        "dc-side/dc-measurements/power:2",
+        "ac-side/grid-measurements/power:2",
         "ac-side/measured-values/daily-yield:30",
 
         "battery/state-of-charge:20",
