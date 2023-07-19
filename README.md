@@ -27,8 +27,8 @@ The --net option is included in this command to specify a separate network for S
 USAGE: sma2mqtt <options>
 
 OPTIONS:
-  --log-level <log-level> Set the log level. (default: notice)
-  --json                  send json output to stdout
+  --log-level <log-level> Set the log level. (default: debug)
+  --json-output           send json output to stdout
   --mqtt-servername <mqtt-servername>
                           MQTT Server hostname (default: mqtt)
   --mqtt-port <mqtt-port> MQTT Server port (default: 1883)
@@ -37,9 +37,9 @@ OPTIONS:
   --mqtt-password <mqtt-password>
                           MQTT Server password
   -e, --emit-interval <emit-interval>
-                          Interval to send updates to mqtt Server. (default: 1.0)
+                          Minimum Emit Interval to send updates to mqtt Server. (default: 1.0)
   -b, --basetopic <basetopic>
-                          MQTT Server topic. (default: sma/)
+                          MQTT Server topic. (default: example/sma/)
   --bind-address <bind-address>
                           Multicast Binding Listening Interface Address. (default: 0.0.0.0)
   --bind-port <bind-port> Multicast Binding Listening Port number. (default: 9522)
@@ -50,7 +50,7 @@ OPTIONS:
   --inverter-password <inverter-password>
                           Inverter Password. (default: 0000)
   --interesting-paths-and-values <interesting-paths-and-values>
-                          Array of path:interval values we are interested in (default: dc-side/dc-measurements/power:1, ac-side/grid-measurements/power:1, ac-side/measured-values/daily-yield:30, battery/state-of-charge:20, battery/battery/temperature:30,
+                          Array of path:interval values we are interested in (default: dc-side/dc-measurements/power:2, ac-side/grid-measurements/power:2, ac-side/measured-values/daily-yield:30, battery/state-of-charge:20, battery/battery/temperature:30,
                           battery/battery-charge/battery-charge:20)
   -h, --help              Show help information.
 
