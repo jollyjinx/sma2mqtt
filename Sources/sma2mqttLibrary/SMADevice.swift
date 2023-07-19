@@ -16,7 +16,6 @@ public actor SMADevice
     let userright: UserRight
     let password: String
     let publisher: SMAPublisher?
-
     let refreshInterval: Int
     let interestingPaths: [String: Int]
 

@@ -18,18 +18,13 @@ extension JLog.Level: ExpressibleByArgument {}
 {
     @Option(help: "Set the log level.") var logLevel: JLog.Level = defaultLoglevel
 
-    @Flag(name: .long, help: "send json output to stdout") var json: Bool = false
+    @Flag(name: .long, help: "send json output to stdout") var jsonOutput: Bool = false
 
     @Option(name: .long, help: "MQTT Server hostname") var mqttServername: String = "mqtt"
-
     @Option(name: .long, help: "MQTT Server port") var mqttPort: UInt16 = 1883
-
     @Option(name: .long, help: "MQTT Server username") var mqttUsername: String = "mqtt"
-
     @Option(name: .long, help: "MQTT Server password") var mqttPassword: String = ""
-
-    @Option(name: .shortAndLong, help: "Interval to send updates to mqtt Server.") var emitInterval: Double = 1.0
-
+    @Option(name: .shortAndLong, help: "Minimum Emit Interval to send updates to mqtt Server.") var emitInterval: Double = 1.0
     #if DEBUG
         @Option(name: .shortAndLong, help: "MQTT Server topic.") var basetopic: String = "example/sma/"
     #else
@@ -37,15 +32,11 @@ extension JLog.Level: ExpressibleByArgument {}
     #endif
 
     @Option(name: .long, help: "Multicast Binding Listening Interface Address.") var bindAddress: String = "0.0.0.0"
-
     @Option(name: .long, help: "Multicast Binding Listening Port number.") var bindPort: UInt16 = 9522
-
     @Option(name: .long, help: "Multicast Group Address.") var mcastAddress: String = "239.12.255.254"
-
     @Option(name: .long, help: "Multicast Group Port number.") var mcastPort: UInt16 = 9522
 
     @Option(name: .long, help: "Inverter Password.") var inverterPassword: String = "0000"
-
     @Option(name: .long, help: "Array of path:interval values we are interested in") var interestingPathsAndValues: [String] = [
         "dc-side/dc-measurements/power:2",
         "ac-side/grid-measurements/power:2",
@@ -66,7 +57,7 @@ extension JLog.Level: ExpressibleByArgument {}
             JLog.info("Loglevel: \(logLevel)")
         }
 
-        let mqttPublisher = try await MQTTPublisher(hostname: mqttServername, port: Int(mqttPort), username: mqttUsername, password: mqttPassword, emitInterval: emitInterval, baseTopic: basetopic)
+        let mqttPublisher = try await MQTTPublisher(hostname: mqttServername, port: Int(mqttPort), username: mqttUsername, password: mqttPassword, emitInterval: emitInterval, baseTopic: basetopic, jsonOutput: jsonOutput)
 
         let interestingPaths = Dictionary(uniqueKeysWithValues: interestingPathsAndValues.compactMap
         {
@@ -85,8 +76,7 @@ extension JLog.Level: ExpressibleByArgument {}
                                                 bindAddress: bindAddress,
                                                 bindPort: bindPort,
                                                 password: inverterPassword,
-                                                interestingPaths: interestingPaths,
-                                                jsonOutput: json)
+                                                interestingPaths: interestingPaths)
         sunnyHomeManagers.append(sunnyHome)
 
         while true { try await sunnyHome.receiveNext() }

@@ -19,7 +19,6 @@ public actor SMALighthouse
     let bindAddress: String
     let mqttPublisher: MQTTPublisher
     let interestingPaths: [String: Int]
-    let jsonOutput: Bool
 
     let mcastAddress: String
     let mcastPort: UInt16
@@ -37,7 +36,7 @@ public actor SMALighthouse
     var lastDiscoveryRequestDate = Date.distantPast
     let disoveryRequestInterval = 10.0
 
-    public init(mqttPublisher: MQTTPublisher, multicastAddress: String, multicastPort: UInt16, bindAddress: String = "0.0.0.0", bindPort _: UInt16 = 0, password: String = "0000", interestingPaths: [String: Int] = [:], jsonOutput: Bool = false) async throws
+    public init(mqttPublisher: MQTTPublisher, multicastAddress: String, multicastPort: UInt16, bindAddress: String = "0.0.0.0", bindPort _: UInt16 = 0, password: String = "0000", interestingPaths: [String: Int] = [:]) async throws
     {
         self.password = password
         mcastAddress = multicastAddress
@@ -45,7 +44,6 @@ public actor SMALighthouse
 
         self.bindAddress = bindAddress
         self.mqttPublisher = mqttPublisher
-        self.jsonOutput = jsonOutput
         self.interestingPaths = interestingPaths
 
         mcastReceiver = try MulticastReceiver(groups: [mcastAddress], bindAddress: bindAddress, listenPort: multicastPort)

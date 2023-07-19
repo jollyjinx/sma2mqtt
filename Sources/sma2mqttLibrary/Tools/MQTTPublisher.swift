@@ -15,14 +15,16 @@ public protocol SMAPublisher
 public actor MQTTPublisher: SMAPublisher
 {
     let mqttClient: MQTTClient
+    let jsonOutput: Bool
     let emitInterval: Double
     let baseTopic: String
     let mqttQueue = DispatchQueue(label: "mqttQueue")
     var lasttimeused = [String: Date]()
 
-    public init(hostname: String, port: Int, username: String? = nil, password _: String? = nil, emitInterval: Double = 1.0, baseTopic: String = "") async throws
+    public init(hostname: String, port: Int, username: String? = nil, password _: String? = nil, emitInterval: Double = 1.0, baseTopic: String = "", jsonOutput: Bool = false) async throws
     {
         self.emitInterval = emitInterval
+        self.jsonOutput = jsonOutput
         self.baseTopic = baseTopic.hasSuffix("/") ? String(baseTopic.dropLast(1)) : baseTopic
 
         mqttClient = MQTTClient(host: hostname, port: port, identifier: ProcessInfo.processInfo.processName, eventLoopGroupProvider: .createNew, configuration: .init(userName: username, password: ""))
@@ -50,6 +52,11 @@ public actor MQTTPublisher: SMAPublisher
             }
             JLog.debug("publish:\(topic) payload:\(payload)")
             _ = self.mqttClient.publish(to: topic, payload: byteBuffer, qos: qos, retain: retain)
+
+            if self.jsonOutput
+            {
+                print("{\"topic\":\"\(topic)\",\"payload\":\(payload)}")
+            }
         }
     }
 }
