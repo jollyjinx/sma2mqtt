@@ -51,6 +51,8 @@ extension JLog.Level: ExpressibleByArgument {}
     {
         var sunnyHomeManagers = [SMALighthouse]()
         JLog.loglevel = logLevel
+        signal(SIGINT, SIG_IGN)
+        signal(SIGINT, handleSIGINT)
 
         if logLevel != defaultLoglevel
         {
@@ -81,4 +83,20 @@ extension JLog.Level: ExpressibleByArgument {}
 
         while true { try await sunnyHome.receiveNext() }
     }
+}
+
+func handleSIGINT(signal _: Int32)
+{
+    JLog.info("Received SIGINT signal.")
+    JLog.info("Switching Log level from \(JLog.loglevel)")
+
+    switch JLog.loglevel
+    {
+        case .trace: JLog.loglevel = .info
+        case .debug: JLog.loglevel = .trace
+        case .info: JLog.loglevel = .debug
+        default: JLog.loglevel = .debug
+    }
+
+    JLog.info("to \(JLog.loglevel)")
 }
