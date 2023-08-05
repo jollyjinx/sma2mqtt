@@ -33,8 +33,8 @@ public actor SMALighthouse
 
     private var smaDeviceCache = [String: SMADeviceCacheEntry]()
 
-    var lastDiscoveryRequestDate = Date.distantPast
     let disoveryRequestInterval = 10.0
+    private var discoveryTask: Task<Void, Error>?
 
     public init(mqttPublisher: MQTTPublisher, multicastAddress: String, multicastPort: UInt16, bindAddress: String = "0.0.0.0", bindPort _: UInt16 = 0, password: String = "0000", interestingPaths: [String: Int] = [:]) async throws
     {
@@ -49,16 +49,22 @@ public actor SMALighthouse
         mcastReceiver = try MulticastReceiver(groups: [mcastAddress], bindAddress: bindAddress, listenPort: multicastPort)
         await mcastReceiver.startListening()
 
-        Task
+        discoveryTask = Task(priority: .background)
         {
+            let discoveryLoop = IntervalLoop(loopTime: self.disoveryRequestInterval)
+
             while !Task.isCancelled
             {
-                try? await Task.sleep(for: .seconds(5))
-                guard !Task.isCancelled else { return }
                 JLog.debug("sending discovery packet")
-                try? await sendDiscoveryPacketIfNeeded()
+                try? await self.sendDiscoveryPacket()
+                try? await discoveryLoop.waitForNextIteration()
             }
         }
+    }
+
+    deinit
+    {
+        discoveryTask?.cancel()
     }
 
     public func remote(for remoteAddress: String) async -> SMADevice?
@@ -68,12 +74,20 @@ public actor SMALighthouse
             switch cacheEntry
             {
                 case let .ready(smaDevice):
-                    return smaDevice
+                    if await smaDevice.isValid
+                    {
+                        return smaDevice
+                    }
+                    JLog.error("\(remoteAddress) is not responding - purging from cache")
+                    smaDeviceCache.removeValue(forKey: remoteAddress)
+
                 case let .inProgress(task):
                     return try? await task.value
+
                 case let .failed(date):
                     if date.timeIntervalSinceNow > -30
                     {
+                        JLog.info("still ignoring:\(remoteAddress)")
                         return nil
                     }
                     JLog.info("renabling:\(remoteAddress)")
@@ -101,19 +115,15 @@ public actor SMALighthouse
         }
     }
 
-    public func shutdown() async throws { await mcastReceiver.shutdown() }
+//    public nonisolated func shutdown() async throws { await mcastReceiver.shutdown() }
 
-    var hassentlogin = false
-    private func sendDiscoveryPacketIfNeeded() async throws
+    private nonisolated func sendDiscoveryPacket() async throws
     {
-        guard Date().timeIntervalSince(lastDiscoveryRequestDate) > disoveryRequestInterval else { return }
-
         let dicoveryPacket = SMAPacketGenerator.generateDiscoveryPacket()
         await mcastReceiver.sendPacket(data: [UInt8](dicoveryPacket.hexStringToData()), packetcounter: 0, address: mcastAddress, port: mcastPort)
-        lastDiscoveryRequestDate = Date()
     }
 
-    public func receiveNext() async throws
+    public nonisolated func receiveNext() async throws
     {
         let packet = try await mcastReceiver.receiveNextPacket()
 
@@ -127,7 +137,7 @@ public actor SMALighthouse
             return
         }
 
-        Task.detached
+        Task
         {
             await smaDevice.receivedUDPData(packet.data)
         }

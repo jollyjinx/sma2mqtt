@@ -98,11 +98,11 @@ class UDPReceiver: UDPEmitter
 
     func stopListening() { isListening = false }
 
-    func shutdown()
-    {
-        isListening = false
-        close(socketFileDescriptor)
-    }
+//    func shutdown()
+//    {
+//        isListening = false
+//        close(socketFileDescriptor)
+//    }
 
     func receiveNextPacket(from address: String = "0.0.0.0", port: UInt16 = 0, timeout: Double) async throws -> Packet
     {

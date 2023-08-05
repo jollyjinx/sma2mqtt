@@ -40,6 +40,8 @@ public actor SMADevice
     var objectsToQueryContinously = [String: QueryObject]()
     var objectsToQueryNext = [QueryElement]()
     var lastRequestSentDate = Date.distantPast
+    var lastPublishedDate = Date()
+
     let udpMinimumRequestInterval = 1.0 / 10.0 // 1 / maximumRequestsPerSecond
     let udpRequestTimeout = 5.0
     var currentRequestedObjectID: String = "UNKNOWN"
@@ -90,7 +92,7 @@ public actor SMADevice
         try await findOutDeviceNameAndType()
         if !objectsToQueryContinously.isEmpty
         {
-            refreshTask = Task.detached
+            refreshTask = Task
             {
                 var errorcounter = 0
                 while errorcounter < 100
@@ -104,10 +106,9 @@ public actor SMADevice
                     {
                         JLog.error("\(address): Failed to query interesting objects: \(error)")
                         errorcounter += 1
-                        //  try? await Task.sleep(for: .seconds(1))
                     }
                 }
-                JLog.error("\(address): too many erros")
+                JLog.error("\(address): too many errors")
             }
         }
     }
@@ -115,6 +116,8 @@ public actor SMADevice
 
 public extension SMADevice
 {
+    var isValid: Bool { lastPublishedDate.timeIntervalSinceNow > -120 }
+
     func receivedUDPData(_ data: Data) async -> SMAPacket?
     {
         guard !data.isEmpty
@@ -237,11 +240,13 @@ public extension SMADevice
 
                         default:
                             try? await publisher?.publish(to: path + ".\(value.number)", payload: value.json, qos: .atMostOnce, retain: false)
+                            lastPublishedDate = Date()
                     }
                 }
 
                 let singleValue = PublishedValue(objectID: objectID, values: resultValues, tagTranslator: tagTranslator)
                 try? await publisher?.publish(to: path, payload: singleValue.json, qos: .atMostOnce, retain: false)
+                lastPublishedDate = Date()
             }
             else if !objectIDs.isEmpty
             {
@@ -258,6 +263,7 @@ public extension SMADevice
             if obisvalue.mqtt != .invisible
             {
                 try? await publisher?.publish(to: name + "/" + obisvalue.topic, payload: obisvalue.json, qos: .atMostOnce, retain: obisvalue.mqtt == .retained)
+                lastPublishedDate = Date()
             }
         }
 
@@ -511,7 +517,7 @@ extension SMADevice
         }
     }
 
-    func pathIsInteresting(_ path: String) -> Int?
+    nonisolated func pathIsInteresting(_ path: String) -> Int?
     {
         for interestingPath in interestingPaths
         {
@@ -599,6 +605,7 @@ extension SMADevice
                        addObjectToQueryContinouslyIfNeeded(objectid: objectId.key)
                     {
                         try await publisher?.publish(to: mqttPath, payload: singleValue.json, qos: .atMostOnce, retain: false)
+                        lastPublishedDate = Date()
                     }
                 }
                 catch
