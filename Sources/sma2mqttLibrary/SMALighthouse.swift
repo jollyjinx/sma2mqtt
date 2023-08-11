@@ -18,7 +18,7 @@ public actor SMALighthouse
     let password: String
     let bindAddress: String
     let mqttPublisher: MQTTPublisher
-    let interestingPaths: [String: Int]
+    let interestingPaths: [String: TimeInterval]
 
     let mcastAddress: String
     let mcastPort: UInt16
@@ -29,6 +29,17 @@ public actor SMALighthouse
         case inProgress(Task<SMADevice, Error>)
         case ready(SMADevice)
         case failed(Date)
+
+        func asyncDescription() async -> String
+        {
+            switch self
+            {
+                case .inProgress: return "inProgress()\n"
+                case let .ready(smaDevice): let deviceDescription = await smaDevice.asyncDescription()
+                    return "ready(\(smaDevice.address)): \(deviceDescription)\n"
+                case let .failed(date): return "failed(\(date))\n"
+            }
+        }
     }
 
     private var smaDeviceCache = [String: SMADeviceCacheEntry]()
@@ -36,7 +47,7 @@ public actor SMALighthouse
     let disoveryRequestInterval = 10.0
     private var discoveryTask: Task<Void, Error>?
 
-    public init(mqttPublisher: MQTTPublisher, multicastAddress: String, multicastPort: UInt16, bindAddress: String = "0.0.0.0", bindPort _: UInt16 = 0, password: String = "0000", interestingPaths: [String: Int] = [:]) async throws
+    public init(mqttPublisher: MQTTPublisher, multicastAddress: String, multicastPort: UInt16, bindAddress: String = "0.0.0.0", bindPort _: UInt16 = 0, password: String = "0000", interestingPaths: [String: TimeInterval] = [:]) async throws
     {
         self.password = password
         mcastAddress = multicastAddress
@@ -66,8 +77,22 @@ public actor SMALighthouse
     {
         discoveryTask?.cancel()
     }
+}
 
-    public func remote(for remoteAddress: String) async -> SMADevice?
+public extension SMALighthouse
+{
+    func asyncDescription() async -> String
+    {
+        var cacheDescription = [String]()
+        for entry in smaDeviceCache
+        {
+            await cacheDescription.append(entry.value.asyncDescription())
+        }
+
+        return "SMALighthouse:\ninterestingPaths:\(interestingPaths.json)\nsmaDeviceCache: \(cacheDescription.joined(separator: "\n"))"
+    }
+
+    func remote(for remoteAddress: String) async -> SMADevice?
     {
         if let cacheEntry = smaDeviceCache[remoteAddress]
         {
@@ -123,7 +148,7 @@ public actor SMALighthouse
         await mcastReceiver.sendPacket(data: [UInt8](dicoveryPacket.hexStringToData()), packetcounter: 0, address: mcastAddress, port: mcastPort)
     }
 
-    public nonisolated func receiveNext() async throws
+    nonisolated func receiveNext() async throws
     {
         let packet = try await mcastReceiver.receiveNextPacket()
 

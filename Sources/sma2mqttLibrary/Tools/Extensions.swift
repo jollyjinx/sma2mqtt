@@ -83,10 +83,15 @@ public extension Encodable
     var json: String
     {
         let jsonEncoder = JSONEncoder()
-        jsonEncoder.outputFormatting = [.sortedKeys]
+        jsonEncoder.outputFormatting = [.sortedKeys, .prettyPrinted]
         jsonEncoder.dateEncodingStrategy = .iso8601
         let jsonData = try? jsonEncoder.encode(self)
-        return jsonData != nil ? String(data: jsonData!, encoding: .utf8) ?? "" : ""
+        return jsonData != nil ? "\n" + (String(data: jsonData!, encoding: .utf8) ?? "") : ""
+    }
+
+    var description: String
+    {
+        json
     }
 }
 

@@ -14,6 +14,8 @@ extension JLog.Level: ExpressibleByArgument {}
     let defaultLoglevel: JLog.Level = .notice
 #endif
 
+var globalLighthouse: SMALighthouse?
+
 @main struct sma2mqtt: AsyncParsableCommand
 {
     @Option(help: "Set the log level.") var logLevel: JLog.Level = defaultLoglevel
@@ -49,10 +51,11 @@ extension JLog.Level: ExpressibleByArgument {}
     ]
     func run() async throws
     {
-        var sunnyHomeManagers = [SMALighthouse]()
         JLog.loglevel = logLevel
         signal(SIGINT, SIG_IGN)
         signal(SIGINT, handleSIGINT)
+        signal(SIGUSR1, SIG_IGN)
+        signal(SIGUSR1, handleSIGUSR1)
 
         if logLevel != defaultLoglevel
         {
@@ -67,36 +70,50 @@ extension JLog.Level: ExpressibleByArgument {}
             if kv.count == 2,
                let (path, interval) = (String(kv[0]), Int(kv[1])) as? (String, Int)
             {
-                return (path, interval)
+                return (path, TimeInterval(interval))
             }
             return nil
         })
 
-        let sunnyHome = try await SMALighthouse(mqttPublisher: mqttPublisher,
-                                                multicastAddress: mcastAddress,
-                                                multicastPort: mcastPort,
-                                                bindAddress: bindAddress,
-                                                bindPort: bindPort,
-                                                password: inverterPassword,
-                                                interestingPaths: interestingPaths)
-        sunnyHomeManagers.append(sunnyHome)
-
-        while true { try await sunnyHome.receiveNext() }
+        let lightHouse = try await SMALighthouse(mqttPublisher: mqttPublisher,
+                                                 multicastAddress: mcastAddress,
+                                                 multicastPort: mcastPort,
+                                                 bindAddress: bindAddress,
+                                                 bindPort: bindPort,
+                                                 password: inverterPassword,
+                                                 interestingPaths: interestingPaths)
+        globalLighthouse = lightHouse
+        while true { try await lightHouse.receiveNext() }
     }
 }
 
-func handleSIGINT(signal _: Int32)
+func handleSIGINT(signal: Int32)
 {
-    JLog.info("Received SIGINT signal.")
-    JLog.info("Switching Log level from \(JLog.loglevel)")
-
-    switch JLog.loglevel
+    DispatchQueue.main.async
     {
-        case .trace: JLog.loglevel = .info
-        case .debug: JLog.loglevel = .trace
-        case .info: JLog.loglevel = .debug
-        default: JLog.loglevel = .debug
-    }
+        JLog.notice("Received \(signal) signal.")
+        JLog.notice("Switching Log level from \(JLog.loglevel)")
+        switch JLog.loglevel
+        {
+            case .trace: JLog.loglevel = .info
+            case .debug: JLog.loglevel = .trace
+            case .info: JLog.loglevel = .debug
+            default: JLog.loglevel = .debug
+        }
 
-    JLog.info("to \(JLog.loglevel)")
+        JLog.notice("to \(JLog.loglevel)")
+    }
+}
+
+func handleSIGUSR1(signal: Int32)
+{
+    JLog.notice("Received \(signal) signal.")
+    DispatchQueue.main.async
+    {
+        Task
+        {
+            let description = await globalLighthouse?.asyncDescription() ?? "no Lighthouse"
+            JLog.notice("\(description)")
+        }
+    }
 }

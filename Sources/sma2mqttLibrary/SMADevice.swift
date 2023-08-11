@@ -10,43 +10,25 @@ import NIOFoundationCompat
 import NIOHTTP1
 import RegexBuilder
 
+public typealias ObjectId = String
+
 public actor SMADevice
 {
     let address: String
     let userright: UserRight
     let password: String
     let publisher: SMAPublisher?
-    let refreshInterval: Int
-    let interestingPaths: [String: Int]
+    let interestingPaths: [String: TimeInterval]
 
-    struct QueryObject: Hashable
-    {
-        let objectid: String
-        let path: String
-        let interval: Int
-    }
-
-    struct QueryElement: Hashable, Comparable
-    {
-        let objectid: String
-        let nextReadDate: Date
-
-        static func < (lhs: Self, rhs: Self) -> Bool { lhs.nextReadDate < rhs.nextReadDate }
-        static func <= (lhs: Self, rhs: Self) -> Bool { lhs.nextReadDate <= rhs.nextReadDate }
-        static func >= (lhs: Self, rhs: Self) -> Bool { lhs.nextReadDate >= rhs.nextReadDate }
-        static func > (lhs: Self, rhs: Self) -> Bool { lhs.nextReadDate > rhs.nextReadDate }
-    }
-
-    var objectsToQueryContinously = [String: QueryObject]()
-    var objectsToQueryNext = [QueryElement]()
     var lastRequestSentDate = Date.distantPast
     var lastPublishedDate = Date()
 
     let udpMinimumRequestInterval = 1.0 / 10.0 // 1 / maximumRequestsPerSecond
     let udpRequestTimeout = 5.0
-    var currentRequestedObjectID: String = "UNKNOWN"
+    var currentRequestedObjectID: ObjectId = "UNKNOWN"
 
     let requestAllObjects: Bool
+    var queryQueue: QueryQueue
 
     public var lastRequestReceived = Date.distantPast
 
@@ -70,18 +52,18 @@ public actor SMADevice
     private var refreshTask: Task<Void, Error>?
     private var tagTranslator = SMATagTranslator.shared
 
-    public init(address: String, userright: UserRight = .user, password: String = "00000", publisher: SMAPublisher? = nil, refreshInterval: Int = 30, interestingPaths: [String: Int] = [:], requestAllObjects: Bool = false, bindAddress: String = "0.0.0.0", udpEmitter: UDPEmitter? = nil) async throws
+    public init(address: String, userright: UserRight = .user, password: String = "00000", publisher: SMAPublisher? = nil, interestingPaths: [String: TimeInterval] = [:], requestAllObjects: Bool = false, bindAddress: String = "0.0.0.0", udpEmitter: UDPEmitter? = nil) async throws
     {
         self.address = address
         self.userright = userright
         self.password = password
         self.publisher = publisher
 
-        self.refreshInterval = refreshInterval
-
         self.interestingPaths = interestingPaths
         self.requestAllObjects = requestAllObjects
         self.udpEmitter = udpEmitter
+
+        queryQueue = QueryQueue(address: address, minimumRequestInterval: 0.1, retryInterval: 10.0)
 
         udpReceiver = try UDPReceiver(bindAddress: bindAddress, listenPort: 0)
 
@@ -90,7 +72,8 @@ public actor SMADevice
 
         httpClient = HTTPClientProvider.sharedHttpClient
         try await findOutDeviceNameAndType()
-        if !objectsToQueryContinously.isEmpty
+
+        if !queryQueue.isEmpty
         {
             refreshTask = Task
             {
@@ -99,7 +82,11 @@ public actor SMADevice
                 {
                     do
                     {
-                        try await self.workOnNextPacket()
+                        let id = try await queryQueue.waitForNextObjectId()
+                        try queryQueue.shouldRetry(id: id)
+                        lastRequestSentDate = Date()
+
+                        try await udpQueryObject(objectID: id)
                         errorcounter = 0
                     }
                     catch
@@ -116,149 +103,58 @@ public actor SMADevice
 
 public extension SMADevice
 {
-    var isValid: Bool { lastPublishedDate.timeIntervalSinceNow > -120 }
+    func asyncDescription() async -> String
+    {
+        "SMADevice\(address): queryQueue: \(queryQueue.json)"
+    }
 
-    func receivedUDPData(_ data: Data) async -> SMAPacket?
+    var isValid: Bool
+    { lastPublishedDate.timeIntervalSinceNow > -120
+        && lastRequestSentDate.timeIntervalSince1970 > -120
+        && lastRequestReceived.timeIntervalSinceNow > -120
+    }
+
+    func receivedUDPData(_ data: Data) async
     {
         guard !data.isEmpty
         else
         {
             JLog.error("\(address):received empty packet")
-            return nil
+            return
         }
         JLog.debug("\(address):received udp packet:\(data.hexDump)")
 
         if isHomeManager, lastRequestReceived.timeIntervalSinceNow > -1.0
         {
             JLog.debug("\(address): isHomeManager and received already at:\(lastRequestReceived) - ignoring")
-            return nil
+            return
         }
         lastRequestReceived = Date()
 
-        guard let smaPacket = try? SMAPacket(data: data) else { return nil }
+        guard let smaPacket = try? SMAPacket(data: data) else { return }
 
-        return await receivedSMAPacket(smaPacket)
+        await receivedSMAPacket(smaPacket)
     }
 
-    func receivedSMAPacket(_ smaPacket: SMAPacket) async -> SMAPacket?
+    func receivedSMAPacket(_ smaPacket: SMAPacket) async
     {
-        if let netPacket = smaPacket.netPacket
-        {
-            JLog.debug("\(address): received netPacket: objectid:\(currentRequestedObjectID) result:\(String(format: "0x%04x", netPacket.header.u16result)) command:\(String(format: "0x%04x", netPacket.header.u16command)) packetid:\(String(format: "0x%04x", netPacket.header.packetId))")
-
-            if udpPacketCounter != (0x7FFF & netPacket.header.packetId)
-            {
-                JLog.notice("\(address): received netPacket: we did not await:\(String(format: "0x%04x", udpPacketCounter)) packet command:\(String(format: "0x%04x", netPacket.header.u16command)) packetid:\(String(format: "0x%04x", netPacket.header.packetId))")
-                return nil
-            }
-
-            if netPacket.header.u16command == 0xFFFD
-            {
-                if currentRequestedObjectID == "LOGIN"
-                {
-                    guard netPacket.header.resultIsOk
-                    else
-                    {
-                        JLog.error("\(address): login failed.")
-                        udpLoggedIn = false
-                        return nil
-                    }
-                    JLog.notice("\(address): login success.")
-                    udpLoggedIn = true
-                    udpSystemId = netPacket.header.sourceSystemId
-                    udpSerial = netPacket.header.sourceSerial
-                    return nil
-                }
-                JLog.debug("\(address): login required")
-                udpLoggedIn = false
-                return nil
-            }
-
-            if !udpLoggedIn
-            {
-                JLog.error("\(address): received correct packet even though we are logged out - ignoring.")
-                return nil
-            }
-
-            if netPacket.header.invalidRequest
-            {
-                JLog.notice("\(address):removing invalid request objectId:\(currentRequestedObjectID) : \(tagTranslator.objectsAndPaths[currentRequestedObjectID]?.path ?? "unknown")")
-
-                udpLoggedIn = false
-
-                objectsToQueryNext = objectsToQueryNext.compactMap { $0.objectid == currentRequestedObjectID ? nil : $0 }
-                objectsToQueryContinously.removeValue(forKey: currentRequestedObjectID)
-
-                return nil
-            }
-
-            if !netPacket.header.resultIsOk
-            {
-                JLog.debug("\(address): result not ok. logging out. objectId:\(currentRequestedObjectID) : \(tagTranslator.objectsAndPaths[currentRequestedObjectID]?.path ?? "unknown")")
-
-                udpLoggedIn = false
-                return nil
-            }
-
-            let objectIDs = netPacket.values.map { String(format: "%04X_%02X%04X00", netPacket.header.u16command, $0.type, $0.address) }
-
-            if let objectID = objectIDs.first(where: { tagTranslator.objectsAndPaths[$0] != nil }),
-               let simpleObject = tagTranslator.objectsAndPaths[objectID]
-            {
-                JLog.debug("\(address): objectid:\(objectID) name:\(simpleObject.json)")
-                justRetrievedObject(objectID: objectID)
-
-                let path = name + "/\(simpleObject.path)"
-                var resultValues = [GetValuesResult.Value]()
-
-                for value in netPacket.values
-                {
-                    JLog.trace("\(address): objectid:\(objectID)")
-
-                    switch value.value
-                    {
-                        case let .uint(value):
-                            if let firstValue = value.first as? UInt32
-                            {
-                                let resultValue = GetValuesResult.Value.intValue(Int(firstValue))
-                                resultValues.append(resultValue)
-                            }
-                        case let .int(value):
-                            if let firstValue = value.first as? Int32
-                            {
-                                let resultValue = GetValuesResult.Value.intValue(Int(firstValue))
-                                resultValues.append(resultValue)
-                            }
-
-                        case let .string(string):
-                            let resultValue = GetValuesResult.Value.stringValue(string)
-                            resultValues.append(resultValue)
-
-                        case let .tags(tags):
-                            let resultValue = GetValuesResult.Value.tagValues(tags.map { Int($0) })
-                            resultValues.append(resultValue)
-
-                        default:
-                            try? await publisher?.publish(to: path + ".\(value.number)", payload: value.json, qos: .atMostOnce, retain: false)
-                            lastPublishedDate = Date()
-                    }
-                }
-
-                let singleValue = PublishedValue(objectID: objectID, values: resultValues, tagTranslator: tagTranslator)
-                try? await publisher?.publish(to: path, payload: singleValue.json, qos: .atMostOnce, retain: false)
-                lastPublishedDate = Date()
-            }
-            else if !objectIDs.isEmpty
-            {
-                JLog.error("\(address): objectIDs not known \(objectIDs)")
-            }
-        }
-
         JLog.trace("\(address): received \(smaPacket)")
 
-        guard hasDeviceName else { return nil }
+        if let netPacket = smaPacket.netPacket
+        {
+            await receivedNetPacket(netPacket: netPacket)
+            return
+        }
+        else if !smaPacket.obis.isEmpty
+        {
+            guard hasDeviceName else { return }
+            await receivedObisPacket(obisValues: smaPacket.obis)
+        }
+    }
 
-        for obisvalue in smaPacket.obis
+    func receivedObisPacket(obisValues: [ObisValue]) async
+    {
+        for obisvalue in obisValues
         {
             if obisvalue.mqtt != .invisible
             {
@@ -266,51 +162,114 @@ public extension SMADevice
                 lastPublishedDate = Date()
             }
         }
-
-        return smaPacket
     }
 
-    internal func getNextRequest() throws -> QueryElement
+    func receivedNetPacket(netPacket: SMANetPacket) async
     {
-        guard let queryElement = objectsToQueryNext.min() else { throw DeviceError.packetGenerationError("no packets to wait for") }
+        JLog.debug("\(address): received netPacket: requestedID:\(currentRequestedObjectID) result:\(String(format: "0x%04x", netPacket.header.u16result)) command:\(String(format: "0x%04x", netPacket.header.u16command)) packetid:\(String(format: "0x%04x", netPacket.header.packetId))")
 
-        let newElement = QueryElement(objectid: queryElement.objectid, nextReadDate: Date(timeIntervalSinceNow: 5.0))
-        objectsToQueryNext = objectsToQueryNext.map { $0.objectid == queryElement.objectid ? newElement : $0 }
-
-        return queryElement
-    }
-
-    func justRetrievedObject(objectID: String)
-    {
-        if let object = objectsToQueryContinously[objectID]
+        if udpPacketCounter != (0x7FFF & netPacket.header.packetId)
         {
-            if object.interval != 0
-            {
-                let newElement = QueryElement(objectid: object.objectid, nextReadDate: Date(timeIntervalSinceNow: Double(object.interval)))
-                objectsToQueryNext = objectsToQueryNext.map { $0.objectid == objectID ? newElement : $0 }
-            }
-            else
-            {
-                objectsToQueryNext.removeAll(where: { $0.objectid == objectID })
-            }
+            JLog.notice("\(address): received netPacket: we did not await:\(String(format: "0x%04x", udpPacketCounter)) packet command:\(String(format: "0x%04x", netPacket.header.u16command)) packetid:\(String(format: "0x%04x", netPacket.header.packetId))")
+            return
         }
-    }
 
-    func workOnNextPacket() async throws
-    {
-        let objectToQuery = try getNextRequest()
-
-        let nextReadDate = max(objectToQuery.nextReadDate, lastRequestSentDate + udpMinimumRequestInterval)
-
-        let timeToWait = nextReadDate.timeIntervalSinceNow
-
-        if timeToWait > 0
+        if netPacket.header.u16command == 0xFFFD
         {
-            try await Task.sleep(for: .seconds(timeToWait))
+            if currentRequestedObjectID == "LOGIN"
+            {
+                guard netPacket.header.resultIsOk
+                else
+                {
+                    JLog.error("\(address): login failed.")
+                    udpLoggedIn = false
+                    return
+                }
+                JLog.notice("\(address): login success.")
+                udpLoggedIn = true
+                udpSystemId = netPacket.header.sourceSystemId
+                udpSerial = netPacket.header.sourceSerial
+                return
+            }
+            JLog.debug("\(address): login required")
+            udpLoggedIn = false
+            return
         }
-        lastRequestSentDate = Date()
 
-        try await udpQueryObject(objectID: objectToQuery.objectid)
+        if !udpLoggedIn
+        {
+            JLog.error("\(address): received correct packet even though we are logged out - ignoring.")
+            return
+        }
+
+        if netPacket.header.invalidRequest
+        {
+            JLog.notice("\(address): received netPacket: requestedID:\(currentRequestedObjectID) result:\(String(format: "0x%04x", netPacket.header.u16result)) command:\(String(format: "0x%04x", netPacket.header.u16command)) packetid:\(String(format: "0x%04x", netPacket.header.packetId))")
+            queryQueue.retrieved(id: currentRequestedObjectID, success: false)
+
+            udpLoggedIn = false
+            return
+        }
+
+        if !netPacket.header.resultIsOk
+        {
+            JLog.notice("\(address): result not ok. logging out. objectId:\(currentRequestedObjectID) : \(tagTranslator.objectsAndPaths[currentRequestedObjectID]?.path ?? "unknown")")
+
+            udpLoggedIn = false
+            return
+        }
+
+        let objectIDs = netPacket.values.map { String(format: "%04X_%02X%04X00", netPacket.header.u16command, $0.type, $0.address) }
+
+        if let objectID = objectIDs.first(where: { tagTranslator.objectsAndPaths[$0] != nil }),
+           let simpleObject = tagTranslator.objectsAndPaths[objectID]
+        {
+            JLog.debug("\(address): objectid:\(objectID) name:\(simpleObject.json)")
+
+            let path = name + "/\(simpleObject.path)"
+            var resultValues = [GetValuesResult.Value]()
+
+            for value in netPacket.values
+            {
+                JLog.trace("\(address): objectid:\(objectID)")
+
+                switch value.value
+                {
+                    case let .uint(value):
+                        if let firstValue = value.first as? UInt32
+                        {
+                            let resultValue = GetValuesResult.Value.intValue(Int(firstValue))
+                            resultValues.append(resultValue)
+                        }
+                    case let .int(value):
+                        if let firstValue = value.first as? Int32
+                        {
+                            let resultValue = GetValuesResult.Value.intValue(Int(firstValue))
+                            resultValues.append(resultValue)
+                        }
+
+                    case let .string(string):
+                        let resultValue = GetValuesResult.Value.stringValue(string)
+                        resultValues.append(resultValue)
+
+                    case let .tags(tags):
+                        let resultValue = GetValuesResult.Value.tagValues(tags.map { Int($0) })
+                        resultValues.append(resultValue)
+
+                    default:
+                        try? await publisher?.publish(to: path + ".\(value.number)", payload: value.json, qos: .atMostOnce, retain: false)
+                        lastPublishedDate = Date()
+                }
+            }
+
+            let singleValue = PublishedValue(objectID: objectID, values: resultValues, tagTranslator: tagTranslator)
+            try? await publisher?.publish(to: path, payload: singleValue.json, qos: .atMostOnce, retain: false)
+            lastPublishedDate = Date()
+        }
+        else if !objectIDs.isEmpty
+        {
+            JLog.error("\(address): objectIDs not known \(objectIDs)")
+        }
     }
 
     func getNextPacketCounter() -> Int
@@ -438,7 +397,7 @@ extension SMADevice
             sessionid = try await httpLogin()
         }
         JLog.debug("\(address):Successfull login")
-        try await getInformationDictionary(atPath: "/dyn/getValues.json", requestIds: Array(objectsToQueryContinously.keys))
+        try await getInformationDictionary(atPath: "/dyn/getValues.json", requestIds: queryQueue.allOjectIds)
     }
 
     func httpLogin() async throws -> String
@@ -517,7 +476,7 @@ extension SMADevice
         }
     }
 
-    nonisolated func pathIsInteresting(_ path: String) -> Int?
+    nonisolated func pathIsInteresting(_ path: String) -> TimeInterval?
     {
         for interestingPath in interestingPaths
         {
@@ -529,15 +488,18 @@ extension SMADevice
         return nil
     }
 
-    func objectIdIsInteresting(_ objectid: String) -> (path: String, interval: Int?)
+    func objectIdIsInteresting(_ objectid: String) -> (path: String, interval: TimeInterval)?
     {
         let path = "/" + (tagTranslator.objectsAndPaths[objectid]?.path ?? "unkown-id-\(objectid)")
-
         let interval = pathIsInteresting(path)
 
         JLog.trace("\(address):\(objectid) \(path) interval:\(interval ?? -1)")
 
-        return (path: path, interval: interval)
+        if let interval
+        {
+            return (path: path, interval: interval)
+        }
+        return nil
     }
 
     @discardableResult
@@ -545,27 +507,9 @@ extension SMADevice
     {
         JLog.trace("\(address):working on objectId:\(objectid)")
 
-        let (path, interval) = objectIdIsInteresting(objectid)
+        guard let (path, interval) = objectIdIsInteresting(objectid) else { return false }
 
-        if let interval
-        {
-            if let inuse = objectsToQueryContinously.values.first(where: { $0.path == path })
-            {
-                JLog.notice("\(address): Won't query objectid:\(objectid) - object with same path:\(inuse.objectid) path:\(inuse.path)")
-                return false
-            }
-            JLog.debug("\(address): adding to objectsToQueryContinously objectid:\(objectid) path:\(path) interval:\(interval)")
-
-            let queryObject = objectsToQueryContinously[objectid] ?? QueryObject(objectid: objectid, path: path, interval: interval)
-
-            if interval <= queryObject.interval
-            {
-                objectsToQueryContinously[objectid] = queryObject
-                objectsToQueryNext.append(QueryElement(objectid: objectid, nextReadDate: Date(timeIntervalSinceNow: Double(min(interval, 5)))))
-            }
-            return true
-        }
-        return false
+        return queryQueue.addObjectToQuery(id: objectid, path: path, interval: interval)
     }
 
     func _getInformationDictionary(atPath path: String, requestIds: [String] = [String]()) async throws -> [String: PublishedValue]
