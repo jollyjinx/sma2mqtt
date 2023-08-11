@@ -51,7 +51,10 @@ extension QueryQueue
     {
         if let inuse = contains(path: path)
         {
-            JLog.notice("\(address): Won't query objectid:\(id) - object with same path:\(inuse.id) path:\(inuse.path)")
+            if inuse.id != id
+            {
+                JLog.notice("\(address): Won't query objectid:\(id) - object with same path:\(inuse.id) path:\(inuse.path)")
+            }
             return false
         }
 
