@@ -30,7 +30,7 @@ public actor SMADevice
     let requestAllObjects: Bool
     var queryQueue: QueryQueue
 
-    public var lastRequestReceived = Date.distantPast
+    public var lastRequestReceived = Date()
 
     var scheme = "https"
     let httpClient: HTTPClient
@@ -108,11 +108,7 @@ public extension SMADevice
         "SMADevice\(address): queryQueue: \(queryQueue.json)"
     }
 
-    var isValid: Bool
-    { lastPublishedDate.timeIntervalSinceNow > -120
-        && lastRequestSentDate.timeIntervalSince1970 > -120
-        && lastRequestReceived.timeIntervalSinceNow > -120
-    }
+    var isValid: Bool { lastRequestReceived.timeIntervalSinceNow > -120 }
 
     func receivedUDPData(_ data: Data) async
     {
