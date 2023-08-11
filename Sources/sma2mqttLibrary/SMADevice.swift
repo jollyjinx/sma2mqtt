@@ -221,6 +221,7 @@ public extension SMADevice
            let simpleObject = tagTranslator.objectsAndPaths[objectID]
         {
             JLog.debug("\(address): objectid:\(objectID) name:\(simpleObject.json)")
+            queryQueue.retrieved(id: currentRequestedObjectID, success: true)
 
             let path = name + "/\(simpleObject.path)"
             var resultValues = [GetValuesResult.Value]()
