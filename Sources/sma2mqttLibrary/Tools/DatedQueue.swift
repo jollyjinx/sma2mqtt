@@ -39,12 +39,12 @@ extension DatedQueue
         sortedArray.removeAll { $0.element.id == element.id }
     }
 
-    mutating func removeNext() throws -> (element: Element, date: Date)
-    {
-        guard !sortedArray.isEmpty else { throw DatedQueueError.invalidAccess }
-        let first = sortedArray.removeFirst()
-        return (element: first.element, date: first.date)
-    }
+//    mutating func removeNext() throws -> (element: Element, date: Date)
+//    {
+//        guard !sortedArray.isEmpty else { throw DatedQueueError.invalidAccess }
+//        let first = sortedArray.removeFirst()
+//        return (element: first.element, date: first.date)
+//    }
 
     func waitNext() async throws -> (element: Element, date: Date)
     {
