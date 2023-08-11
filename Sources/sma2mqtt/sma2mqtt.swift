@@ -112,7 +112,7 @@ func handleSIGUSR1(signal: Int32)
     {
         Task
         {
-            let description = await globalLighthouse?.asyncDescription() ?? "no Lighthouse"
+            let description = await globalLighthouse?.asyncDescription ?? "no Lighthouse"
             JLog.notice("\(description)")
         }
     }

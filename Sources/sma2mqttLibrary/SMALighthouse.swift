@@ -30,15 +30,17 @@ public actor SMALighthouse
         case ready(SMADevice)
         case failed(Date)
 
-        func asyncDescription() async -> String
+        var asyncDescription: String
+        { get async
         {
             switch self
             {
                 case .inProgress: return "inProgress()\n"
-                case let .ready(smaDevice): let deviceDescription = await smaDevice.asyncDescription()
+                case let .ready(smaDevice): let deviceDescription = await smaDevice.asyncDescription
                     return "ready(\(smaDevice.address)): \(deviceDescription)\n"
                 case let .failed(date): return "failed(\(date))\n"
             }
+        }
         }
     }
 
@@ -81,15 +83,17 @@ public actor SMALighthouse
 
 public extension SMALighthouse
 {
-    func asyncDescription() async -> String
+    var asyncDescription: String
+    { get async
     {
         var cacheDescription = [String]()
         for entry in smaDeviceCache
         {
-            await cacheDescription.append(entry.value.asyncDescription())
+            await cacheDescription.append(entry.value.asyncDescription)
         }
 
         return "SMALighthouse:\ninterestingPaths:\(interestingPaths.json)\nsmaDeviceCache: \(cacheDescription.joined(separator: "\n"))"
+    }
     }
 
     func remote(for remoteAddress: String) async -> SMADevice?
@@ -110,7 +114,7 @@ public extension SMALighthouse
                     return try? await task.value
 
                 case let .failed(date):
-                    if date.timeIntervalSinceNow > -30
+                    if date.isWithin(30.0)
                     {
                         JLog.info("still ignoring:\(remoteAddress)")
                         return nil

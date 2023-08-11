@@ -56,14 +56,14 @@ extension QueryQueue
         }
 
         objectsToQuery[id] = QueryObject(id: id, path: path, interval: interval)
-        objectsToQueryNext.insert(element: id, at: Date(timeIntervalSinceNow: interval / 100))
+        objectsToQueryNext.insert(element: id, at: Date(timeIntervalSinceNow: interval / 100.0))
 
         return true
     }
 
     func waitForNextObjectId() async throws -> ObjectId
     {
-        let (id, _) = try objectsToQueryNext.waitNext()
+        let (id, _) = try await objectsToQueryNext.waitNext()
         return id
     }
 

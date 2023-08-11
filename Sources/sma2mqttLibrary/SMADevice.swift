@@ -20,8 +20,10 @@ public actor SMADevice
     let publisher: SMAPublisher?
     let interestingPaths: [String: TimeInterval]
 
+    let deviceTimeout = 120.0
     var lastRequestSentDate = Date.distantPast
     var lastPublishedDate = Date()
+    var lastRequestReceived = Date()
 
     let udpMinimumRequestInterval = 1.0 / 10.0 // 1 / maximumRequestsPerSecond
     let udpRequestTimeout = 5.0
@@ -29,8 +31,6 @@ public actor SMADevice
 
     let requestAllObjects: Bool
     var queryQueue: QueryQueue
-
-    public var lastRequestReceived = Date()
 
     var scheme = "https"
     let httpClient: HTTPClient
@@ -103,12 +103,16 @@ public actor SMADevice
 
 public extension SMADevice
 {
-    func asyncDescription() async -> String
-    {
-        "SMADevice\(address): queryQueue: \(queryQueue.json)"
-    }
+    var asyncDescription: String { get async { "SMADevice\(address): queryQueue: \(queryQueue.json)" } }
 
-    var isValid: Bool { lastRequestReceived.timeIntervalSinceNow > -120 }
+    var isValid: Bool
+    { if isHomeManager
+        {
+            return lastRequestReceived.isWithin(deviceTimeout)
+        }
+        return lastRequestReceived.isWithin(deviceTimeout)
+            && lastRequestSentDate.isWithin(deviceTimeout)
+    }
 
     func receivedUDPData(_ data: Data) async
     {
@@ -120,7 +124,7 @@ public extension SMADevice
         }
         JLog.debug("\(address):received udp packet:\(data.hexDump)")
 
-        if isHomeManager, lastRequestReceived.timeIntervalSinceNow > -1.0
+        if isHomeManager, lastRequestReceived.isWithin(1.0)
         {
             JLog.debug("\(address): isHomeManager and received already at:\(lastRequestReceived) - ignoring")
             return

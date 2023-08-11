@@ -46,14 +46,12 @@ extension DatedQueue
         return (element: first.element, date: first.date)
     }
 
-    func waitNext() throws -> (element: Element, date: Date)
+    func waitNext() async throws -> (element: Element, date: Date)
     {
         guard let first = next() else { throw DatedQueueError.noPacketsInQueue }
 
-        if first.date.timeIntervalSinceNow > 0
-        {
-            Thread.sleep(until: first.date)
-        }
+        try await Task.sleep(until: first.date)
+
         return first
     }
 

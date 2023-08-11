@@ -179,7 +179,7 @@ class UDPReceiver: UDPEmitter
         let endDate = Date(timeIntervalSinceNow: receiveTimeout)
         var smaPackets = [SMAPacket]()
 
-        while endDate.timeIntervalSinceNow > 0
+        while endDate.isInFuture
         {
             guard let packet = try? await receiveNextPacket(from: address, port: port, timeout: receiveTimeout)
             else

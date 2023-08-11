@@ -11,6 +11,37 @@ public extension UInt32 { var ipv4String: String { "\(self >> 24).\(self >> 16 &
     public let USEC_PER_SEC: Int64 = 1_000_000
 #endif
 
+public extension Date
+{
+    func isWithin(_ timeInterval: TimeInterval) -> Bool
+    {
+        timeIntervalSinceNow > -timeInterval
+    }
+
+    var isInFuture: Bool { timeIntervalSinceNow > 0 }
+}
+
+extension Task where Success == Never, Failure == Never
+{
+    static func sleep(seconds: Double) async throws
+    {
+        let duration = UInt64(seconds * 1_000_000_000)
+        try await Task.sleep(nanoseconds: duration)
+    }
+
+    static func sleep(until date: Date) async throws
+    {
+        let distance = date.timeIntervalSinceNow
+
+        if distance < 0
+        {
+            return
+        }
+        let nanoseconds = UInt64(distance * 1_000_000_000)
+        try await Task.sleep(nanoseconds: nanoseconds)
+    }
+}
+
 public extension Data
 {
     var fullDump: String

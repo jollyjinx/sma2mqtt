@@ -18,12 +18,8 @@ public class IntervalLoop
     {
         let nextWorkDate = lastWorkDate + loopTime
 
-        let timeToWait = nextWorkDate.timeIntervalSinceNow
+        try await Task.sleep(until: nextWorkDate)
 
-        if timeToWait > 0
-        {
-            try await Task.sleep(for: .seconds(timeToWait))
-        }
         lastWorkDate = Date()
     }
 }
