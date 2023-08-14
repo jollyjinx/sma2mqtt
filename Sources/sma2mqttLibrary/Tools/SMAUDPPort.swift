@@ -1,5 +1,5 @@
 //
-//  UDPReceiver.swift
+//  SMAUDPPort.swift
 //
 
 import Foundation
@@ -30,7 +30,7 @@ private enum UDPReceiverError: Error
     case timeoutErrorReceived([SMAPacket])
 }
 
-class UDPReceiver: UDPEmitter
+class SMAUDPPort: UDPEmitter
 {
     private let socketFileDescriptor: Int32
     private let bufferSize: Int
@@ -171,7 +171,7 @@ class UDPReceiver: UDPEmitter
         }
     }
 
-    func sendReceivePacket(data: [UInt8], packetcounter: Int, address: String, port: UInt16, receiveTimeout: Double) async throws -> [SMAPacket]
+    func sendRequestAndAwaitResponse(data: [UInt8], packetcounter: Int, address: String, port: UInt16, receiveTimeout: Double) async throws -> [SMAPacket]
     {
         sendPacket(data: data, packetcounter: packetcounter, address: address, port: port)
         let startDate = Date()

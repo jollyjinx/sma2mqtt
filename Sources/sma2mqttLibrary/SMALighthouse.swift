@@ -114,7 +114,7 @@ public extension SMALighthouse
                     return try? await task.value
 
                 case let .failed(date):
-                    if date.isWithin(30.0)
+                    if date.isWithin(timeInterval: 30.0)
                     {
                         JLog.info("still ignoring:\(remoteAddress)")
                         return nil
@@ -168,7 +168,7 @@ public extension SMALighthouse
 
         Task
         {
-            await smaDevice.receivedUDPData(packet.data)
+            await smaDevice.receivedMulticast(packet.data)
         }
     }
 }

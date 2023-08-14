@@ -13,9 +13,14 @@ public extension UInt32 { var ipv4String: String { "\(self >> 24).\(self >> 16 &
 
 public extension Date
 {
-    func isWithin(_ timeInterval: TimeInterval) -> Bool
+    func isWithin(timeInterval: TimeInterval) -> Bool
     {
         timeIntervalSinceNow > -timeInterval
+    }
+
+    func isOlderThan(timeInterval: TimeInterval) -> Bool
+    {
+        timeIntervalSinceNow < -timeInterval
     }
 
     var isInFuture: Bool { timeIntervalSinceNow > 0 }

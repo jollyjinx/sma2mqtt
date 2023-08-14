@@ -14,6 +14,9 @@ public typealias ObjectId = String
 
 public actor SMADevice
 {
+    let id = UUID().uuidString
+    let initDate = Date()
+
     let address: String
     let userright: UserRight
     let password: String
@@ -23,7 +26,7 @@ public actor SMADevice
     let deviceTimeout = 120.0
     var lastRequestSentDate = Date.distantPast
     var lastPublishedDate = Date()
-    var lastRequestReceived = Date()
+    var lastReceivedValidPacket = Date()
 
     let udpMinimumRequestInterval = 1.0 / 10.0 // 1 / maximumRequestsPerSecond
     let udpRequestTimeout = 5.0
@@ -37,7 +40,7 @@ public actor SMADevice
     private var sessionid: String?
     let httpTimeout: NIOCore.TimeAmount = .seconds(5)
 
-    let udpReceiver: UDPReceiver
+    let udpReceiver: SMAUDPPort
     let udpEmitter: UDPEmitter?
     var udpSystemId: UInt16 = 0xFFFF
     var udpSerial: UInt32 = 0xFFFF_FFFF
@@ -50,6 +53,7 @@ public actor SMADevice
     var isHomeManager = false
 
     private var refreshTask: Task<Void, Error>?
+    private var _isValid = true
     private var tagTranslator = SMATagTranslator.shared
 
     public init(address: String, userright: UserRight = .user, password: String = "00000", publisher: SMAPublisher? = nil, interestingPaths: [String: TimeInterval] = [:], requestAllObjects: Bool = false, bindAddress: String = "0.0.0.0", udpEmitter: UDPEmitter? = nil) async throws
@@ -65,7 +69,7 @@ public actor SMADevice
 
         queryQueue = QueryQueue(address: address, minimumRequestInterval: 0.1, retryInterval: 10.0)
 
-        udpReceiver = try UDPReceiver(bindAddress: bindAddress, listenPort: 0)
+        udpReceiver = try SMAUDPPort(bindAddress: bindAddress, listenPort: 0)
 
         name = address
         hasDeviceName = false
@@ -78,7 +82,7 @@ public actor SMADevice
             refreshTask = Task
             {
                 var errorcounter = 0
-                while errorcounter < 100
+                while errorcounter < 100, self.isValid
                 {
                     do
                     {
@@ -96,6 +100,7 @@ public actor SMADevice
                     }
                 }
                 JLog.error("\(address): too many errors")
+                _isValid = false
             }
         }
     }
@@ -103,18 +108,25 @@ public actor SMADevice
 
 public extension SMADevice
 {
-    var asyncDescription: String { get async { "SMADevice\(address): queryQueue: \(queryQueue.json)" } }
+    var asyncDescription: String { get async { "SMADevice\(address): id:\(id) init:\(initDate) isValid:\(isValid) queryQueue: \(queryQueue.json)" } }
 
     var isValid: Bool
-    { if isHomeManager
+    {
+        guard _isValid else { return false }
+
+        if isHomeManager
         {
-            return lastRequestReceived.isWithin(deviceTimeout)
+            _isValid = lastReceivedValidPacket.isWithin(timeInterval: deviceTimeout)
         }
-        return lastRequestReceived.isWithin(deviceTimeout)
-            && lastRequestSentDate.isWithin(deviceTimeout)
+        else
+        {
+            _isValid = lastReceivedValidPacket.isWithin(timeInterval: deviceTimeout) && lastRequestSentDate.isWithin(timeInterval: deviceTimeout)
+        }
+
+        return _isValid
     }
 
-    func receivedUDPData(_ data: Data) async
+    func receivedMulticast(_ data: Data) async
     {
         guard !data.isEmpty
         else
@@ -124,16 +136,28 @@ public extension SMADevice
         }
         JLog.debug("\(address):received udp packet:\(data.hexDump)")
 
-        if isHomeManager, lastRequestReceived.isWithin(1.0)
+        guard isHomeManager, hasDeviceName
+        else
         {
-            JLog.debug("\(address): isHomeManager and received already at:\(lastRequestReceived) - ignoring")
+            JLog.debug("\(address):no HomeManager or DeviceName - ignoring multicast packet")
             return
         }
-        lastRequestReceived = Date()
 
-        guard let smaPacket = try? SMAPacket(data: data) else { return }
+        guard lastReceivedValidPacket.isOlderThan(timeInterval: 1.0)
+        else
+        {
+            JLog.debug("\(address): isHomeManager and received already at:\(lastReceivedValidPacket) - ignoring")
+            return
+        }
 
-        await receivedSMAPacket(smaPacket)
+        guard let smaPacket = try? SMAPacket(data: data), !smaPacket.obis.isEmpty
+        else
+        {
+            JLog.debug("\(address): isHomeManager and received not an ObisPacket - ignoring")
+            return
+        }
+
+        await receivedObisPacket(obisValues: smaPacket.obis)
     }
 
     func receivedSMAPacket(_ smaPacket: SMAPacket) async
@@ -145,15 +169,12 @@ public extension SMADevice
             await receivedNetPacket(netPacket: netPacket)
             return
         }
-        else if !smaPacket.obis.isEmpty
-        {
-            guard hasDeviceName else { return }
-            await receivedObisPacket(obisValues: smaPacket.obis)
-        }
     }
 
     func receivedObisPacket(obisValues: [ObisValue]) async
     {
+        lastReceivedValidPacket = Date()
+
         for obisvalue in obisValues
         {
             if obisvalue.mqtt != .invisible
@@ -300,16 +321,25 @@ public extension SMADevice
 
         JLog.trace("\(address): sending udp packetcounter:\(String(format: "0x%04x", packetcounter)) packet:\(packetToSend)")
 
-        let packets = try await udpReceiver.sendReceivePacket(data: [UInt8](packetToSend.hexStringToData()), packetcounter: packetcounter, address: address, port: 9522, receiveTimeout: udpRequestTimeout)
+        let packets = try await udpReceiver.sendRequestAndAwaitResponse(data: [UInt8](packetToSend.hexStringToData()), packetcounter: packetcounter, address: address, port: 9522, receiveTimeout: udpRequestTimeout)
 
         if !packets.isEmpty
         {
-            lastRequestReceived = Date()
+            lastReceivedValidPacket = Date()
         }
 
         for packet in packets
         {
-            _ = await receivedSMAPacket(packet)
+            JLog.debug("\(address): working on \(packet)")
+
+            if let netPacket = packet.netPacket
+            {
+                await receivedNetPacket(netPacket: netPacket)
+            }
+            else
+            {
+                JLog.debug("\(address): received packet has no netPacket\(packet)")
+            }
         }
     }
 }
@@ -602,7 +632,7 @@ extension SMADevice
         let response = try await httpClient.execute(request, timeout: httpTimeout)
 
         JLog.trace("\(address):url:\(url) got response: \(response)")
-        lastRequestReceived = Date()
+        lastReceivedValidPacket = Date()
 
         if response.status == .ok
         {
