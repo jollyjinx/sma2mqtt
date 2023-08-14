@@ -83,7 +83,14 @@ var globalLighthouse: SMALighthouse?
                                                  password: inverterPassword,
                                                  interestingPaths: interestingPaths)
         globalLighthouse = lightHouse
-        while true { try await lightHouse.receiveNext() }
+        while true
+        {
+            #if DEBUG
+                let description = await globalLighthouse?.asyncDescription ?? "no Lighthouse"
+                JLog.debug("\(description)")
+            #endif
+            try await lightHouse.receiveNext()
+        }
     }
 }
 

@@ -23,8 +23,8 @@ public actor SMADevice
     let publisher: SMAPublisher?
     let interestingPaths: [String: TimeInterval]
 
-    let deviceTimeout = 120.0
-    var lastRequestSentDate = Date.distantPast
+    let deviceTimeout = 180.0
+    var lastRequestSentDate = Date()
     var lastPublishedDate = Date()
     var lastReceivedValidPacket = Date()
 
@@ -88,7 +88,6 @@ public actor SMADevice
                     {
                         let id = try await queryQueue.waitForNextObjectId()
                         try queryQueue.shouldRetry(id: id)
-                        lastRequestSentDate = Date()
 
                         try await udpQueryObject(objectID: id)
                         errorcounter = 0
@@ -108,12 +107,13 @@ public actor SMADevice
 
 public extension SMADevice
 {
-    var asyncDescription: String { get async { "SMADevice\(address): id:\(id) init:\(initDate) isValid:\(isValid) queryQueue: \(queryQueue.json)" } }
+    var asyncDescription: String { get async { "SMADevice:\(address): id:\(id) init:\(initDate) lastReceivedValidPacket:\(lastReceivedValidPacket) lastRequestSentDate:\(lastRequestSentDate) udpPacketCounter:\(String(format: "0x%04x", udpPacketCounter)) isValid:\(isValid) queryQueue: \(queryQueue.json)" } }
 
     var isValid: Bool
     {
         guard _isValid else { return false }
 
+        JLog.debug("\(address):isValid:\(_isValid)")
         if isHomeManager
         {
             _isValid = lastReceivedValidPacket.isWithin(timeInterval: deviceTimeout)
@@ -122,7 +122,7 @@ public extension SMADevice
         {
             _isValid = lastReceivedValidPacket.isWithin(timeInterval: deviceTimeout) && lastRequestSentDate.isWithin(timeInterval: deviceTimeout)
         }
-
+        JLog.debug("\(address):isValid:\(_isValid)")
         return _isValid
     }
 
@@ -240,6 +240,8 @@ public extension SMADevice
             return
         }
 
+        lastReceivedValidPacket = Date()
+
         let objectIDs = netPacket.values.map { String(format: "%04X_%02X%04X00", netPacket.header.u16command, $0.type, $0.address) }
 
         if let objectID = objectIDs.first(where: { tagTranslator.objectsAndPaths[$0] != nil }),
@@ -321,12 +323,8 @@ public extension SMADevice
 
         JLog.trace("\(address): sending udp packetcounter:\(String(format: "0x%04x", packetcounter)) packet:\(packetToSend)")
 
+        lastRequestSentDate = Date()
         let packets = try await udpReceiver.sendRequestAndAwaitResponse(data: [UInt8](packetToSend.hexStringToData()), packetcounter: packetcounter, address: address, port: 9522, receiveTimeout: udpRequestTimeout)
-
-        if !packets.isEmpty
-        {
-            lastReceivedValidPacket = Date()
-        }
 
         for packet in packets
         {
@@ -596,6 +594,7 @@ extension SMADevice
     func string(forPath path: String, headers: HTTPHeaders = .init(), httpMethod: HTTPMethod = .GET, requestBody: Data? = nil) async throws -> (headers: HTTPHeaders, bodyString: String)
     {
         let (headers, data) = try await data(forPath: path, headers: headers, httpMethod: httpMethod, requestBody: requestBody)
+
         guard let string = String(data: data, encoding: .utf8) ?? String(data: data, encoding: .ascii)
         else
         {
@@ -629,10 +628,11 @@ extension SMADevice
             request.body = .bytes(requestBody)
         }
 
+        lastRequestSentDate = Date()
         let response = try await httpClient.execute(request, timeout: httpTimeout)
+        lastReceivedValidPacket = Date()
 
         JLog.trace("\(address):url:\(url) got response: \(response)")
-        lastReceivedValidPacket = Date()
 
         if response.status == .ok
         {

@@ -11,6 +11,11 @@ public extension UInt32 { var ipv4String: String { "\(self >> 24).\(self >> 16 &
     public let USEC_PER_SEC: Int64 = 1_000_000
 #endif
 
+extension Collection
+{
+    var isNotEmpty: Bool { !isEmpty }
+}
+
 public extension Date
 {
     func isWithin(timeInterval: TimeInterval) -> Bool
