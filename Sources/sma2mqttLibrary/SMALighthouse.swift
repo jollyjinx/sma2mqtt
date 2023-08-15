@@ -28,7 +28,7 @@ public actor SMALighthouse
     {
         case inProgress(Task<SMADevice, Error>)
         case ready(SMADevice)
-        case failed(Date)
+        case failed(String, Date)
 
         var asyncDescription: String
         { get async
@@ -38,7 +38,7 @@ public actor SMALighthouse
                 case .inProgress: return "inProgress()\n"
                 case let .ready(smaDevice): let deviceDescription = await smaDevice.asyncDescription
                     return "ready(\(smaDevice.address)): \(deviceDescription)\n"
-                case let .failed(date): return "failed(\(date))\n"
+                case let .failed(address, date): return "failed(\(address),\(date))\n"
             }
         }
         }
@@ -113,10 +113,10 @@ public extension SMALighthouse
                 case let .inProgress(task):
                     return try? await task.value
 
-                case let .failed(date):
+                case let .failed(address, date):
                     if date.isWithin(timeInterval: 30.0)
                     {
-                        JLog.info("still ignoring:\(remoteAddress)")
+                        JLog.info("still ignoring:\(address) == \(remoteAddress)")
                         return nil
                     }
                     JLog.info("renabling:\(remoteAddress)")
@@ -139,7 +139,7 @@ public extension SMALighthouse
         {
             JLog.error("\(remoteAddress): was not able to initialize:\(error) - ignoring address")
 
-            smaDeviceCache[remoteAddress] = .failed(Date())
+            smaDeviceCache[remoteAddress] = .failed(remoteAddress, Date())
             return nil
         }
     }
