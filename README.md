@@ -57,3 +57,11 @@ OPTIONS:
 ```
 
 The option __--interesting-paths-and-values__ is currently defaulted to the things I like to see, but you probably have different needs. To find out what your inverter supports you can use the catch all argument __\*:600__ which will show all paths your inverter supports.
+
+__sma2mqtt__ does support signaling. When you send:
+
+- __SIG_USR1__:  it switches the log level between trace/debug/info.
+- __SIG_USR2__: it prints the description of the SMALighthouse object including all currently used SMADevices and their state.
+
+
+So you can use ```killall -USR2 sma2mqtt``` in a shell to let __sma2mqtt__ print out the SMALighthouse status.

@@ -52,10 +52,10 @@ var globalLighthouse: SMALighthouse?
     func run() async throws
     {
         JLog.loglevel = logLevel
-        signal(SIGINT, SIG_IGN)
-        signal(SIGINT, handleSIGINT)
         signal(SIGUSR1, SIG_IGN)
         signal(SIGUSR1, handleSIGUSR1)
+        signal(SIGUSR2, SIG_IGN)
+        signal(SIGUSR2, handleSIGUSR2)
 
         if logLevel != defaultLoglevel
         {
@@ -94,7 +94,7 @@ var globalLighthouse: SMALighthouse?
     }
 }
 
-func handleSIGINT(signal: Int32)
+func handleSIGUSR1(signal: Int32)
 {
     DispatchQueue.main.async
     {
@@ -109,10 +109,15 @@ func handleSIGINT(signal: Int32)
         }
 
         JLog.notice("to \(JLog.loglevel)")
+        Task
+        {
+            let description = await globalLighthouse?.asyncDescription ?? "no Lighthouse"
+            JLog.notice("\(description)")
+        }
     }
 }
 
-func handleSIGUSR1(signal: Int32)
+func handleSIGUSR2(signal: Int32)
 {
     JLog.notice("Received \(signal) signal.")
     DispatchQueue.main.async
