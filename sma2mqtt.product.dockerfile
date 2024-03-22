@@ -21,5 +21,6 @@ CMD ["sma2mqtt"]
 # following lines are for publishing on docker hub
 #
 # docker build . --file sma2mqtt.product.dockerfile --tag jollyjinx/sma2mqtt:latest && docker push jollyjinx/sma2mqtt:latest
-# docker build . --file sma2mqtt.product.dockerfile --tag jollyjinx/sma2mqtt:development && docker push jollyjinx/sma2mqtt:development
+# docker tag jollyjinx/sma2mqtt:development jollyjinx/sma2mqtt:latest  && docker push jollyjinx/modbus2mqtt:latest
+# docker tag jollyjinx/sma2mqtt:development jollyjinx/sma2mqtt:3.1.1  && docker push jollyjinx/modbus2mqtt:3.1.1
 
