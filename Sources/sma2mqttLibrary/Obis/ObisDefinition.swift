@@ -5,7 +5,7 @@
 import Foundation
 import JLog
 
-struct ObisDefinition: Encodable, Decodable
+struct ObisDefinition: Encodable, Decodable, Sendable
 {
     enum ObisDefinitionType: String, Encodable, Decodable
     {

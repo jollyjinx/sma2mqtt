@@ -13,7 +13,7 @@ import CNative
 //    let sourceAddress: String
 // }
 
-private enum UDPReceiverError: Error
+private enum UDPReceiverError: Error, Sendable
 {
     case socketCreationFailed(Int32)
     case socketOptionReuseAddressFailed(Int32)
@@ -30,7 +30,7 @@ private enum UDPReceiverError: Error
     case timeoutErrorReceived([SMAPacket])
 }
 
-class SMAUDPPort: UDPEmitter
+actor SMAUDPPort: UDPEmitter
 {
     private let socketFileDescriptor: Int32
     private let bufferSize: Int

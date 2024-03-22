@@ -14,9 +14,11 @@ extension JLog.Level: ExpressibleByArgument {}
     let defaultLoglevel: JLog.Level = .notice
 #endif
 
+@MainActor
 var globalLighthouse: SMALighthouse?
 
-@main struct sma2mqtt: AsyncParsableCommand
+@main
+struct sma2mqtt: AsyncParsableCommand
 {
     @Option(help: "Set the log level.") var logLevel: JLog.Level = defaultLoglevel
 
@@ -49,6 +51,8 @@ var globalLighthouse: SMALighthouse?
         "battery/battery-charge/battery-charge:20",
 //        "*:600", // all once
     ]
+
+    @MainActor
     func run() async throws
     {
         JLog.loglevel = logLevel

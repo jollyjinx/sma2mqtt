@@ -6,14 +6,14 @@ import BinaryCoder
 import Foundation
 import JLog
 
-public enum ObisType: Encodable, Decodable
+public enum ObisType: Encodable, Decodable, Sendable
 {
     case string(String)
     case uint(UInt64)
     case int(Int64)
 }
 
-public struct ObisValue: Decodable
+public struct ObisValue: Decodable, Sendable
 {
     let id: String
     let value: ObisType
@@ -21,7 +21,7 @@ public struct ObisValue: Decodable
     public var includeTopicInJSON = false
     public var topic: String { ObisDefinition.obisDefinitions[id]?.topic ?? "id/\(id)" }
 
-    public enum MQTTVisibilty: String, Encodable, Decodable { case invisible, visible, retained }
+    public enum MQTTVisibilty: String, Encodable, Decodable, Sendable { case invisible, visible, retained }
 
     public var mqtt: MQTTVisibilty { ObisDefinition.obisDefinitions[id]?.mqtt ?? .invisible }
 }

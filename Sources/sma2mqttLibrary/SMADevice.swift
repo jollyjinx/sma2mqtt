@@ -12,7 +12,7 @@ import RegexBuilder
 
 public typealias ObjectId = String
 
-public actor SMADevice
+public actor SMADevice: Sendable
 {
     let id = UUID().uuidString
     let initDate = Date()

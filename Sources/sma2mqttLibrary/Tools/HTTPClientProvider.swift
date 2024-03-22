@@ -10,9 +10,9 @@ import Foundation
 // import NIOHTTP1
 import NIOSSL
 
-enum HTTPClientProvider
+enum HTTPClientProvider: Sendable
 {
-    static var sharedHttpClient: HTTPClient = { var tlsConfiguration = TLSConfiguration.makeClientConfiguration()
+    static let sharedHttpClient: HTTPClient = { var tlsConfiguration = TLSConfiguration.makeClientConfiguration()
         tlsConfiguration.certificateVerification = .none
 
         return HTTPClient(eventLoopGroupProvider: .createNew, configuration: .init(tlsConfiguration: tlsConfiguration,

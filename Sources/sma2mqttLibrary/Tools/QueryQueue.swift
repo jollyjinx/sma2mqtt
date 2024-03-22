@@ -102,7 +102,7 @@ extension ConnectionState
     }
 }
 
-struct QueryQueue
+struct QueryQueue: Sendable
 {
     let address: String
     let minimumRequestInterval: TimeInterval

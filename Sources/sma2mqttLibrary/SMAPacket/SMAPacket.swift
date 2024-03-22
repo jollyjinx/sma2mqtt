@@ -6,7 +6,7 @@ import BinaryCoder
 import Foundation
 import JLog
 
-public struct SMAPacket: Codable
+public struct SMAPacket: Codable, Sendable
 {
     enum MagicHeader: UInt32
     {

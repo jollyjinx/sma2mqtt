@@ -7,7 +7,7 @@ import JLog
 import MQTTNIO
 import NIO
 
-public protocol SMAPublisher
+public protocol SMAPublisher: Sendable
 {
     func publish(to topic: String, payload: String, qos: MQTTQoS, retain: Bool) async throws
 }

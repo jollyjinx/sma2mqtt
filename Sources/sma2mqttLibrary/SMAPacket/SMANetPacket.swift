@@ -6,7 +6,7 @@ import BinaryCoder
 import Foundation
 import JLog
 
-public struct SMANetPacket: Codable
+public struct SMANetPacket: Codable, Sendable
 {
     let header: SMANetPacketHeader
     let valuesheader: [Int]

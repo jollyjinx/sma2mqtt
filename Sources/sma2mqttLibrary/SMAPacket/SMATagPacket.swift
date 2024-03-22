@@ -6,7 +6,7 @@ import BinaryCoder
 import Foundation
 import JLog
 
-public struct SMATagPacket: Codable
+public struct SMATagPacket: Codable, Sendable
 {
     let tag: UInt16
     let data: Data

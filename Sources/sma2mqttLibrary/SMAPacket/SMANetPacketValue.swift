@@ -6,7 +6,7 @@ import BinaryCoder
 import Foundation
 import JLog
 
-public struct SMANetPacketValue
+public struct SMANetPacketValue: Sendable
 {
     let number: UInt8
     let address: UInt16

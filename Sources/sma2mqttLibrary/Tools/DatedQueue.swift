@@ -4,7 +4,7 @@
 
 import Foundation
 
-struct DatedQueue<Element: Identifiable> where Element: Codable
+struct DatedQueue<Element: Identifiable> where Element: Codable, Element: Sendable
 {
     internal struct InternalElement: Codable
     {

@@ -18,7 +18,7 @@ public protocol UDPEmitter
     func sendPacket(data: [UInt8], packetcounter: Int, address: String, port: UInt16) async
 }
 
-public struct Packet
+public struct Packet: Sendable
 {
     let data: Data
     let sourceAddress: String

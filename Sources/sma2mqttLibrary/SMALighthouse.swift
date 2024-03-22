@@ -5,7 +5,7 @@
 import Foundation
 import JLog
 
-public enum UserRight: String
+public enum UserRight: String, Sendable
 {
     case user = "usr"
     case installer = "istl"

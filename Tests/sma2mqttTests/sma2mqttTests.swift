@@ -93,26 +93,6 @@ final class sma2mqttTests: XCTestCase
 
     func testSMAPacketGeneration() throws
     {
-        let data1 = """
-
-        534d 4100
-            0004 02a0
-                0000 0001
-            0026 0010
-            6065
-            09
-            a0
-            ffff ffff ffff 00
-            00
-            7401 10e7 f0b2 00
-            00
-            0000
-            0000
-            60e2 0002 8061 0048 2100 ff4a 4100
-        0000 0000
-
-        """
-
         let dataString = try SMAPacketGenerator.generatePacketForObjectID(packetcounter: 1, objectID: "6180_08414E00")
         let data = dataString.hexStringToData()
 

@@ -6,7 +6,7 @@ import Foundation
 import JLog
 import RegexBuilder
 
-public struct SMADataObject
+public struct SMADataObject: Sendable
 {
     let object: Int
     let lri: Int

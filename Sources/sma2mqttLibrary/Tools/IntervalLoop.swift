@@ -4,7 +4,7 @@
 
 import Foundation
 
-public class IntervalLoop
+public actor IntervalLoop
 {
     public let loopTime: Double
     private var lastWorkDate: Date = .distantPast

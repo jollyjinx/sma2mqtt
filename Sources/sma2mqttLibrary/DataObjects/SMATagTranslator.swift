@@ -5,7 +5,7 @@
 import Foundation
 import JLog
 
-struct SMATagTranslator
+struct SMATagTranslator: Sendable
 {
     typealias ObjectIDString = String
 
@@ -18,8 +18,11 @@ struct SMATagTranslator
         let path: String
         let format: Int
     }
+}
 
-    static var shared: SMATagTranslator = .init(definitionData: nil, translationData: nil)
+extension SMATagTranslator
+{
+    static let shared: SMATagTranslator = .init(definitionData: nil, translationData: nil)
 
     init(definitionData: Data?, translationData: Data?)
     {
