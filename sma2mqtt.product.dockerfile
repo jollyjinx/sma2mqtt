@@ -1,15 +1,13 @@
-FROM swift:latest as builder
+FROM --platform=$BUILDPLATFORM swift:latest AS smabuilder
 WORKDIR /swift
 COPY . .
 RUN swift build -c release
 RUN chmod -R u+rwX,go+rX-w /swift/.build/release/
 
-FROM swift:slim
+FROM --platform=$TARGETPLATFORM swift:slim
 WORKDIR /sma2mqtt
-ENV PATH "$PATH:/sma2mqtt"
-RUN chmod -R ugo+rwX /sma2mqtt
-COPY --from=builder /swift/.build/release/sma2mqtt .
-COPY --from=builder /swift/.build/release/sma2mqtt_sma2mqttLibrary.resources ./sma2mqtt_sma2mqttLibrary.resources
+ENV PATH="$PATH:/sma2mqtt"
+COPY --from=smabuilder /swift/.build/release/sma2mqtt .
 CMD ["sma2mqtt"]
 
 # create your own docker image:
@@ -18,9 +16,9 @@ CMD ["sma2mqtt"]
 # docker run --name sma2mqtt sma2mqtt
 
 
-# following lines are for publishing on docker hub
+# multiarch build to docker.io:
 #
-# docker build . --file sma2mqtt.product.dockerfile --tag jollyjinx/sma2mqtt:latest && docker push jollyjinx/sma2mqtt:latest
-# docker tag jollyjinx/sma2mqtt:development jollyjinx/sma2mqtt:latest  && docker push jollyjinx/modbus2mqtt:latest
-# docker tag jollyjinx/sma2mqtt:development jollyjinx/sma2mqtt:3.1.1  && docker push jollyjinx/modbus2mqtt:3.1.1
-
+# docker buildx create --use --name multiarch-builder
+# docker buildx inspect --bootstrap
+# docker buildx build --no-cache --platform linux/amd64,linux/arm64 --tag jollyjinx/sma2mqtt:latest --tag jollyjinx/sma2mqtt:3.1.2 --file sma2mqtt.product.dockerfile --push .
+# docker buildx imagetools inspect jollyjinx/sma2mqtt:latest
