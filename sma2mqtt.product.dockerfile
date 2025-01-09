@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM swift:latest AS smabuilder
+FROM --platform=$BUILDPLATFORM swift:latest AS sma2mqttbuilder
 WORKDIR /swift
 COPY . .
 RUN swift build -c release
@@ -7,7 +7,8 @@ RUN chmod -R u+rwX,go+rX-w /swift/.build/release/
 FROM --platform=$TARGETPLATFORM swift:slim
 WORKDIR /sma2mqtt
 ENV PATH="$PATH:/sma2mqtt"
-COPY --from=smabuilder /swift/.build/release/sma2mqtt .
+COPY --from=sma2mqttbuilder /swift/.build/release/sma2mqtt .
+COPY --from=sma2mqttbuilder /swift/.build/release/sma2mqtt_sma2mqttLibrary.resources ./sma2mqtt_sma2mqttLibrary.resources
 CMD ["sma2mqtt"]
 
 # create your own docker image:
