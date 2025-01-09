@@ -1,4 +1,4 @@
-// swift-tools-version:5.10
+// swift-tools-version: 6.0
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -28,30 +28,19 @@ let package = Package(name: "sma2mqtt",
                                                 "sma2mqttLibrary",
                                                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
                                                 .product(name: "JLog", package: "JLog"),
-                                            ],
-                                            swiftSettings: [
-                                                .enableExperimentalFeature("StrictConcurrency"),
                                             ]),
                           .target(name: "sma2mqttLibrary",
                                   dependencies: [
-                                      "CNative",
                                       .product(name: "BinaryCoder", package: "BinaryCoder"),
                                       .product(name: "AsyncHTTPClient", package: "async-http-client"),
                                       .product(name: "MQTTNIO", package: "mqtt-nio"),
                                       .product(name: "JLog", package: "JLog"),
 
                                   ],
+
                                   resources: [
-                                      .copy("Obis/Resources/obisdefinition.json"),
-                                      .copy("DataObjects/Resources/sma.data.objectMetaData.json"),
-                                      .copy("DataObjects/Resources/sma.data.Translation_Names.json"),
-                                      .copy("SMAPacket/Resources/SMANetPacketDefinitions.json"),
-                                  ],
-                                  swiftSettings: [
-                                      .enableExperimentalFeature("StrictConcurrency"),
+                                      .process("Resources"),
                                   ]),
-                          .target(name: "CNative",
-                                  dependencies: []),
                           .testTarget(name: "sma2mqttTests",
                                       dependencies: [
                                           "sma2mqttLibrary",

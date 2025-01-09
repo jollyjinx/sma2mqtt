@@ -5,7 +5,7 @@
 import Foundation
 import JLog
 
-public struct PublishedValue: Encodable
+public struct PublishedValue: Encodable, Sendable
 {
     let objectID: String
     let values: [GetValuesResult.Value]

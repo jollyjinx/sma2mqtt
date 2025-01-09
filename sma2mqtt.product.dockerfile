@@ -1,10 +1,12 @@
 FROM --platform=$BUILDPLATFORM swift:latest AS sma2mqttbuilder
 WORKDIR /swift
-COPY . .
+COPY Package.swift Package.swift
+COPY Sources Sources
+COPY Tests Tests
 RUN swift build -c release
 RUN chmod -R u+rwX,go+rX-w /swift/.build/release/
 
-FROM --platform=$TARGETPLATFORM swift:slim
+FROM swift:slim
 WORKDIR /sma2mqtt
 ENV PATH="$PATH:/sma2mqtt"
 COPY --from=sma2mqttbuilder /swift/.build/release/sma2mqtt .
@@ -15,6 +17,7 @@ CMD ["sma2mqtt"]
 #
 # docker build . --file sma2mqtt.product.dockerfile --tag sma2mqtt
 # docker run --name sma2mqtt sma2mqtt
+# docker buildx build --no-cache --platform linux/amd64,linux/arm64 --tag jollyjinx/sma2mqtt:development --file sma2mqtt.product.dockerfile --push .
 
 
 # multiarch build to docker.io:

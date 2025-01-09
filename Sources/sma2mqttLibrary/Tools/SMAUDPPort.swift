@@ -5,14 +5,6 @@
 import Foundation
 import JLog
 
-import CNative
-
-// public struct Packet
-// {
-//    let data: Data
-//    let sourceAddress: String
-// }
-
 private enum UDPReceiverError: Error, Sendable
 {
     case socketCreationFailed(Int32)
@@ -124,8 +116,7 @@ actor SMAUDPPort: UDPEmitter
                 var timeout = timeval(tv_sec: seconds, tv_usec: suseconds_t((timeout - Double(seconds)) * Double(USEC_PER_SEC)))
                 var readset: fd_set = .init()
 
-                SWIFT_FD_SET(socket, &readset)
-
+                SwiftFD_SET(socket, &readset)
                 let rv = select(socket + 1, &readset, nil, nil, &timeout)
                 guard rv > 0 else { return continuation.resume(throwing: UDPReceiverError.timeoutErrorRecv) }
 

@@ -7,7 +7,7 @@ import Foundation
 import JLog
 import sma2mqttLibrary
 
-extension JLog.Level: ExpressibleByArgument {}
+extension JLog.Level: @retroactive ExpressibleByArgument {}
 #if DEBUG
     let defaultLoglevel: JLog.Level = .debug
 #else
