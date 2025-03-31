@@ -5,7 +5,7 @@
 import Foundation
 import JLog
 
-extension ObjectId: Identifiable { public var id: ObjectId { self } }
+extension ObjectId: @retroactive Identifiable { public var id: ObjectId { self } }
 
 struct QueryObject
 {
@@ -79,6 +79,7 @@ extension ConnectionState
             case let x where x > 0:
                 history.append(Interval.ok(interval: DateInterval(start: intervalStart, end: Date()), count: counter))
                 fallthrough
+
             case 0: counter = -1
                 intervalStart = Date()
 
@@ -93,6 +94,7 @@ extension ConnectionState
             case let x where x < 0:
                 history.append(Interval.error(interval: DateInterval(start: intervalStart, end: Date()), count: counter))
                 fallthrough
+
             case 0:
                 counter = 1
                 intervalStart = Date()
