@@ -20,13 +20,13 @@ struct DataSplitter: Sequence, IteratorProtocol
     {
         self.data = data
         self.splitData = splitData
-        self.index = data.startIndex
+        index = data.startIndex
         JLog.debug("init")
     }
 
     mutating func next() -> Data?
     {
-        guard self.index != self.data.endIndex else { return nil }
+        guard index != data.endIndex else { return nil }
 
         guard let range = data[index ..< data.endIndex].range(of: splitData)
         else
@@ -82,19 +82,21 @@ extension Data
 
 extension ProcessInfo
 {
-    func value(forArgument argument: String) -> String?
+    func value(forArgument matchingArgument: String) -> String?
     {
-        var lastTestArgument: String?
+        var previousMatched = false
 
-        return arguments.compactMap
+        for argument in arguments
         {
-            guard lastTestArgument == argument
-            else
+            if previousMatched
             {
-                lastTestArgument = $0
-                return nil
+                return argument
             }
-            return $0
-        }.first
+            if argument == matchingArgument
+            {
+                previousMatched = true
+            }
+        }
+        return nil
     }
 }

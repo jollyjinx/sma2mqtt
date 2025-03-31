@@ -265,6 +265,7 @@ public extension SMADevice
                             let resultValue = GetValuesResult.Value.intValue(Int(firstValue))
                             resultValues.append(resultValue)
                         }
+
                     case let .int(value):
                         if let firstValue = value.first as? Int32
                         {
@@ -367,8 +368,10 @@ extension SMADevice
             scheme = "http"
         }
 
-        if let response = try? await string(forPath: "legal_notices.txt")
+        do
         {
+            let response = try await string(forPath: "legal_notices.txt")
+
             JLog.debug("\(address):got legal notice")
             if let (_, version) = try? #/Sunny Home Manager (\d+\.\d+)/#.firstMatch(in: response.bodyString)?.output
             {
@@ -381,6 +384,11 @@ extension SMADevice
             }
             JLog.debug("\(address):legal no match")
         }
+        catch
+        {
+            JLog.error("\(address): \(error)- getting legal notice failed \(error)")
+        }
+
         JLog.debug("\(address):not homemanager")
 
         do
@@ -627,8 +635,10 @@ extension SMADevice
         {
             request.body = .bytes(requestBody)
         }
+        JLog.trace("\(address):url:\(url) requesting:\(request)")
 
         lastRequestSentDate = Date()
+
         let response = try await httpClient.execute(request, timeout: httpTimeout)
         lastReceivedValidPacket = Date()
 
