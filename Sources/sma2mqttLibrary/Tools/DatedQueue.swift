@@ -6,7 +6,7 @@ import Foundation
 
 struct DatedQueue<Element: Identifiable> where Element: Codable, Element: Sendable
 {
-    internal struct InternalElement: Codable
+    struct InternalElement: Codable
     {
         let date: Date
         let element: Element
@@ -18,7 +18,7 @@ struct DatedQueue<Element: Identifiable> where Element: Codable, Element: Sendab
         case noPacketsInQueue
     }
 
-    internal var sortedArray = [InternalElement]()
+    var sortedArray = [InternalElement]()
 }
 
 extension DatedQueue: Codable {}

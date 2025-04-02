@@ -7,9 +7,11 @@ import JLog
 
 #if os(Linux)
     import Glibc
+
     let SOCK_DGRAM_VALUE = Int32(SOCK_DGRAM.rawValue)
 #else
     import Darwin
+
     let SOCK_DGRAM_VALUE = SOCK_DGRAM
 #endif
 

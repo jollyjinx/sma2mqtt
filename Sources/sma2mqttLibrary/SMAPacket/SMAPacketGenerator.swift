@@ -75,7 +75,7 @@ extension SMAPacketGenerator
 
     static func objectID2Command(objectId: String) throws -> String
     {
-        let regex: Regex = { #/([a-fA-F\d]{2})([a-fA-F\d]{2})_([a-fA-F\d]{2})([a-fA-F\d]{2})([a-fA-F\d]{2})([a-fA-F\d]{2})/# }()
+        let regex: Regex = #/([a-fA-F\d]{2})([a-fA-F\d]{2})_([a-fA-F\d]{2})([a-fA-F\d]{2})([a-fA-F\d]{2})([a-fA-F\d]{2})/#
 
         if let match = objectId.firstMatch(of: regex)
         {

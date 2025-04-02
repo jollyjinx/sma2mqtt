@@ -72,11 +72,9 @@ extension SMANetPacketValue: Codable
             case let .uint(values):
                 let toEncode = values.map { $0 == nil ? nil : (hasFactor ? Decimal($0!) / factor! : Decimal($0!)) }
                 try container.encode(toEncode, forKey: CodingKeys.value)
-
             case let .int(values):
                 let toEncode = values.map { $0 == nil ? nil : (hasFactor ? Decimal($0!) / factor! : Decimal($0!)) }
                 try container.encode(toEncode, forKey: CodingKeys.value)
-
             case let .string(value): try container.encode(value, forKey: CodingKeys.value)
             case let .tags(values): try container.encode(values, forKey: CodingKeys.tags)
             case let .password(value): try container.encode(value, forKey: CodingKeys.value)

@@ -3,9 +3,15 @@
 
 import PackageDescription
 
+let swiftSettings: [SwiftSetting] = [
+    .swiftLanguageMode(.v6),
+//    .enableUpcomingFeature("ExistentialAny"),
+//    .enableUpcomingFeature("InternalImportsByDefault"),
+]
+
 let package = Package(name: "sma2mqtt",
                       platforms: [
-                          .macOS(.v13),
+                          .macOS(.v15),
                           //        .iOS(.v13),
                           //        .tvOS(.v13),
                           //        .watchOS(.v6)
@@ -28,23 +34,24 @@ let package = Package(name: "sma2mqtt",
                                                 "sma2mqttLibrary",
                                                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
                                                 .product(name: "JLog", package: "JLog"),
-                                            ]),
+                                            ],
+                                            swiftSettings: swiftSettings),
                           .target(name: "sma2mqttLibrary",
                                   dependencies: [
                                       .product(name: "BinaryCoder", package: "BinaryCoder"),
                                       .product(name: "AsyncHTTPClient", package: "async-http-client"),
                                       .product(name: "MQTTNIO", package: "mqtt-nio"),
                                       .product(name: "JLog", package: "JLog"),
-
                                   ],
-
                                   resources: [
                                       .process("Resources"),
-                                  ]),
+                                  ],
+                                  swiftSettings: swiftSettings),
                           .testTarget(name: "sma2mqttTests",
                                       dependencies: [
                                           "sma2mqttLibrary",
                                           .product(name: "BinaryCoder", package: "BinaryCoder"),
                                           .product(name: "JLog", package: "JLog"),
-                                      ]),
+                                      ],
+                                      swiftSettings: swiftSettings),
                       ])

@@ -153,7 +153,7 @@ final class sma2mqttTests: XCTestCase
     func testSMAFile() throws
     {
         JLog.debug("loading data")
-        let filedata = try Data(contentsOf: URL(fileURLWithPath: "/Users/jolly/Documents/GitHub/sma2mqtt/Temp/Reverseengineering/pcaps/vlan2.20220618-1.pcap"), options: .mappedRead)
+        let filedata = try Data(contentsOf: URL(fileURLWithPath: "/Users/jolly/Documents/GitHub/sma2mqtt/Temp/Reverseengineering/pcaps/vlan2.20220618-1.pcap"), options: .mappedIfSafe)
 //                let filedata = try Data(contentsOf: URL(fileURLWithPath:"/Users/jolly/Downloads/FW3-11-11-R_SBS25-1VL-10/SBS2.5-1VL-10-V3.11.11.R.up2"),options:.mappedRead)
 //        let filedata = try Data(contentsOf: URL(fileURLWithPath:"/Users/jolly/Documents/GitHub/sma2mqtt/Temp/Reverseengineering/shm.20220615.pcap"),options: .mappedRead)
         JLog.debug("data loaded")
@@ -653,5 +653,21 @@ final class sma2mqttTests: XCTestCase
         """.hexStringToData()
         let binaryDecoder = BinaryDecoder(data: [UInt8](data))
         let _ = try? SMAPacket(fromBinary: binaryDecoder)
+    }
+
+    func testSMAPacketDecoding9() throws
+    {
+        let data = """
+
+        534d 4100
+        0004 02a0 0000 0001 0002 0000 0001 0004
+        0010 0001 0003 0004 0020 0000 0001 0004
+        0030 0a70 100d 0002 0070 ef0c 0000 0000
+
+        """.hexStringToData()
+        let binaryDecoder = BinaryDecoder(data: [UInt8](data))
+        let packet = try? SMAPacket(fromBinary: binaryDecoder)
+
+        print(packet?.smaTagPackets.description ?? "")
     }
 }

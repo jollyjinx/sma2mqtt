@@ -2,8 +2,11 @@
 //  SMADevice.swift
 //
 
-import AsyncHTTPClient
+// import AsyncHTTPClient
 import Foundation
+#if canImport(FoundationNetworking)
+    import FoundationNetworking
+#endif
 import JLog
 import NIOCore
 import NIOFoundationCompat
@@ -36,9 +39,8 @@ public actor SMADevice: Sendable
     var queryQueue: QueryQueue
 
     var scheme = "https"
-    let httpClient: HTTPClient
+    let urlSession: URLSession
     private var sessionid: String?
-    let httpTimeout: NIOCore.TimeAmount = .seconds(5)
 
     let udpReceiver: SMAUDPPort
     let udpEmitter: UDPEmitter?
@@ -74,7 +76,10 @@ public actor SMADevice: Sendable
         name = address
         hasDeviceName = false
 
-        httpClient = HTTPClientProvider.sharedHttpClient
+        urlSession = URLSession(configuration: .default)
+        urlSession.configuration.timeoutIntervalForRequest = 5.0
+        urlSession.configuration.timeoutIntervalForResource = 5.0
+
         try await findOutDeviceNameAndType()
 
         if !queryQueue.isEmpty
@@ -347,8 +352,8 @@ extension SMADevice
 {
     enum DeviceError: Error
     {
-        case connectionError
         case invalidURLError
+        case connectionError
         case invalidDataError(String)
         case invalidHTTPResponseError
         case loginFailed
@@ -365,6 +370,7 @@ extension SMADevice
         }
         else
         {
+            JLog.debug("\(address):https failed - trying http")
             scheme = "http"
         }
 
@@ -373,7 +379,7 @@ extension SMADevice
             let response = try await string(forPath: "legal_notices.txt")
 
             JLog.debug("\(address):got legal notice")
-            if let (_, version) = try? #/Sunny Home Manager (\d+\.\d+)/#.firstMatch(in: response.bodyString)?.output
+            if let (_, version) = try? /Sunny\s+Home\s+Manager\s+(\d+\.\d+)/.firstMatch(in: response.bodyString)?.output
             {
                 JLog.debug("\(address):got legal notice with match")
 
@@ -443,9 +449,9 @@ extension SMADevice
         {
             JLog.debug("\(address):Login")
 
-            let headers = [("Content-Type", "application/json"), ("Connection", "keep-alive")]
+            let headers = ["Content-Type": "application/json", "Connection": "keep-alive"]
             let loginBody = try JSONSerialization.data(withJSONObject: ["right": userright.rawValue, "pass": password], options: [])
-            let response = try await data(forPath: "/dyn/login.json", headers: .init(headers), httpMethod: .POST, requestBody: loginBody)
+            let response = try await data(forPath: "/dyn/login.json", headers: headers, httpMethod: "POST", requestBody: loginBody)
 
             let decoder = JSONDecoder()
             let loginResult = try decoder.decode([String: [String: String]].self, from: response.bodyData)
@@ -492,8 +498,8 @@ extension SMADevice
 
     func logout() async throws
     {
-        let headers = [("Content-Type", "application/json")]
-        try await data(forPath: "/dyn/logout.json", headers: .init(headers), httpMethod: .POST, requestBody: nil)
+        let headers = ["Content-Type": "application/json"]
+        try await data(forPath: "/dyn/logout.json", headers: headers, httpMethod: "POST", requestBody: nil)
         sessionid = nil
     }
 
@@ -551,13 +557,13 @@ extension SMADevice
 
     func _getInformationDictionary(atPath path: String, requestIds: [String] = [String]()) async throws -> [String: PublishedValue]
     {
-        let headers = [("Content-Type", "application/json")]
+        let headers = ["Content-Type": "application/json"]
 
         let postDictionary = requestIds.isEmpty ? ["destDev": [String]()] : ["destDev": [String](), "keys": requestIds]
 
         JLog.trace("\(address):get keys:\(requestIds)")
         let loginBody = try JSONSerialization.data(withJSONObject: postDictionary, options: [])
-        let response = try await data(forPath: path, headers: .init(headers), httpMethod: .POST, requestBody: loginBody)
+        let response = try await data(forPath: path, headers: headers, httpMethod: "POST", requestBody: loginBody)
 
         JLog.trace("\(address):retrieved body:\(String(data: response.bodyData, encoding: .utf8) ?? response.bodyData.hexDump)")
         let decoder = JSONDecoder()
@@ -599,11 +605,11 @@ extension SMADevice
     }
 
     @discardableResult
-    func string(forPath path: String, headers: HTTPHeaders = .init(), httpMethod: HTTPMethod = .GET, requestBody: Data? = nil) async throws -> (headers: HTTPHeaders, bodyString: String)
+    func string(forPath path: String, headers: [String: String] = [:], httpMethod: String = "GET", requestBody: Data? = nil) async throws -> (headers: [[String: String]], bodyString: String)
     {
         let (headers, data) = try await data(forPath: path, headers: headers, httpMethod: httpMethod, requestBody: requestBody)
 
-        guard let string = String(data: data, encoding: .utf8) ?? String(data: data, encoding: .ascii)
+        guard let string = String(data: data, encoding: .ascii) ?? String(data: data, encoding: .isoLatin1) ?? String(data: data, encoding: .utf8)
         else
         {
             throw DeviceError.invalidDataError("Could not decode webpage content to String \(#file)\(#line)")
@@ -612,7 +618,7 @@ extension SMADevice
     }
 
     @discardableResult
-    func data(forPath path: String, headers: HTTPHeaders = .init(), httpMethod: HTTPMethod = .GET, requestBody: Data? = nil) async throws -> (headers: HTTPHeaders, bodyData: Data)
+    func data(forPath path: String, headers: [String: String] = [:], httpMethod: String = "GET", requestBody: Data? = nil) async throws -> (headers: [[String: String]], bodyData: Data)
     {
         guard var url = URL(string: "\(scheme)://\(address)\(path.hasPrefix("/") ? path : "/" + path)")
         else
@@ -626,42 +632,45 @@ extension SMADevice
         }
 
         JLog.debug("\(address):requesting: \(url) for \(address)")
-        var request = HTTPClientRequest(url: url.absoluteString)
-        request.method = httpMethod
+        var request = URLRequest(url: url)
+        request.httpMethod = httpMethod
+        request.allHTTPHeaderFields = headers
+        request.httpBody = requestBody
 
-        request.headers.add(contentsOf: headers)
-
-        if let requestBody
-        {
-            request.body = .bytes(requestBody)
-        }
         JLog.trace("\(address):url:\(url) requesting:\(request)")
 
         lastRequestSentDate = Date()
 
-        let response = try await httpClient.execute(request, timeout: httpTimeout)
+        let (data, response): (Data, URLResponse)
+        do
+        {
+            (data, response) = try await urlSession.data(for: request)
+        }
+        catch
+        {
+            JLog.error("\(address):url:\(url) request failed: \(error)")
+            throw DeviceError.connectionError
+        }
         lastReceivedValidPacket = Date()
 
         JLog.trace("\(address):url:\(url) got response: \(response)")
 
-        if response.status == .ok
+        guard let response = response as? HTTPURLResponse
+        else
         {
-            var bodyData = Data()
-
-            do
-            {
-                for try await buffer in response.body
-                {
-                    bodyData.append(Data(buffer: buffer))
-                }
-                JLog.trace("\(address):url:\(url) receivedData:\(bodyData.count)")
-            }
-            catch
-            {
-                JLog.trace("\(address):url:\(url) Error: \(error) receivedData:\(bodyData.count)")
-            }
-            return (headers: response.headers, bodyData: bodyData)
+            JLog.error("\(address):url:\(url) got invalid response: \(response)")
+            throw DeviceError.invalidHTTPResponseError
         }
-        throw DeviceError.connectionError
+
+        JLog.trace("\(address):url:\(url) got response: \(response.statusCode) \(response.allHeaderFields)")
+
+        let headers = response.allHeaderFields.compactMap { [$0: $1] as? [String: String] }
+
+        switch response.statusCode
+        {
+            case 200: return (headers: headers, bodyData: data)
+            case 400 ... 499: throw DeviceError.loginFailed
+            default: throw DeviceError.invalidHTTPResponseError
+        }
     }
 }

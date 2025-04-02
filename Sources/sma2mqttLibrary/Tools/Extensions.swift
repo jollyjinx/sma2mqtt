@@ -58,7 +58,10 @@ public extension Data
     {
         var string: String = hexDump + "\n"
 
-        for (offset, value) in enumerated() { string += String(format: "%04d: 0x%02x %03d c:%c\n", offset, value, value, value > 31 && value < 127 ? value : 32) }
+        for (offset, value) in enumerated()
+        {
+            string += String(format: "%04d: 0x%02x %03d c:%c\n", offset, value, value, value > 31 && value < 127 ? value : 32)
+        }
         return string
     }
 }

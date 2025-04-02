@@ -44,6 +44,10 @@ final class SMAObjectTests: XCTestCase
 
     func testSMAInverter() async throws
     {
+        let _ = try await SMADevice(address: "10.112.16.10", userright: .user, password: inverterPassword, publisher: nil)
+        let _ = try await SMADevice(address: "10.112.16.13", userright: .user, password: inverterPassword, publisher: nil)
+        let _ = try await SMADevice(address: "10.112.16.14", userright: .user, password: inverterPassword, publisher: nil)
+        let _ = try await SMADevice(address: "10.112.16.15", userright: .user, password: inverterPassword, publisher: nil)
         let _ = try await SMADevice(address: inverterAddress, userright: .user, password: inverterPassword, publisher: nil)
     }
 
