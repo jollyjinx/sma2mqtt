@@ -8,7 +8,7 @@ import Testing
 
 @testable import sma2mqttLibrary
 
-struct sma2mqttLibraryTests
+struct DeviceTests
 {
     @Test
     func sunnymanagerTest() async throws
