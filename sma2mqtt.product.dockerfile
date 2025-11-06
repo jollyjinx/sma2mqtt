@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM swift:latest AS sma2mqttbuilder
+FROM swift:latest AS sma2mqttbuilder
 WORKDIR /swift
 COPY Package.swift ./Package.swift
 COPY Sources ./Sources
@@ -26,5 +26,5 @@ CMD ["sma2mqtt"]
 # docker buildx inspect --bootstrap
 # version=development
 # docker buildx build --no-cache --platform linux/amd64,linux/arm64 --tag "jollyjinx/sma2mqtt:$version" --file sma2mqtt.product.dockerfile --push .
-# docker buildx build --no-cache --platform linux/amd64,linux/arm64 --tag jollyjinx/sma2mqtt:latest --tag "jollyjinx/sma2mqtt:$version" --file sma2mqtt.product.dockerfile --push .
+# docker buildx build --no-cache --platform linux/amd64,linux/arm64 --tag jollyjinx/sma2mqtt:latest --tag jollyjinx/sma2mqtt:development --tag "jollyjinx/sma2mqtt:3.2.0" --file sma2mqtt.product.dockerfile --push .
 # docker buildx imagetools inspect jollyjinx/sma2mqtt:latest
