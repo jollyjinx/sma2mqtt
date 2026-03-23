@@ -21,7 +21,8 @@ The --net option is included in this command to specify a separate network for S
 
 ### Available Docker Tags
 - `latest`: Published from the `main` branch for both ARM64 and x86.
-- `development`: Published from the `development` branch, the `development` tag, or `*-development*` version tags.
+- `development-branch`: Published from the `development` branch as a fast branch image.
+- `development`: Published from the `development` tag or `*-development*` version tags.
 - `beta`: Published from the `beta` tag or `*-beta*` version tags.
 - `1.2.3` and `1.2.3-beta.1`: Published from matching Git tags.
 

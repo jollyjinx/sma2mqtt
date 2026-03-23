@@ -1,12 +1,12 @@
-FROM swift:latest AS sma2mqttbuilder
+FROM swift:6.2 AS sma2mqttbuilder
 WORKDIR /swift
-COPY Package.swift ./Package.swift
+ENV SWIFTPM_BUILD_TESTS=false
+COPY Package.swift Package.resolved ./
 COPY Sources ./Sources
-COPY Tests ./Tests
-RUN swift build -c release
+RUN swift build -c release --product sma2mqtt
 RUN chmod -R u+rwX,go+rX-w /swift/.build/release/
 
-FROM swift:slim
+FROM swift:6.2-slim
 WORKDIR /sma2mqtt
 ENV PATH="$PATH:/sma2mqtt"
 COPY --from=sma2mqttbuilder /swift/.build/release/sma2mqtt .
