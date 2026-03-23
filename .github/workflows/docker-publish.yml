@@ -1,4 +1,4 @@
-name: Build and Push Docker Image
+name: Build and Publish Docker Image
 
 on:
   push:
@@ -6,12 +6,12 @@ on:
       - main
       - development
     tags:
-      - '*.*.*'
-      - '*.*.*-*'
-      - 'v*.*.*'
-      - 'v*.*.*-*'
-      - 'beta'
-      - 'development'
+      - "*.*.*"
+      - "*.*.*-*"
+      - "v*.*.*"
+      - "v*.*.*-*"
+      - "beta"
+      - "development"
 
 env:
   REGISTRY: ghcr.io
@@ -20,7 +20,7 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
 
     steps:
@@ -30,17 +30,7 @@ jobs:
       - name: Set image name to lowercase
         run: echo "IMAGE_NAME=${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
 
-      - name: Determine build platforms
-        id: platforms
-        run: |
-          if [ "${GITHUB_REF}" = "refs/heads/development" ]; then
-            echo "platforms=linux/amd64" >> "$GITHUB_OUTPUT"
-          else
-            echo "platforms=linux/amd64,linux/arm64" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Set up QEMU
-        if: contains(steps.platforms.outputs.platforms, 'arm64')
         uses: docker/setup-qemu-action@v4
 
       - name: Set up Docker Buildx
@@ -60,19 +50,60 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
-            type=raw,value=development-branch,enable=${{ github.ref == 'refs/heads/development' }}
-            type=raw,value=development,enable=${{ github.ref == 'refs/tags/development' || contains(github.ref_name, '-development') }}
+            type=raw,value=main,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=development,enable=${{ github.ref == 'refs/heads/development' || github.ref == 'refs/tags/development' || contains(github.ref_name, '-development') }}
             type=raw,value=beta,enable=${{ github.ref == 'refs/tags/beta' || contains(github.ref_name, '-beta') }}
             type=semver,pattern={{version}},value=${{ github.ref_name }},enable=${{ startsWith(github.ref, 'refs/tags/') && github.ref_name != 'beta' && github.ref_name != 'development' }}
 
       - name: Build and push Docker image
+        id: build
         uses: docker/build-push-action@v7
         with:
           context: .
           file: ./sma2mqtt.product.dockerfile
-          platforms: ${{ steps.platforms.outputs.platforms }}
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
-          cache-to: type=gha,mode=min
+          cache-to: type=gha,mode=max
+
+      - name: Prepare release metadata
+        if: startsWith(github.ref, 'refs/tags/')
+        id: release
+        run: |
+          set -euo pipefail
+
+          prerelease=false
+          case "${GITHUB_REF_NAME}" in
+            development|*alpha*|*beta*|*gamma*) prerelease=true ;;
+          esac
+
+          echo "prerelease=${prerelease}" >> "$GITHUB_OUTPUT"
+
+      - name: Write release asset metadata
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          set -euo pipefail
+
+          {
+            echo "Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
+            echo "Release tag: ${{ github.ref_name }}"
+            echo "Digest: ${{ steps.build.outputs.digest }}"
+            echo
+            echo "Published tags:"
+            printf '%s\n' '${{ steps.meta.outputs.tags }}' | sed 's/^/  /'
+          } > DOCKER-IMAGE.txt
+
+      - name: Create or update GitHub release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          draft: false
+          prerelease: ${{ steps.release.outputs.prerelease == 'true' }}
+          body_path: DOCKER-IMAGE.txt
+          overwrite_files: true
+          files: |
+            DOCKER-IMAGE.txt
