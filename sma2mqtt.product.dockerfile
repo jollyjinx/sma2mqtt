@@ -11,14 +11,15 @@ COPY Tests ./Tests
 RUN --mount=type=cache,target=/root/.cache \
     --mount=type=cache,target=/root/.swiftpm \
     --mount=type=cache,target=/swift/.build \
-    swift build -c release --product sma2mqtt
-RUN chmod -R u+rwX,go+rX-w /swift/.build/release/
+    swift build -c release --product sma2mqtt \
+    && install -Dm755 /swift/.build/release/sma2mqtt /out/sma2mqtt \
+    && cp -R /swift/.build/release/sma2mqtt_sma2mqttLibrary.resources /out/sma2mqtt_sma2mqttLibrary.resources
 
 FROM swift:6.2-slim
 WORKDIR /sma2mqtt
 ENV PATH="$PATH:/sma2mqtt"
-COPY --from=sma2mqttbuilder /swift/.build/release/sma2mqtt .
-COPY --from=sma2mqttbuilder /swift/.build/release/sma2mqtt_sma2mqttLibrary.resources ./sma2mqtt_sma2mqttLibrary.resources
+COPY --from=sma2mqttbuilder /out/sma2mqtt .
+COPY --from=sma2mqttbuilder /out/sma2mqtt_sma2mqttLibrary.resources ./sma2mqtt_sma2mqttLibrary.resources
 CMD ["sma2mqtt"]
 
 # create your own docker image:
