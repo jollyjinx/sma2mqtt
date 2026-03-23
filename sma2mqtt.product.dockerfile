@@ -1,7 +1,7 @@
 FROM swift:6.2 AS sma2mqttbuilder
 WORKDIR /swift
 ENV SWIFTPM_BUILD_TESTS=false
-COPY Package.swift Package.resolved ./
+COPY Package.swift ./
 COPY Sources ./Sources
 RUN swift build -c release --product sma2mqtt
 RUN chmod -R u+rwX,go+rX-w /swift/.build/release/
