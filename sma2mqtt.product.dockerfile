@@ -3,6 +3,7 @@ WORKDIR /swift
 ENV SWIFTPM_BUILD_TESTS=false
 COPY Package.swift ./
 COPY Sources ./Sources
+COPY Tests ./Tests
 RUN swift build -c release --product sma2mqtt
 RUN chmod -R u+rwX,go+rX-w /swift/.build/release/
 
