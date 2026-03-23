@@ -1,7 +1,15 @@
 .git
 .github
 .build
+.swiftpm
+.vscode
+.DS_Store
+.bash_history
 Images
+LICENSE
 README.md
+SMA Protocol.md
+Temp
+build.sh
 multicast.entitlements
 sma2mqtt.log

@@ -1,10 +1,17 @@
+# syntax=docker/dockerfile:1.7
 FROM swift:6.2 AS sma2mqttbuilder
 WORKDIR /swift
 ENV SWIFTPM_BUILD_TESTS=false
 COPY Package.swift ./
+RUN --mount=type=cache,target=/root/.cache \
+    --mount=type=cache,target=/root/.swiftpm \
+    swift package resolve
 COPY Sources ./Sources
 COPY Tests ./Tests
-RUN swift build -c release --product sma2mqtt
+RUN --mount=type=cache,target=/root/.cache \
+    --mount=type=cache,target=/root/.swiftpm \
+    --mount=type=cache,target=/swift/.build \
+    swift build -c release --product sma2mqtt
 RUN chmod -R u+rwX,go+rX-w /swift/.build/release/
 
 FROM swift:6.2-slim

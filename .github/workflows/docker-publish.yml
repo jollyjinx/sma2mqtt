@@ -1,5 +1,9 @@
 name: Build and Publish Docker Image
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     branches:
@@ -65,8 +69,8 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=sma2mqtt
+          cache-to: type=gha,mode=max,scope=sma2mqtt
 
       - name: Prepare release metadata
         if: startsWith(github.ref, 'refs/tags/')
