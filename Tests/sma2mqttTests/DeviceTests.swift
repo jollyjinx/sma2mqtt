@@ -4,24 +4,28 @@
 
 import BinaryCoder
 import JLog
-import Testing
-
 @testable import sma2mqttLibrary
+import XCTest
 
-struct DeviceTests
+final class DeviceTests: XCTestCase
 {
-    @Test
-    func sunnymanagerTest() async throws
+    func testSunnyManager() async throws
     {
+        guard ProcessInfo.processInfo.shouldRunIntegrationTests
+        else
+        {
+            throw XCTSkip("Requires --run-integration-tests or SMA_INTEGRATION_TESTS=1.")
+        }
+
         JLog.loglevel = .trace
 
         let smaDevice = try await SMADevice(address: "10.112.16.10")
+        let isHomeManager = await smaDevice.isHomeManager
 
-        #expect(await smaDevice.isHomeManager == true)
+        XCTAssertTrue(isHomeManager)
     }
 
-    @Test
-    func sunnyDiscoveryPacketResponse() async throws
+    func testSunnyDiscoveryPacketResponse() throws
     {
         let data = """
         534d 4100 0004 02a0 0000 0001 0002 0000 0001 0004 0010 0001 0003 0004 0020 0000 0001 0004 0030 0a70 100a 0004 0040 0000 0000 0002 0070 ef0c 0001 0080 0000 0000 00
@@ -41,8 +45,8 @@ struct DeviceTests
         }
         catch
         {
-            #expect(false)
+            XCTFail("Could not decode discovery packet response: \(error)")
         }
-        #expect(binaryDecoder.isAtEnd)
+        XCTAssertTrue(binaryDecoder.isAtEnd)
     }
 }

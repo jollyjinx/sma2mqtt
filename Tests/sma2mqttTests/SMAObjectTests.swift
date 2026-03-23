@@ -2,13 +2,11 @@
 //  SMAObjectTests.swift
 //
 
-import XCTest
-
-import class Foundation.Bundle
-
 @testable import BinaryCoder
+import class Foundation.Bundle
 @testable import JLog
 @testable import sma2mqttLibrary
+import XCTest
 
 final class SMAObjectTests: XCTestCase
 {
@@ -26,7 +24,7 @@ final class SMAObjectTests: XCTestCase
         // Put teardown code here. This method is called after the invocation of each test method in the class.
     }
 
-    func testSMADataObject() throws
+    func testSMADataObject()
     {
         let dataObjects = SMADataObject.defaultDataObjects
 
@@ -44,14 +42,20 @@ final class SMAObjectTests: XCTestCase
 
     func testSMAInverter() async throws
     {
-        let _ = try await SMADevice(address: "10.112.16.10", userright: .user, password: inverterPassword, publisher: nil)
-        let _ = try await SMADevice(address: "10.112.16.13", userright: .user, password: inverterPassword, publisher: nil)
-        let _ = try await SMADevice(address: "10.112.16.14", userright: .user, password: inverterPassword, publisher: nil)
-        let _ = try await SMADevice(address: "10.112.16.15", userright: .user, password: inverterPassword, publisher: nil)
-        let _ = try await SMADevice(address: inverterAddress, userright: .user, password: inverterPassword, publisher: nil)
+        guard ProcessInfo.processInfo.shouldRunIntegrationTests
+        else
+        {
+            throw XCTSkip("Requires --run-integration-tests or SMA_INTEGRATION_TESTS=1.")
+        }
+
+        _ = try await SMADevice(address: "10.112.16.10", userright: .user, password: inverterPassword, publisher: nil)
+        _ = try await SMADevice(address: "10.112.16.13", userright: .user, password: inverterPassword, publisher: nil)
+        _ = try await SMADevice(address: "10.112.16.14", userright: .user, password: inverterPassword, publisher: nil)
+        _ = try await SMADevice(address: "10.112.16.15", userright: .user, password: inverterPassword, publisher: nil)
+        _ = try await SMADevice(address: inverterAddress, userright: .user, password: inverterPassword, publisher: nil)
     }
 
-    func testSMAdefinition() async throws
+    func testSMAdefinition()
     {
         let smaObjectDefinitions = SMADataObject.defaultDataObjects
         let keys = smaObjectDefinitions.keys.compactMap { $0 as String }
@@ -59,13 +63,13 @@ final class SMAObjectTests: XCTestCase
         XCTAssertNotNil(keys.first, "Incorrectly loaded smaObjectDefinitions")
     }
 
-    func testPassword() async throws
+    func testPassword()
     {
         let encoded = SMAPacketGenerator.encodePassword(password: "password", userRight: .user)
         XCTAssertEqual(encoded.hexStringToData(), "f8e9 fbfb fff7 faec 8888 8888".hexStringToData())
     }
 
-    func testDiscoveryPacket() async throws
+    func testDiscoveryPacket()
     {
         let encoded = SMAPacketGenerator.generateDiscoveryPacket()
         XCTAssertEqual(encoded.hexStringToData(), "534d 4100 0004 02a0 ffff ffff 0000 0020 0000".hexStringToData())

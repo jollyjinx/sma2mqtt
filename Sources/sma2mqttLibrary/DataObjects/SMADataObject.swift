@@ -37,8 +37,15 @@ public struct SMADataObject: Sendable
 
 extension SMADataObject // Descriptions
 {
-    var id: String { "\(String(object, radix: 16))_\(String(lri, radix: 16))" }
-    var description: String { "\(id): \(json)" }
+    var id: String
+    {
+        "\(String(object, radix: 16))_\(String(lri, radix: 16))"
+    }
+
+    var description: String
+    {
+        "\(id): \(json)"
+    }
 }
 
 extension SMADataObject: Decodable, Encodable
@@ -99,14 +106,12 @@ extension SMADataObject
             let jsonData = try Data(contentsOf: url)
             let translations = try JSONDecoder().decode([String: String?].self, from: jsonData)
 
-            return Dictionary(
-                uniqueKeysWithValues: translations.compactMap
-                {
-                    guard let intvalue = Int($0) else { return nil }
-                    guard let stringvalue = $1 else { return nil }
-                    return (intvalue, stringvalue)
-                }
-            )
+            return Dictionary(uniqueKeysWithValues: translations.compactMap
+            {
+                guard let intvalue = Int($0) else { return nil }
+                guard let stringvalue = $1 else { return nil }
+                return (intvalue, stringvalue)
+            })
         }
         catch { JLog.error("Could not create Translation_Names Objects \(error)") }
         return [Int: String]()
@@ -117,7 +122,7 @@ extension SMADataObject
 {
     public static let defaultDataObjects: [String: SMADataObject] = {
         let url = Bundle.module.url(forResource: "sma.data.objectMetaData", withExtension: "json")!
-        let jsonString = try! String(contentsOf: url)
+        let jsonString = try! String(contentsOf: url, encoding: .utf8)
         return try! dataObjects(from: jsonString)
     }()
 
@@ -137,9 +142,7 @@ extension SMADataObject
             //           JLog.debug("Replaced json:\(replaced)")
             if let jsonData = replaced.data(using: .utf8)
             {
-                let jsonObjects = try JSONDecoder().decode([String: SMADataObject].self, from: jsonData)
-
-                return jsonObjects
+                return try JSONDecoder().decode([String: SMADataObject].self, from: jsonData)
             }
         }
         catch

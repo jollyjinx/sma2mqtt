@@ -2,13 +2,11 @@
 //  TestHelpers.swift
 //
 
-import XCTest
-
-import class Foundation.Bundle
-
 @testable import BinaryCoder
+import class Foundation.Bundle
 @testable import JLog
 @testable import sma2mqttLibrary
+import XCTest
 
 struct DataSplitter: Sequence, IteratorProtocol
 {
@@ -82,6 +80,16 @@ extension Data
 
 extension ProcessInfo
 {
+    var shouldRunIntegrationTests: Bool
+    {
+        hasArgument("--run-integration-tests") || environment["SMA_INTEGRATION_TESTS"] == "1"
+    }
+
+    func hasArgument(_ matchingArgument: String) -> Bool
+    {
+        arguments.contains(matchingArgument)
+    }
+
     func value(forArgument matchingArgument: String) -> String?
     {
         var previousMatched = false
