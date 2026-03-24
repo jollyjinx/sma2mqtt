@@ -31,16 +31,17 @@ public actor SMALighthouse
         case failed(String, Date)
 
         var asyncDescription: String
-        { get async
         {
-            switch self
+            get async
             {
-                case .inProgress: return "inProgress()\n"
-                case let .ready(smaDevice): let deviceDescription = await smaDevice.asyncDescription
-                    return "ready(\(smaDevice.address)): \(deviceDescription)\n"
-                case let .failed(address, date): return "failed(\(address),\(date))\n"
+                switch self
+                {
+                    case .inProgress: return "inProgress()\n"
+                    case let .ready(smaDevice): let deviceDescription = await smaDevice.asyncDescription
+                        return "ready(\(smaDevice.address)): \(deviceDescription)\n"
+                    case let .failed(address, date): return "failed(\(address),\(date))\n"
+                }
             }
-        }
         }
     }
 
@@ -84,21 +85,30 @@ public actor SMALighthouse
 public extension SMALighthouse
 {
     var asyncDescription: String
-    { get async
     {
-        var cacheDescription = [String]()
-        for entry in smaDeviceCache
+        get async
         {
-            await cacheDescription.append(entry.value.asyncDescription)
-        }
+            var cacheDescription = [String]()
+            for entry in smaDeviceCache
+            {
+                await cacheDescription.append(entry.value.asyncDescription)
+            }
 
-        return "SMALighthouse:\ninterestingPaths:\(interestingPaths.json)\nsmaDeviceCache: \(cacheDescription.joined(separator: "\n"))"
-    }
+            return "SMALighthouse:\ninterestingPaths:\(interestingPaths.json)\nsmaDeviceCache: \(cacheDescription.joined(separator: "\n"))"
+        }
     }
 
     func remote(for remoteAddress: String) async -> SMADevice?
     {
-        if let cacheEntry = smaDeviceCache[remoteAddress]
+        let normalizedAddress = remoteAddress.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !normalizedAddress.isEmpty
+        else
+        {
+            JLog.error("ignoring packet with empty remoteAddress")
+            return nil
+        }
+
+        if let cacheEntry = smaDeviceCache[normalizedAddress]
         {
             switch cacheEntry
             {
@@ -107,8 +117,8 @@ public extension SMALighthouse
                     {
                         return smaDevice
                     }
-                    JLog.error("\(remoteAddress) is not responding - purging from cache")
-                    smaDeviceCache.removeValue(forKey: remoteAddress)
+                    JLog.error("\(normalizedAddress) is not responding - purging from cache")
+                    smaDeviceCache.removeValue(forKey: normalizedAddress)
 
                 case let .inProgress(task):
                     return try? await task.value
@@ -116,30 +126,30 @@ public extension SMALighthouse
                 case let .failed(address, date):
                     if date.isWithin(timeInterval: 30.0)
                     {
-                        JLog.info("still ignoring:\(address) == \(remoteAddress)")
+                        JLog.info("still ignoring:\(address) == \(normalizedAddress)")
                         return nil
                     }
-                    JLog.info("renabling:\(remoteAddress)")
-                    smaDeviceCache.removeValue(forKey: remoteAddress)
+                    JLog.info("renabling:\(normalizedAddress)")
+                    smaDeviceCache.removeValue(forKey: normalizedAddress)
             }
         }
 
-        JLog.debug("Got new SMA Device with remoteAddress:\(remoteAddress)")
+        JLog.debug("Got new SMA Device with remoteAddress:\(normalizedAddress)")
 
-        let task = Task { try await SMADevice(address: remoteAddress, userright: .user, password: password, publisher: mqttPublisher, interestingPaths: interestingPaths, bindAddress: bindAddress, udpEmitter: mcastReceiver) }
-        smaDeviceCache[remoteAddress] = .inProgress(task)
+        let task = Task { try await SMADevice(address: normalizedAddress, userright: .user, password: password, publisher: mqttPublisher, interestingPaths: interestingPaths, bindAddress: bindAddress, udpEmitter: mcastReceiver) }
+        smaDeviceCache[normalizedAddress] = .inProgress(task)
 
         do
         {
             let smaDevice = try await task.value
-            smaDeviceCache[remoteAddress] = .ready(smaDevice)
+            smaDeviceCache[normalizedAddress] = .ready(smaDevice)
             return smaDevice
         }
         catch
         {
-            JLog.error("\(remoteAddress): was not able to initialize:\(error) - ignoring address")
+            JLog.error("\(normalizedAddress): was not able to initialize:\(error) - ignoring address")
 
-            smaDeviceCache[remoteAddress] = .failed(remoteAddress, Date())
+            smaDeviceCache[normalizedAddress] = .failed(normalizedAddress, Date())
             return nil
         }
     }

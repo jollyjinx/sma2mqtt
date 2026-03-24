@@ -666,7 +666,55 @@ extension SMADevice
     @discardableResult
     func data(forPath path: String, headers: HTTPHeaders = .init(), httpMethod: HTTPMethod = .GET, requestBody: Data? = nil) async throws -> (headers: HTTPHeaders, bodyData: Data)
     {
-        guard var url = URL(string: "\(scheme)://\(address)\(path.hasPrefix("/") ? path : "/" + path)")
+        let normalizedPath = path.hasPrefix("/") ? path : "/" + path
+
+        func makeURL(for scheme: String) -> URL?
+        {
+            URL(string: "\(scheme)://\(address)\(normalizedPath)")
+        }
+
+        func executeRequest(to url: URL, headers: HTTPHeaders, httpMethod: HTTPMethod, requestBody: Data?) async throws -> (headers: HTTPHeaders, bodyData: Data)
+        {
+            JLog.debug("\(address):requesting: \(url) for \(address)")
+            var request = HTTPClientRequest(url: url.absoluteString)
+            request.method = httpMethod
+
+            request.headers.add(contentsOf: headers)
+
+            if let requestBody
+            {
+                request.body = .bytes(requestBody)
+            }
+            JLog.trace("\(address):url:\(url) requesting:\(request)")
+
+            lastRequestSentDate = Date()
+            let response = try await httpClient.execute(request, timeout: httpTimeout)
+            lastReceivedValidPacket = Date()
+
+            JLog.trace("\(address):url:\(url) got response: \(response)")
+
+            if response.status == .ok
+            {
+                var bodyData = Data()
+
+                do
+                {
+                    for try await buffer in response.body
+                    {
+                        bodyData.append(Data(buffer: buffer))
+                    }
+                    JLog.trace("\(address):url:\(url) receivedData:\(bodyData.count)")
+                }
+                catch
+                {
+                    JLog.trace("\(address):url:\(url) Error: \(error) receivedData:\(bodyData.count)")
+                }
+                return (headers: response.headers, bodyData: bodyData)
+            }
+            throw DeviceError.connectionError
+        }
+
+        guard var url = makeURL(for: scheme)
         else
         {
             throw DeviceError.invalidURLError
@@ -677,43 +725,22 @@ extension SMADevice
             url = url.byAppendingQueryItems([URLQueryItem(name: "sid", value: sessionid)]) ?? url
         }
 
-        JLog.debug("\(address):requesting: \(url) for \(address)")
-        var request = HTTPClientRequest(url: url.absoluteString)
-        request.method = httpMethod
-
-        request.headers.add(contentsOf: headers)
-
-        if let requestBody
+        do
         {
-            request.body = .bytes(requestBody)
+            return try await executeRequest(to: url, headers: headers, httpMethod: httpMethod, requestBody: requestBody)
         }
-        JLog.trace("\(address):url:\(url) requesting:\(request)")
-
-        lastRequestSentDate = Date()
-
-        let response = try await httpClient.execute(request, timeout: httpTimeout)
-        lastReceivedValidPacket = Date()
-
-        JLog.trace("\(address):url:\(url) got response: \(response)")
-
-        if response.status == .ok
+        catch
         {
-            var bodyData = Data()
+            guard scheme == "https",
+                  let fallbackURL = makeURL(for: "http")
+            else
+            {
+                throw error
+            }
 
-            do
-            {
-                for try await buffer in response.body
-                {
-                    bodyData.append(Data(buffer: buffer))
-                }
-                JLog.trace("\(address):url:\(url) receivedData:\(bodyData.count)")
-            }
-            catch
-            {
-                JLog.trace("\(address):url:\(url) Error: \(error) receivedData:\(bodyData.count)")
-            }
-            return (headers: response.headers, bodyData: bodyData)
+            JLog.notice("\(address): https request failed for \(normalizedPath), retrying with http")
+            scheme = "http"
+            return try await executeRequest(to: fallbackURL, headers: headers, httpMethod: httpMethod, requestBody: requestBody)
         }
-        throw DeviceError.connectionError
     }
 }
