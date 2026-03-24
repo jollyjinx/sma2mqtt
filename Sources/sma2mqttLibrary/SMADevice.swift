@@ -30,6 +30,7 @@ public actor SMADevice: Sendable
 
     let udpMinimumRequestInterval = 1.0 / 10.0 // 1 / maximumRequestsPerSecond
     let udpRequestTimeout = 5.0
+    let deviceNameQueryInterval = 60.0
     var currentRequestedObjectID: ObjectId = "UNKNOWN"
 
     let requestAllObjects: Bool
@@ -49,7 +50,11 @@ public actor SMADevice: Sendable
     var udpPacketCounter = 0x0000
 
     private var hasDeviceName = false
-    public var name: String { willSet { hasDeviceName = true } }
+    public var name: String
+    {
+        willSet { hasDeviceName = true }
+    }
+
     var isHomeManager = false
 
     private var refreshTask: Task<Void, Error>?
@@ -107,7 +112,10 @@ public actor SMADevice: Sendable
 
 public extension SMADevice
 {
-    var asyncDescription: String { get async { "SMADevice:\(address): id:\(id) init:\(initDate) lastReceivedValidPacket:\(lastReceivedValidPacket) lastRequestSentDate:\(lastRequestSentDate) udpPacketCounter:\(String(format: "0x%04x", udpPacketCounter)) isValid:\(isValid) queryQueue: \(queryQueue.json)" } }
+    var asyncDescription: String
+    {
+        get async { "SMADevice:\(address): id:\(id) init:\(initDate) lastReceivedValidPacket:\(lastReceivedValidPacket) lastRequestSentDate:\(lastRequestSentDate) udpPacketCounter:\(String(format: "0x%04x", udpPacketCounter)) isValid:\(isValid) queryQueue: \(queryQueue.json)" }
+    }
 
     var isValid: Bool
     {
@@ -250,8 +258,10 @@ public extension SMADevice
             JLog.debug("\(address): objectid:\(objectID) name:\(simpleObject.json)")
             queryQueue.retrieved(id: currentRequestedObjectID, success: true)
 
-            let path = name + "/\(simpleObject.path)"
+            let objectPath = simpleObject.path
+            let currentPath = name + "/\(objectPath)"
             var resultValues = [GetValuesResult.Value]()
+            var discoveredDeviceName: String?
 
             for value in netPacket.values
             {
@@ -277,16 +287,33 @@ public extension SMADevice
                         let resultValue = GetValuesResult.Value.stringValue(string)
                         resultValues.append(resultValue)
 
+                        if objectPath.hasSuffix("type-label/device-name")
+                        {
+                            let trimmedName = string.trimmingCharacters(in: .whitespacesAndNewlines)
+                            if !trimmedName.isEmpty
+                            {
+                                discoveredDeviceName = trimmedName
+                            }
+                        }
+
                     case let .tags(tags):
                         let resultValue = GetValuesResult.Value.tagValues(tags.map { Int($0) })
                         resultValues.append(resultValue)
 
                     default:
-                        try? await publisher?.publish(to: path + ".\(value.number)", payload: value.json, qos: .atMostOnce, retain: false)
+                        try? await publisher?.publish(to: currentPath + ".\(value.number)", payload: value.json, qos: .atMostOnce, retain: false)
                         lastPublishedDate = Date()
                 }
             }
 
+            if let discoveredDeviceName,
+               name != discoveredDeviceName
+            {
+                JLog.notice("\(address): discovered device name:\(discoveredDeviceName)")
+                name = discoveredDeviceName
+            }
+
+            let path = name + "/\(objectPath)"
             let singleValue = PublishedValue(objectID: objectID, values: resultValues, tagTranslator: tagTranslator)
             try? await publisher?.publish(to: path, payload: singleValue.json, qos: .atMostOnce, retain: false)
             lastPublishedDate = Date()
@@ -404,27 +431,31 @@ extension SMADevice
             JLog.error("\(address): no sma definitions / translations found \(error)- using default")
         }
 
-        JLog.debug("\(address):SMA device found - logging in now")
+        seedUDPQueryQueue()
 
-        // login now
-        sessionid = try await httpLogin()
-        JLog.debug("\(address):Successfull login")
-
-        // get first time data
-        if let deviceName = try await getDeviceName(), !deviceName.isEmpty
+        do
         {
-            name = deviceName
+            JLog.debug("\(address):SMA device found - logging in now")
+
+            // login now
+            sessionid = try await httpLogin()
+            JLog.debug("\(address):Successfull login")
+
+            // get first time data
+            if let deviceName = try await getDeviceName(), !deviceName.isEmpty
+            {
+                name = deviceName
+            }
+
+            try await getInformationDictionary(atPath: "/dyn/getDashValues.json")
+            try await getInformationDictionary(atPath: "/dyn/getAllOnlValues.json")
+
+            try? await logout()
         }
-
-        try await getInformationDictionary(atPath: "/dyn/getDashValues.json")
-        try await getInformationDictionary(atPath: "/dyn/getAllOnlValues.json")
-
-        for objectid in tagTranslator.smaObjectDefinitions.keys
+        catch
         {
-            addObjectToQueryContinouslyIfNeeded(objectid: objectid)
+            JLog.error("\(address): HTTP bootstrap failed \(error) - continuing with UDP discovery")
         }
-
-        try? await logout()
     }
 
     func httpQueryInterestingObjects() async throws
@@ -548,6 +579,26 @@ extension SMADevice
         guard let (path, interval) = objectIdIsInteresting(objectid) else { return false }
 
         return queryQueue.addObjectToQuery(id: objectid, path: path, interval: interval)
+    }
+
+    @discardableResult
+    func addObjectToQuery(objectid: String, interval: TimeInterval) -> Bool
+    {
+        let path = "/" + (tagTranslator.objectsAndPaths[objectid]?.path ?? "unkown-id-\(objectid)")
+        return queryQueue.addObjectToQuery(id: objectid, path: path, interval: interval)
+    }
+
+    func seedUDPQueryQueue()
+    {
+        for objectid in tagTranslator.devicenameObjectIDs
+        {
+            _ = addObjectToQuery(objectid: objectid, interval: deviceNameQueryInterval)
+        }
+
+        for objectid in tagTranslator.smaObjectDefinitions.keys
+        {
+            addObjectToQueryContinouslyIfNeeded(objectid: objectid)
+        }
     }
 
     func _getInformationDictionary(atPath path: String, requestIds: [String] = [String]()) async throws -> [String: PublishedValue]
