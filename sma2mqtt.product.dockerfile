@@ -10,10 +10,13 @@ COPY Sources ./Sources
 COPY Tests ./Tests
 RUN --mount=type=cache,target=/root/.cache \
     --mount=type=cache,target=/root/.swiftpm \
-    --mount=type=cache,target=/swift/.build \
     swift build -c release --product sma2mqtt \
-    && install -Dm755 /swift/.build/release/sma2mqtt /out/sma2mqtt \
-    && cp -R /swift/.build/release/sma2mqtt_sma2mqttLibrary.resources /out/sma2mqtt_sma2mqttLibrary.resources
+    && binary_path="$(find /swift/.build -path '*/release/sma2mqtt' -type f | head -n 1)" \
+    && test -n "$binary_path" \
+    && install -Dm755 "$binary_path" /out/sma2mqtt \
+    && resource_path="$(find /swift/.build -type d -name 'sma2mqtt_sma2mqttLibrary.resources' | head -n 1)" \
+    && test -n "$resource_path" \
+    && cp -R "$resource_path" /out/sma2mqtt_sma2mqttLibrary.resources
 
 FROM swift:6.2-slim
 WORKDIR /sma2mqtt
