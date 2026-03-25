@@ -98,13 +98,14 @@ public extension SMALighthouse
         }
     }
 
-    func remote(for remoteAddress: String) async -> SMADevice?
+    func remote(for remoteAddress: String, sourceDescription: String? = nil) async -> SMADevice?
     {
         let normalizedAddress = remoteAddress.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !normalizedAddress.isEmpty
         else
         {
-            JLog.error("ignoring packet with empty remoteAddress")
+            let sourceDescription = sourceDescription ?? "<unknown>"
+            JLog.error("ignoring packet with empty remoteAddress, udp source:\(sourceDescription)")
             return nil
         }
 
@@ -166,13 +167,13 @@ public extension SMALighthouse
     {
         let packet = try await mcastReceiver.receiveNextPacket()
 
-        JLog.debug("Received packet from \(packet.sourceAddress)")
-        JLog.trace("Received packet from \(packet.sourceAddress): \(packet.data.hexDump)")
+        JLog.debug("Received packet from \(packet.sourceDescription)")
+        JLog.trace("Received packet from \(packet.sourceDescription): \(packet.data.hexDump)")
 
-        guard let smaDevice = await remote(for: packet.sourceAddress)
+        guard let smaDevice = await remote(for: packet.sourceAddress, sourceDescription: packet.sourceDescription)
         else
         {
-            JLog.debug("\(packet.sourceAddress) ignoring as failed to initialize device")
+            JLog.debug("\(packet.sourceDescription) ignoring as failed to initialize device")
             return
         }
 

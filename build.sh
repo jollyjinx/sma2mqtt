@@ -1,8 +1,20 @@
 #!/bin/bash
 #
-# This script downloads the current docker container
-# and starts it with autorestart.
-# I use this script on a raspberry pi running ubuntu
+# Starts the published `sma2mqtt` container locally.
+#
+# Purpose:
+# - stop and remove any existing `sma2mqtt` container
+# - pull/run the configured image tag
+# - launch it in detached mode with automatic restart enabled
+#
+# Typical use:
+# - run this on the target host that should keep `sma2mqtt` running
+# - set `INVERTER_PASSWORD` below before using it
+#
+# Notes:
+# - the script must run as a regular user, not as root
+# - it expects Docker to be installed and the `service16` network to exist
+# - by default it runs the `latest` image from Docker Hub
 #
 
 INVERTER_PASSWORD="MyPassword"

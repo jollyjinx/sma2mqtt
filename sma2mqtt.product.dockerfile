@@ -19,10 +19,17 @@ RUN --mount=type=cache,target=/root/.cache \
     && cp -R "$resource_path" /out/sma2mqtt_sma2mqttLibrary.resources
 
 FROM swift:6.2-slim
-WORKDIR /sma2mqtt
-ENV PATH="$PATH:/sma2mqtt"
-COPY --from=sma2mqttbuilder /out/sma2mqtt .
-COPY --from=sma2mqttbuilder /out/sma2mqtt_sma2mqttLibrary.resources ./sma2mqtt_sma2mqttLibrary.resources
+ENV APP_ROOT=/opt/sma2mqtt
+ENV STATE_ROOT=/var/lib/sma2mqtt
+ENV PATH="$PATH:${APP_ROOT}"
+RUN mkdir -p "${APP_ROOT}" "${STATE_ROOT}" \
+    && chmod 755 "${APP_ROOT}" \
+    && chmod 777 "${STATE_ROOT}"
+WORKDIR /var/lib/sma2mqtt
+COPY --from=sma2mqttbuilder /out/sma2mqtt ${APP_ROOT}/sma2mqtt
+COPY --from=sma2mqttbuilder /out/sma2mqtt_sma2mqttLibrary.resources ${APP_ROOT}/sma2mqtt_sma2mqttLibrary.resources
+RUN chmod 755 "${APP_ROOT}/sma2mqtt" \
+    && chmod -R a+rX "${APP_ROOT}/sma2mqtt_sma2mqttLibrary.resources"
 CMD ["sma2mqtt"]
 
 # create your own docker image:

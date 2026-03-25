@@ -24,6 +24,14 @@ public struct Packet: Sendable
 {
     let data: Data
     let sourceAddress: String
+    let sourcePort: UInt16
+
+    var sourceDescription: String
+    {
+        let normalizedAddress = sourceAddress.trimmingCharacters(in: .whitespacesAndNewlines)
+        let address = normalizedAddress.isEmpty ? "<empty>" : normalizedAddress
+        return "\(address):\(sourcePort)"
+    }
 }
 
 private enum MulticastReceiverError: Error
@@ -106,7 +114,52 @@ actor MulticastReceiver: UDPEmitter
         }
     }
 
-    private nonisolated func sockaddr_cast(_ ptr: UnsafeMutablePointer<some Any>) -> UnsafeMutablePointer<sockaddr> { UnsafeMutableRawPointer(ptr).assumingMemoryBound(to: sockaddr.self) }
+    private nonisolated func sockaddr_cast(_ ptr: UnsafeMutablePointer<some Any>) -> UnsafeMutablePointer<sockaddr>
+    {
+        UnsafeMutableRawPointer(ptr).assumingMemoryBound(to: sockaddr.self)
+    }
+
+    private nonisolated func endpointDescription(from socketAddress: inout sockaddr_in, socketAddressLength: socklen_t) throws -> (address: String, port: UInt16)
+    {
+        var hostBuffer = [CChar](repeating: 0, count: Int(NI_MAXHOST))
+        var serviceBuffer = [CChar](repeating: 0, count: Int(NI_MAXSERV))
+
+        let result = withUnsafePointer(to: &socketAddress)
+        {
+            $0.withMemoryRebound(to: sockaddr.self, capacity: 1)
+            {
+                getnameinfo($0,
+                            socketAddressLength,
+                            &hostBuffer,
+                            socklen_t(hostBuffer.count),
+                            &serviceBuffer,
+                            socklen_t(serviceBuffer.count),
+                            NI_NUMERICHOST | NI_NUMERICSERV)
+            }
+        }
+
+        let fallbackPort = UInt16(bigEndian: socketAddress.sin_port)
+        guard result == 0
+        else
+        {
+            var addr = socketAddress.sin_addr
+            var addrBuffer = [CChar](repeating: 0, count: Int(INET_ADDRSTRLEN))
+            guard let addrString = inet_ntop(AF_INET, &addr, &addrBuffer, socklen_t(addrBuffer.count))
+            else
+            {
+                throw MulticastReceiverError.addressStringConversionFailed(Int32(result))
+            }
+            return (String(cString: addrString), fallbackPort)
+        }
+
+        let hostLength = hostBuffer.firstIndex(of: 0) ?? hostBuffer.endIndex
+        let serviceLength = serviceBuffer.firstIndex(of: 0) ?? serviceBuffer.endIndex
+        let addressBytes = hostBuffer[..<hostLength].map(UInt8.init(bitPattern:))
+        let serviceBytes = serviceBuffer[..<serviceLength].map(UInt8.init(bitPattern:))
+        let address = String(decoding: addressBytes, as: UTF8.self)
+        let port = UInt16(String(decoding: serviceBytes, as: UTF8.self)) ?? fallbackPort
+        return (address, port)
+    }
 
     deinit
     {
@@ -120,7 +173,10 @@ actor MulticastReceiver: UDPEmitter
         isListening = true
     }
 
-    func stopListening() { isListening = false }
+    func stopListening()
+    {
+        isListening = false
+    }
 
     func shutdown()
     {
@@ -134,7 +190,10 @@ actor MulticastReceiver: UDPEmitter
         { continuation in
             DispatchQueue.global().async
             {
-                func sockaddr_cast(_ ptr: UnsafeMutablePointer<some Any>) -> UnsafeMutablePointer<sockaddr> { UnsafeMutableRawPointer(ptr).assumingMemoryBound(to: sockaddr.self) }
+                func sockaddr_cast(_ ptr: UnsafeMutablePointer<some Any>) -> UnsafeMutablePointer<sockaddr>
+                {
+                    UnsafeMutableRawPointer(ptr).assumingMemoryBound(to: sockaddr.self)
+                }
                 var socketAddress = sockaddr_in()
                 var socketAddressLength = socklen_t(MemoryLayout<sockaddr_in>.size)
                 JLog.debug("recvfrom")
@@ -144,11 +203,20 @@ actor MulticastReceiver: UDPEmitter
                 let bytesRead = recvfrom(self.socketFileDescriptor, receiveBuffer, self.bufferSize, 0, sockaddr_cast(&socketAddress), &socketAddressLength)
                 guard bytesRead != -1 else { continuation.resume(throwing: MulticastReceiverError.receiveError(errno)); return }
 
-                var addr = socketAddress.sin_addr // sa.sin_addr
-                var addrBuffer = [CChar](repeating: 0, count: Int(INET_ADDRSTRLEN))
-                guard let addrString = inet_ntop(AF_INET, &addr, &addrBuffer, socklen_t(INET_ADDRSTRLEN)) else { continuation.resume(throwing: MulticastReceiverError.addressStringConversionFailed(errno)); return }
+                let endpoint: (address: String, port: UInt16)
+                do
+                {
+                    endpoint = try self.endpointDescription(from: &socketAddress, socketAddressLength: socketAddressLength)
+                }
+                catch
+                {
+                    continuation.resume(throwing: error)
+                    return
+                }
 
-                let packet = Packet(data: Data(bytes: receiveBuffer, count: bytesRead), sourceAddress: String(cString: addrString))
+                let packet = Packet(data: Data(bytes: receiveBuffer, count: bytesRead),
+                                    sourceAddress: endpoint.address,
+                                    sourcePort: endpoint.port)
                 receiveBuffer.deallocate()
 
                 continuation.resume(returning: packet)

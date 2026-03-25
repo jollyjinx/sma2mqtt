@@ -121,9 +121,23 @@ extension SMADataObject
 extension SMADataObject
 {
     public static let defaultDataObjects: [String: SMADataObject] = {
-        let url = Bundle.module.url(forResource: "sma.data.objectMetaData", withExtension: "json")!
-        let jsonString = try! String(contentsOf: url, encoding: .utf8)
-        return try! dataObjects(from: jsonString)
+        guard let url = Bundle.module.url(forResource: "sma.data.objectMetaData", withExtension: "json")
+        else
+        {
+            JLog.error("Could not find sma.data.objectMetaData resource file")
+            return [String: SMADataObject]()
+        }
+
+        do
+        {
+            let jsonString = try String(contentsOf: url, encoding: .utf8)
+            return try dataObjects(from: jsonString)
+        }
+        catch
+        {
+            JLog.error("Could not create Data Objects from resource file \(url): \(error)")
+            return [String: SMADataObject]()
+        }
     }()
 
     static func dataObjects(from jsonString: String) throws -> [String: SMADataObject]
