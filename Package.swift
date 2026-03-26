@@ -1,4 +1,4 @@
-// swift-tools-version: 6.2
+// swift-tools-version: 6.3
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -12,10 +12,8 @@ let swiftSettings: [SwiftSetting] = [
 
 let package = Package(name: "sma2mqtt",
                       platforms: [
+                          .iOS(.v18),
                           .macOS(.v15),
-                          //        .iOS(.v13),
-                          //        .tvOS(.v13),
-                          //        .watchOS(.v6)
                       ],
                       products: [
                           .executable(name: "sma2mqtt", targets: ["sma2mqtt"]),

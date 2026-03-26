@@ -2,11 +2,9 @@
 //  TestHelpers.swift
 //
 
-@testable import BinaryCoder
-import class Foundation.Bundle
-@testable import JLog
-@testable import sma2mqttLibrary
-import XCTest
+import Foundation
+import JLog
+import Testing
 
 struct DataSplitter: Sequence, IteratorProtocol
 {
@@ -58,18 +56,17 @@ extension Data
     {
         var chunks: [Data] = []
         var pos = startIndex
-        // Find next occurrence of separator after current position:
+
         while let matchedRange = self[pos...].range(of: separator)
         {
-            // Append if non-empty:
             if matchedRange.lowerBound > pos
             {
                 chunks.append(self[(pos - separator.count) ..< matchedRange.lowerBound])
             }
-            // Update current position:
+
             pos = matchedRange.upperBound
         }
-        // Append final chunk, if non-empty:
+
         if pos < endIndex
         {
             chunks.append(self[pos ..< endIndex])
@@ -80,9 +77,21 @@ extension Data
 
 extension ProcessInfo
 {
+    static let defaultPcapFixturePath = "/Users/jolly/Documents/GitHub/sma2mqtt/Temp/Reverseengineering/pcaps/vlan2.20220618-1.pcap"
+
     var shouldRunIntegrationTests: Bool
     {
         hasArgument("--run-integration-tests") || environment["SMA_INTEGRATION_TESTS"] == "1"
+    }
+
+    var pcapFixturePath: String
+    {
+        value(forArgument: "--pcap-file") ?? Self.defaultPcapFixturePath
+    }
+
+    var hasPcapFixture: Bool
+    {
+        FileManager.default.fileExists(atPath: pcapFixturePath)
     }
 
     func hasArgument(_ matchingArgument: String) -> Bool

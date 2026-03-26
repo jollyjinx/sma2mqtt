@@ -19,11 +19,17 @@ public struct ObisValue: Decodable, Sendable
     let value: ObisType
 
     public var includeTopicInJSON = false
-    public var topic: String { ObisDefinition.obisDefinitions[id]?.topic ?? "id/\(id)" }
+    public var topic: String
+    {
+        ObisDefinition.obisDefinitions[id]?.topic ?? "id/\(id)"
+    }
 
     public enum MQTTVisibilty: String, Encodable, Decodable, Sendable { case invisible, visible, retained }
 
-    public var mqtt: MQTTVisibilty { ObisDefinition.obisDefinitions[id]?.mqtt ?? .invisible }
+    public var mqtt: MQTTVisibilty
+    {
+        ObisDefinition.obisDefinitions[id]?.mqtt ?? .invisible
+    }
 }
 
 extension ObisValue: Encodable
@@ -121,7 +127,7 @@ extension ObisValue: BinaryDecodable
         else
         {
             JLog.error("Unknown Obis Id: \(id)")
-            throw BinaryDecoder.Error.typeNotConformingToBinaryDecodable(ObisValue.self)
+            throw BinaryDecoder.Error.typeNotConformingToBinaryDecodable(String(reflecting: ObisValue.self))
         }
         JLog.trace("Decoded corretly \(id) \(value)")
 
