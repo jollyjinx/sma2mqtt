@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.7
-FROM swift:6.2 AS sma2mqttbuilder
+FROM swift:6.3 AS sma2mqttbuilder
 WORKDIR /swift
 ENV SWIFTPM_BUILD_TESTS=false
 COPY Package.swift ./
@@ -18,7 +18,7 @@ RUN --mount=type=cache,target=/root/.cache \
     && test -n "$resource_path" \
     && cp -R "$resource_path" /out/sma2mqtt_sma2mqttLibrary.resources
 
-FROM swift:6.2-slim
+FROM swift:6.3-slim
 ENV APP_ROOT=/opt/sma2mqtt
 ENV STATE_ROOT=/var/lib/sma2mqtt
 ENV PATH="$PATH:${APP_ROOT}"
