@@ -25,7 +25,7 @@ let package = Package(name: "sma2mqtt",
                           .package(url: "https://github.com/apple/swift-argument-parser", .upToNextMajor(from: "1.2.2")),
                           .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.18.0"),
                           .package(url: "https://github.com/swift-server-community/mqtt-nio", .upToNextMajor(from: "2.8.0")),
-                          .package(url: "https://github.com/jollyjinx/BinaryCoder", .upToNextMajor(from: "2.3.1")),
+                          .package(url: "https://github.com/jollyjinx/BinaryCoder", .upToNextMajor(from: "2.4.0")),
                           .package(url: "https://github.com/jollyjinx/JLog", .upToNextMajor(from: "0.0.7")),
                       ],
                       targets: [
