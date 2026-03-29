@@ -590,12 +590,12 @@ extension SMADevice
 
     func seedUDPQueryQueue()
     {
-        for objectid in tagTranslator.devicenameObjectIDs
+        for objectid in tagTranslator.devicenameObjectIDs.sorted()
         {
             _ = addObjectToQuery(objectid: objectid, interval: deviceNameQueryInterval)
         }
 
-        for objectid in tagTranslator.smaObjectDefinitions.keys
+        for objectid in tagTranslator.smaObjectDefinitions.keys.sorted()
         {
             addObjectToQueryContinouslyIfNeeded(objectid: objectid)
         }

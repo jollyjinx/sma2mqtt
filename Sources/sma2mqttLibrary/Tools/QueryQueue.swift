@@ -5,7 +5,12 @@
 import Foundation
 import JLog
 
-extension ObjectId: @retroactive Identifiable { public var id: ObjectId { self } }
+extension ObjectId: @retroactive Identifiable
+{ public var id: ObjectId
+    {
+        self
+    }
+}
 
 struct QueryObject
 {
@@ -26,7 +31,10 @@ struct QueryObject
 extension QueryObject: Codable {}
 extension QueryObject
 {
-    var isValid: Bool { state.isValid }
+    var isValid: Bool
+    {
+        state.isValid
+    }
 
     mutating func increaseError()
     {
@@ -104,7 +112,7 @@ extension ConnectionState
     }
 }
 
-struct QueryQueue: Sendable
+struct QueryQueue
 {
     let address: String
     let minimumRequestInterval: TimeInterval
@@ -112,6 +120,8 @@ struct QueryQueue: Sendable
     let maxErrors: Int
 
     private var objectsToQuery = [ObjectId: QueryObject]()
+    private var activeObjectIDsByPath = [String: ObjectId]()
+    private var fallbackObjectIDsByPath = [String: [ObjectId]]()
     private var objectsToQueryNext = DatedQueue<ObjectId>()
 
     enum QueryQueueError: Error
@@ -132,28 +142,59 @@ extension QueryQueue: Codable {}
 
 extension QueryQueue
 {
-    public var count: Int { objectsToQueryNext.count }
-    public var isEmpty: Bool { objectsToQueryNext.isEmpty }
-    public var allOjectIds: [ObjectId] { Array(objectsToQuery.keys) }
-    public var validObjectIds: [ObjectId] { objectsToQuery.values.compactMap { $0.isValid ? $0.id : nil } }
+    var count: Int
+    {
+        objectsToQueryNext.count
+    }
+
+    var isEmpty: Bool
+    {
+        objectsToQueryNext.isEmpty
+    }
+
+    var allOjectIds: [ObjectId]
+    {
+        objectsToQuery.keys.sorted()
+    }
+
+    var validObjectIds: [ObjectId]
+    {
+        activeObjectIDsByPath.values.compactMap
+        {
+            guard let object = objectsToQuery[$0], object.isValid else { return nil }
+            return object.id
+        }
+        .sorted()
+    }
 
     func contains(path: String) -> QueryObject?
     {
-        objectsToQuery.values.first(where: { $0.path == path })
+        guard let id = activeObjectIDsByPath[path] else { return nil }
+        return objectsToQuery[id]
     }
 
     mutating func addObjectToQuery(id: ObjectId, path: String, interval: TimeInterval) -> Bool
     {
+        if objectsToQuery[id] != nil
+        {
+            return false
+        }
+
+        let queryObject = QueryObject(id: id, path: path, interval: interval, maxErrors: maxErrors)
+
         if let inuse = contains(path: path)
         {
             if inuse.id != id
             {
-                JLog.notice("\(address): Won't query objectid:\(id) - object with same path:\(inuse.id) path:\(inuse.path)")
+                objectsToQuery[id] = queryObject
+                fallbackObjectIDsByPath[path, default: []].append(id)
+                JLog.debug("\(address): Registered fallback objectid:\(id) behind active objectid:\(inuse.id) path:\(inuse.path)")
             }
             return false
         }
 
-        objectsToQuery[id] = QueryObject(id: id, path: path, interval: interval, maxErrors: maxErrors)
+        objectsToQuery[id] = queryObject
+        activeObjectIDsByPath[path] = id
         objectsToQueryNext.insert(element: id, at: Date(timeIntervalSinceNow: interval / 100.0))
 
         return true
@@ -167,7 +208,13 @@ extension QueryQueue
 
     mutating func shouldRetry(id: ObjectId) throws
     {
-        guard objectsToQuery[id] != nil else { throw QueryQueueError.invalidAccess }
+        guard let object = objectsToQuery[id],
+              activeObjectIDsByPath[object.path] == id
+        else
+        {
+            throw QueryQueueError.invalidAccess
+        }
+
         objectsToQueryNext.insert(element: id, at: Date(timeIntervalSinceNow: retryInterval))
     }
 
@@ -188,14 +235,58 @@ extension QueryQueue
                 objectsToQuery[id] = object
 
             case false:
+                if let nextID = promoteFallbackIfAvailable(path: object.path, failedID: id)
+                {
+                    JLog.notice("\(address): invalid request for objectid:\(id) - switching path:\(object.path) to fallback objectid:\(nextID)")
+                    return
+                }
+
                 object.increaseError()
                 objectsToQuery[id] = object
 
                 if !object.isValid
                 {
                     JLog.error("\(address): too many errors retrieving id:\(id) - removing")
-                    objectsToQueryNext.remove(id)
+                    removeActiveObject(id: id, path: object.path)
                 }
+        }
+    }
+
+    private mutating func promoteFallbackIfAvailable(path: String, failedID: ObjectId) -> ObjectId?
+    {
+        guard var fallbackIDs = fallbackObjectIDsByPath[path],
+              let nextID = fallbackIDs.first
+        else
+        {
+            return nil
+        }
+
+        objectsToQueryNext.remove(failedID)
+        objectsToQuery.removeValue(forKey: failedID)
+
+        fallbackIDs.removeFirst()
+        if fallbackIDs.isEmpty
+        {
+            fallbackObjectIDsByPath.removeValue(forKey: path)
+        }
+        else
+        {
+            fallbackObjectIDsByPath[path] = fallbackIDs
+        }
+
+        activeObjectIDsByPath[path] = nextID
+        objectsToQueryNext.insert(element: nextID, at: Date())
+        return nextID
+    }
+
+    private mutating func removeActiveObject(id: ObjectId, path: String)
+    {
+        objectsToQueryNext.remove(id)
+        objectsToQuery.removeValue(forKey: id)
+
+        if activeObjectIDsByPath[path] == id
+        {
+            activeObjectIDsByPath.removeValue(forKey: path)
         }
     }
 }

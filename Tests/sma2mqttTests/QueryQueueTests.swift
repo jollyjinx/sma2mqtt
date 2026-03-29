@@ -129,4 +129,34 @@ struct QueryQueueTests
         queryQueue.retrieved(id: "0000_00000002", success: false)
         #expect(queryQueue.count == 2)
     }
+
+    @Test
+    func invalidRequestPromotesFallbackObjectForPath() async throws
+    {
+        var queryQueue = QueryQueue(address: "local", minimumRequestInterval: 0.0, retryInterval: 0.0, maxErrors: 3)
+
+        let firstWasAdded = queryQueue.addObjectToQuery(id: "0000_00000001", path: "/dc/power", interval: 0.0)
+        let fallbackWasActive = queryQueue.addObjectToQuery(id: "0000_00000002", path: "/dc/power", interval: 0.0)
+        #expect(firstWasAdded)
+        #expect(!fallbackWasActive)
+        #expect(queryQueue.count == 1)
+        #expect(queryQueue.allOjectIds == ["0000_00000001", "0000_00000002"])
+
+        let firstObjectID = try await queryQueue.waitForNextObjectId()
+        #expect(firstObjectID == "0000_00000001")
+
+        try queryQueue.shouldRetry(id: firstObjectID)
+        queryQueue.retrieved(id: firstObjectID, success: false)
+
+        let fallbackObjectID = try await queryQueue.waitForNextObjectId()
+        #expect(fallbackObjectID == "0000_00000002")
+        #expect(queryQueue.count == 1)
+        #expect(queryQueue.allOjectIds == ["0000_00000002"])
+
+        try queryQueue.shouldRetry(id: fallbackObjectID)
+        queryQueue.retrieved(id: fallbackObjectID, success: true)
+
+        let repeatedObjectID = try await queryQueue.waitForNextObjectId()
+        #expect(repeatedObjectID == "0000_00000002")
+    }
 }
