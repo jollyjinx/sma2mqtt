@@ -3,6 +3,7 @@
 //
 
 import ArgumentParser
+import Dispatch
 import Foundation
 import JLog
 import sma2mqttLibrary
@@ -16,6 +17,9 @@ extension JLog.Level: @retroactive ExpressibleByArgument {}
 
 @MainActor
 var globalLighthouse: SMALighthouse?
+
+@MainActor
+var globalSignalSources = [DispatchSourceSignal]()
 
 @main
 struct sma2mqtt: AsyncParsableCommand
@@ -56,10 +60,7 @@ struct sma2mqtt: AsyncParsableCommand
     func run() async throws
     {
         JLog.loglevel = logLevel
-        signal(SIGUSR1, SIG_IGN)
-        signal(SIGUSR1, handleSIGUSR1)
-        signal(SIGUSR2, SIG_IGN)
-        signal(SIGUSR2, handleSIGUSR2)
+        globalSignalSources = installSignalHandlers()
 
         if logLevel != defaultLoglevel
         {
@@ -100,36 +101,64 @@ struct sma2mqtt: AsyncParsableCommand
 
 func handleSIGUSR1(signal: Int32)
 {
-    DispatchQueue.main.async
-    {
-        JLog.notice("Received \(signal) signal.")
-        JLog.notice("Switching Log level from \(JLog.loglevel)")
-        switch JLog.loglevel
-        {
-            case .trace: JLog.loglevel = .info
-            case .debug: JLog.loglevel = .trace
-            case .info: JLog.loglevel = .debug
-            default: JLog.loglevel = .debug
-        }
-
-        JLog.notice("to \(JLog.loglevel)")
-        Task
-        {
-            let description = await globalLighthouse?.asyncDescription ?? "no Lighthouse"
-            JLog.notice("\(description)")
-        }
-    }
+    JLog.notice("Received \(signal) signal.")
+    JLog.notice("Switching Log level from \(JLog.loglevel)")
+    JLog.loglevel = nextLogLevel(after: JLog.loglevel)
+    JLog.notice("to \(JLog.loglevel)")
+    dumpLighthouseState()
 }
 
 func handleSIGUSR2(signal: Int32)
 {
     JLog.notice("Received \(signal) signal.")
-    DispatchQueue.main.async
+    dumpLighthouseState()
+}
+
+func nextLogLevel(after level: JLog.Level) -> JLog.Level
+{
+    switch level
+    {
+        case .trace: .info
+        case .debug: .trace
+        case .info: .debug
+        default: .debug
+    }
+}
+
+@MainActor
+func installSignalHandlers() -> [DispatchSourceSignal]
+{
+    signal(SIGUSR1, SIG_IGN)
+    signal(SIGUSR2, SIG_IGN)
+
+    let sigusr1 = DispatchSource.makeSignalSource(signal: SIGUSR1, queue: .main)
+    sigusr1.setEventHandler
     {
         Task
-        {
-            let description = await globalLighthouse?.asyncDescription ?? "no Lighthouse"
-            JLog.notice("\(description)")
+        { @MainActor in
+            handleSIGUSR1(signal: SIGUSR1)
         }
+    }
+    sigusr1.resume()
+
+    let sigusr2 = DispatchSource.makeSignalSource(signal: SIGUSR2, queue: .main)
+    sigusr2.setEventHandler
+    {
+        Task
+        { @MainActor in
+            handleSIGUSR2(signal: SIGUSR2)
+        }
+    }
+    sigusr2.resume()
+
+    return [sigusr1, sigusr2]
+}
+
+func dumpLighthouseState()
+{
+    Task
+    { @MainActor in
+        let description = await globalLighthouse?.asyncDescription ?? "no Lighthouse"
+        JLog.notice("\(description)")
     }
 }

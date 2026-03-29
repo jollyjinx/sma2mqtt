@@ -47,6 +47,7 @@ let package = Package(name: "sma2mqtt",
                                   swiftSettings: swiftSettings),
                           .testTarget(name: "sma2mqttTests",
                                       dependencies: [
+                                          "sma2mqtt",
                                           "sma2mqttLibrary",
                                           .product(name: "BinaryCoder", package: "BinaryCoder"),
                                           .product(name: "JLog", package: "JLog"),
