@@ -635,8 +635,10 @@ extension SMADevice
                 do
                 {
                     if hasDeviceName,
-                       addObjectToQueryContinouslyIfNeeded(objectid: objectId.key)
+                       let (path, interval) = objectIdIsInteresting(objectId.key)
                     {
+                        // Keep HTTP bootstrap publishing independent from queue seeding.
+                        _ = queryQueue.addObjectToQuery(id: objectId.key, path: path, interval: interval)
                         try await publisher?.publish(to: mqttPath, payload: singleValue.json, qos: .atMostOnce, retain: false)
                         lastPublishedDate = Date()
                     }

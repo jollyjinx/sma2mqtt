@@ -45,6 +45,15 @@ struct SMAObjectTests
     }
 
     @Test
+    func stableSunnyBoy4StringPaths()
+    {
+        let objectsAndPaths = SMATagTranslator.shared.objectsAndPaths
+
+        #expect(objectsAndPaths["6400_00456B00"]?.path == "dc-side/dc-measurements/energy-dc-input-a")
+        #expect(objectsAndPaths["6400_00456C00"]?.path == "dc-side/dc-measurements/energy-dc-input-b")
+    }
+
+    @Test
     func testPassword()
     {
         let encoded = SMAPacketGenerator.encodePassword(password: "password", userRight: .user)
