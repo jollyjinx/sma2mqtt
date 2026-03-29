@@ -173,6 +173,49 @@ extension QueryQueue
         return objectsToQuery[id]
     }
 
+    @discardableResult
+    mutating func promoteObjectToActiveQuery(id: ObjectId, path: String, interval: TimeInterval) -> Bool
+    {
+        if objectsToQuery[id] == nil
+        {
+            objectsToQuery[id] = QueryObject(id: id, path: path, interval: interval, maxErrors: maxErrors)
+        }
+
+        guard let activeID = activeObjectIDsByPath[path]
+        else
+        {
+            activeObjectIDsByPath[path] = id
+            objectsToQueryNext.insert(element: id, at: Date())
+            return true
+        }
+
+        guard activeID != id
+        else
+        {
+            return false
+        }
+
+        objectsToQueryNext.remove(activeID)
+        objectsToQueryNext.remove(id)
+
+        var fallbackIDs = fallbackObjectIDsByPath[path, default: []]
+        fallbackIDs.removeAll { $0 == id || $0 == activeID }
+        fallbackIDs.insert(activeID, at: 0)
+
+        if fallbackIDs.isEmpty
+        {
+            fallbackObjectIDsByPath.removeValue(forKey: path)
+        }
+        else
+        {
+            fallbackObjectIDsByPath[path] = fallbackIDs
+        }
+
+        activeObjectIDsByPath[path] = id
+        objectsToQueryNext.insert(element: id, at: Date())
+        return true
+    }
+
     mutating func addObjectToQuery(id: ObjectId, path: String, interval: TimeInterval) -> Bool
     {
         if objectsToQuery[id] != nil

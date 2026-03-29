@@ -159,4 +159,23 @@ struct QueryQueueTests
         let repeatedObjectID = try await queryQueue.waitForNextObjectId()
         #expect(repeatedObjectID == "0000_00000002")
     }
+
+    @Test
+    func observedObjectPromotesToActiveQueryImmediately() async throws
+    {
+        var queryQueue = QueryQueue(address: "local", minimumRequestInterval: 0.0, retryInterval: 0.0, maxErrors: 3)
+
+        let firstWasAdded = queryQueue.addObjectToQuery(id: "0000_00000001", path: "/dc/power", interval: 60.0)
+        let fallbackWasActive = queryQueue.addObjectToQuery(id: "0000_00000002", path: "/dc/power", interval: 60.0)
+        let observedPromotion = queryQueue.promoteObjectToActiveQuery(id: "0000_00000002", path: "/dc/power", interval: 60.0)
+
+        #expect(firstWasAdded)
+        #expect(!fallbackWasActive)
+        #expect(observedPromotion)
+        #expect(queryQueue.contains(path: "/dc/power")?.id == "0000_00000002")
+        #expect(queryQueue.allOjectIds == ["0000_00000001", "0000_00000002"])
+
+        let activeObjectID = try await queryQueue.waitForNextObjectId()
+        #expect(activeObjectID == "0000_00000002")
+    }
 }
