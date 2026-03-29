@@ -101,10 +101,14 @@ struct sma2mqtt: AsyncParsableCommand
 
 func handleSIGUSR1(signal: Int32)
 {
-    JLog.notice("Received \(signal) signal.")
-    JLog.notice("Switching Log level from \(JLog.loglevel)")
-    JLog.loglevel = nextLogLevel(after: JLog.loglevel)
-    JLog.notice("to \(JLog.loglevel)")
+    let previousLevel = JLog.loglevel
+    let nextLevel = nextLogLevel(after: previousLevel)
+    let receivedMessage = "Received \(signal) signal."
+    let levelChangeMessage = "Switching Log level from \(previousLevel) to \(nextLevel)"
+
+    JLog.notice("\(receivedMessage)")
+    JLog.notice("\(levelChangeMessage)")
+    JLog.loglevel = nextLevel
     dumpLighthouseState()
 }
 
