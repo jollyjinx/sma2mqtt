@@ -5,11 +5,34 @@
 import Foundation
 import JLog
 
+private final class PublishedValueShapeCache: @unchecked Sendable
+{
+    private let lock = NSLock()
+    private var arrayShapeKeys = Set<String>()
+
+    func rememberArrayShape(for key: String)
+    {
+        lock.lock()
+        defer { lock.unlock() }
+        arrayShapeKeys.insert(key)
+    }
+
+    func usesArrayShape(for key: String) -> Bool
+    {
+        lock.lock()
+        defer { lock.unlock() }
+        return arrayShapeKeys.contains(key)
+    }
+}
+
 public struct PublishedValue: Encodable, Sendable
 {
+    private static let shapeCache = PublishedValueShapeCache()
+
     let objectID: String
     let values: [GetValuesResult.Value]
     let tagTranslator: SMATagTranslator
+    let shapeKey: String
 
     var stringValue: String?
     {
@@ -21,6 +44,32 @@ public struct PublishedValue: Encodable, Sendable
         return nil
     }
 
+    private var currentlyUsesArrayShape: Bool
+    {
+        if values.count > 1
+        {
+            return true
+        }
+
+        if case let .tagValues(tagValues)? = values.first
+        {
+            return tagValues.count > 1
+        }
+
+        return false
+    }
+
+    private var shouldEncodeAsArray: Bool
+    {
+        if currentlyUsesArrayShape
+        {
+            Self.shapeCache.rememberArrayShape(for: shapeKey)
+            return true
+        }
+
+        return Self.shapeCache.usesArrayShape(for: shapeKey)
+    }
+
     public func encode(to encoder: Encoder) throws
     {
         enum CodingKeys: String, CodingKey { case unit, value, scale, id, prio, write, event, date }
@@ -28,6 +77,7 @@ public struct PublishedValue: Encodable, Sendable
 
         let objectDefinition = tagTranslator.smaObjectDefinitions[objectID]
         let compacted = values.compactMap { $0 }
+        let shouldEncodeAsArray = shouldEncodeAsArray
 
         if JLog.loglevel <= .debug
         {
@@ -46,7 +96,7 @@ public struct PublishedValue: Encodable, Sendable
                     }
                     return nil
                 }
-                if stringValues.count > 1
+                if shouldEncodeAsArray
                 {
                     try container.encode(stringValues, forKey: .value)
                 }
@@ -85,7 +135,7 @@ public struct PublishedValue: Encodable, Sendable
                     }
                     return nil
                 }
-                if decimalValues.count > 1
+                if shouldEncodeAsArray
                 {
                     try container.encode(decimalValues, forKey: .value)
                 }
@@ -97,7 +147,7 @@ public struct PublishedValue: Encodable, Sendable
             case let .tagValues(values):
                 let translated = values.map { $0 == nil ? nil : tagTranslator.translate(tag: $0!) }
 
-                if translated.count > 1
+                if shouldEncodeAsArray
                 {
                     try container.encode(translated, forKey: .value)
                 }
@@ -106,7 +156,17 @@ public struct PublishedValue: Encodable, Sendable
                     try container.encode(translated.first, forKey: .value)
                 }
 
-            case nil: let value: Int? = nil; try container.encode(value, forKey: .value)
+            case nil:
+                if shouldEncodeAsArray
+                {
+                    let value: [Int?] = [nil]
+                    try container.encode(value, forKey: .value)
+                }
+                else
+                {
+                    let value: Int? = nil
+                    try container.encode(value, forKey: .value)
+                }
         }
     }
 }

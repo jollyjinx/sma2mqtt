@@ -314,7 +314,7 @@ public extension SMADevice
             }
 
             let path = name + "/\(objectPath)"
-            let singleValue = PublishedValue(objectID: objectID, values: resultValues, tagTranslator: tagTranslator)
+            let singleValue = PublishedValue(objectID: objectID, values: resultValues, tagTranslator: tagTranslator, shapeKey: path)
             try? await publisher?.publish(to: path, payload: singleValue.json, qos: .atMostOnce, retain: false)
             lastPublishedDate = Date()
         }
@@ -627,8 +627,8 @@ extension SMADevice
             {
                 JLog.trace("\(address):working on objectId:\(objectId.key)")
 
-                let singleValue = PublishedValue(objectID: objectId.key, values: objectId.value.values, tagTranslator: tagTranslator)
                 let mqttPath = name.lowercased().replacing(#/[\\\/\s]+/#) { _ in "-" } + "/" + (tagTranslator.objectsAndPaths[objectId.key]?.path ?? "unkown-id-\(objectId.key)")
+                let singleValue = PublishedValue(objectID: objectId.key, values: objectId.value.values, tagTranslator: tagTranslator, shapeKey: mqttPath)
 
                 retrievedInformation[mqttPath] = singleValue
 

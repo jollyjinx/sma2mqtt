@@ -54,6 +54,31 @@ struct SMAObjectTests
     }
 
     @Test
+    func observedMultiValueTopicsStayArrays() throws
+    {
+        let encoder = JSONEncoder()
+        let shapeKey = "test/sunnyboy3/dc-side/dc-measurements/power"
+
+        let multiValue = PublishedValue(objectID: "6100_40251E00",
+                                        values: [.intValue(36), .intValue(0)],
+                                        tagTranslator: SMATagTranslator.shared,
+                                        shapeKey: shapeKey)
+        let multiObject = try JSONSerialization.jsonObject(with: encoder.encode(multiValue)) as? [String: Any]
+        let initialValues = multiObject?["value"] as? [Any]
+
+        #expect(initialValues?.count == 2)
+
+        let singleValue = PublishedValue(objectID: "6100_40251E00",
+                                         values: [.intValue(36)],
+                                         tagTranslator: SMATagTranslator.shared,
+                                         shapeKey: shapeKey)
+        let singleObject = try JSONSerialization.jsonObject(with: encoder.encode(singleValue)) as? [String: Any]
+        let repeatedValues = singleObject?["value"] as? [Any]
+
+        #expect(repeatedValues?.count == 1)
+    }
+
+    @Test
     func testPassword()
     {
         let encoded = SMAPacketGenerator.encodePassword(password: "password", userRight: .user)
