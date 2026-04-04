@@ -10,18 +10,32 @@ private final class PublishedValueShapeCache: @unchecked Sendable
     private let lock = NSLock()
     private var arrayShapeKeys = Set<String>()
 
+    private static func canonicalShapeKey(_ key: String) -> String
+    {
+        guard let slashIndex = key.firstIndex(of: "/")
+        else
+        {
+            return key.lowercased().replacing(#/[\\\s]+/#) { _ in "-" }
+        }
+
+        let topicPrefix = String(key[..<slashIndex]).lowercased().replacing(#/[\\\s]+/#) { _ in "-" }
+        return topicPrefix + key[slashIndex...]
+    }
+
     func rememberArrayShape(for key: String)
     {
+        let normalizedKey = Self.canonicalShapeKey(key)
         lock.lock()
         defer { lock.unlock() }
-        arrayShapeKeys.insert(key)
+        arrayShapeKeys.insert(normalizedKey)
     }
 
     func usesArrayShape(for key: String) -> Bool
     {
+        let normalizedKey = Self.canonicalShapeKey(key)
         lock.lock()
         defer { lock.unlock() }
-        return arrayShapeKeys.contains(key)
+        return arrayShapeKeys.contains(normalizedKey)
     }
 }
 
