@@ -6,7 +6,6 @@ import AsyncHTTPClient
 import Foundation
 import JLog
 import NIOCore
-import NIOFoundationCompat
 import NIOHTTP1
 import RegexBuilder
 
@@ -703,7 +702,7 @@ extension SMADevice
                 {
                     for try await buffer in response.body
                     {
-                        bodyData.append(Data(buffer: buffer))
+                        bodyData.append(Data(buffer.readableBytesView))
                     }
                     JLog.trace("\(address):url:\(url) receivedData:\(bodyData.count)")
                 }
