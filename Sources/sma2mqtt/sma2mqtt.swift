@@ -21,6 +21,11 @@ var globalLighthouse: SMALighthouse?
 @MainActor
 var globalSignalSources = [DispatchSourceSignal]()
 
+func resolvedInverterPassword(commandLineValue: String?, environment: [String: String] = ProcessInfo.processInfo.environment) -> String
+{
+    commandLineValue ?? environment["INVERTER_PASSWORD"] ?? "0000"
+}
+
 @main
 struct sma2mqtt: AsyncParsableCommand
 {
@@ -45,7 +50,7 @@ struct sma2mqtt: AsyncParsableCommand
     @Option(name: .long, help: "Multicast Group Address.") var mcastAddress: String = "239.12.255.254"
     @Option(name: .long, help: "Multicast Group Port number.") var mcastPort: UInt16 = 9522
 
-    @Option(name: .long, help: "Inverter Password.") var inverterPassword: String = "0000"
+    @Option(name: .long, help: "Inverter password. This password can also be provided via the INVERTER_PASSWORD environment variable.") var inverterPassword: String?
     @Option(name: .long, help: "Array of path:interval values we are interested in") var interestingPathsAndValues: [String] = [
         "dc-side/dc-measurements/power:2",
         "ac-side/grid-measurements/power:2",
@@ -86,7 +91,7 @@ struct sma2mqtt: AsyncParsableCommand
                                                  multicastPort: mcastPort,
                                                  bindAddress: bindAddress,
                                                  bindPort: bindPort,
-                                                 password: inverterPassword,
+                                                 password: resolvedInverterPassword(commandLineValue: inverterPassword),
                                                  interestingPaths: interestingPaths)
         globalLighthouse = lightHouse
         while true

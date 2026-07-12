@@ -9,6 +9,27 @@ import Testing
 struct SignalHandlingTests
 {
     @Test
+    func inverterPasswordDefaultsToEnvironmentValue()
+    {
+        #expect(resolvedInverterPassword(commandLineValue: nil, environment: ["INVERTER_PASSWORD": "secret"]) == "secret")
+    }
+
+    @Test
+    func inverterPasswordFallsBackToDefault()
+    {
+        #expect(resolvedInverterPassword(commandLineValue: nil, environment: [:]) == "0000")
+    }
+
+    @Test
+    func commandLineInverterPasswordOverridesDefault() throws
+    {
+        let command = try sma2mqtt.parse(["--inverter-password", "command-line-secret"])
+
+        #expect(resolvedInverterPassword(commandLineValue: command.inverterPassword,
+                                         environment: ["INVERTER_PASSWORD": "environment-secret"]) == "command-line-secret")
+    }
+
+    @Test
     func logLevelCyclesAsExpected()
     {
         #expect(nextLogLevel(after: .trace) == .info)

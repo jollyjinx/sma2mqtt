@@ -4,17 +4,18 @@ The __sma2mqtt__ tool is designed to discover SMA devices, such as inverters and
 
 Within the local network, __sma2mqtt__ joins the SMA multicast to listen to announcements from Sunny HomeManager. Please note, this functionality is strictly limited to the local network due to the inherent restrictions of multicast.
 
-The repository includes a build.sh shell script that constructs a Docker container encapsulating the __sma2mqtt__ tool. It's likely necessary to adjust this script to suit the specifics of individual Docker setups.
+The repository includes a build.sh shell script that constructs a container encapsulating the __sma2mqtt__ tool. It's likely necessary to adjust this script to suit the specifics of individual container setups.
 
 Upon execution, __sma2mqtt__ produces output on MQTT similar to the one shown on the left, which in turn can be used to drive a node-red dashboard shown on the right.
 
 <img src="Images/mqtt-explorer.png" width="50%" alt="MQTT Explorer Screenshot"/><img src="Images/node-red-dashboard.png" width="50%" alt="Node-Red Dashboard Screenshot"/>
 
-## Docker Container Use
+## Container Use
 
-A multi-architecture Docker image, specifically engineered for both 64-bit ARM and x86 architectures, is available. This image is compatible with a range of devices, including the Raspberry Pi, Apple Silicon Macs, x86-based machines, and other 64-bit ARM computers. It can be employed directly using the following command:
+A multi-architecture container image, specifically engineered for both 64-bit ARM and x86 architectures, is available. This image is compatible with a range of devices, including the Raspberry Pi, Apple Silicon Macs, x86-based machines, and other 64-bit ARM computers. It can be employed directly using the following commands:
 ```
-docker run --name "sma2mqtt" --net service16 ghcr.io/jollyjinx/sma2mqtt:latest sma2mqtt --inverter-password MySimplePassword
+export INVERTER_PASSWORD=MySimplePassword
+container run --name sma2mqtt --network service16 --env INVERTER_PASSWORD="$INVERTER_PASSWORD" ghcr.io/jollyjinx/sma2mqtt:latest
 ```
 
 The --net option is included in this command to specify a separate network for SMA devices. If there is no dedicated network in use, port 9522 should be open for the container.
@@ -57,7 +58,8 @@ OPTIONS:
   --mcast-port <mcast-port>
                           Multicast Group Port number. (default: 9522)
   --inverter-password <inverter-password>
-                          Inverter Password. (default: 0000)
+                          Inverter password. This password can also be provided
+                          via the INVERTER_PASSWORD environment variable.
   --interesting-paths-and-values <interesting-paths-and-values>
                           Array of path:interval values we are interested in (default: dc-side/dc-measurements/power:2, ac-side/grid-measurements/power:2, ac-side/measured-values/daily-yield:30, battery/state-of-charge:20, battery/battery/temperature:30,
                           battery/battery-charge/battery-charge:20)
@@ -66,6 +68,11 @@ OPTIONS:
 ```
 
 The option __--interesting-paths-and-values__ is currently defaulted to the things I like to see, but you probably have different needs. To find out what your inverter supports you can use the catch all argument __\*:600__ which will show all paths your inverter supports.
+
+The inverter password can be supplied with `--inverter-password` or through the
+`INVERTER_PASSWORD` environment variable. The command-line option takes
+precedence when both are present. If neither is supplied, the password defaults
+to `0000`.
 
 ## Unchanged MQTT Updates
 
