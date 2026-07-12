@@ -33,6 +33,7 @@ struct sma2mqtt: AsyncParsableCommand
     @Option(name: .long, help: "MQTT Server username") var mqttUsername: String = "mqtt"
     @Option(name: .long, help: "MQTT Server password") var mqttPassword: String = ""
     @Option(name: .shortAndLong, help: "Minimum Emit Interval to send updates to mqtt Server.") var emitInterval: Double = 1.0
+    @Option(name: .long, help: "Maximum interval between unchanged non-retained MQTT updates; 0 restores publication after every emit interval.") var mqttUnchangedPublishInterval: Double = 15.0
     #if DEBUG
         @Option(name: .shortAndLong, help: "MQTT Server topic.") var basetopic: String = "example/sma/"
     #else
@@ -67,7 +68,7 @@ struct sma2mqtt: AsyncParsableCommand
             JLog.info("Loglevel: \(logLevel)")
         }
 
-        let mqttPublisher = try await MQTTPublisher(hostname: mqttServername, port: Int(mqttPort), username: mqttUsername, password: mqttPassword, emitInterval: emitInterval, baseTopic: basetopic, jsonOutput: jsonOutput)
+        let mqttPublisher = try await MQTTPublisher(hostname: mqttServername, port: Int(mqttPort), username: mqttUsername, password: mqttPassword, emitInterval: emitInterval, unchangedPublishInterval: mqttUnchangedPublishInterval, baseTopic: basetopic, jsonOutput: jsonOutput)
 
         let interestingPaths = Dictionary(uniqueKeysWithValues: interestingPathsAndValues.compactMap
         {
@@ -95,6 +96,16 @@ struct sma2mqtt: AsyncParsableCommand
                 JLog.debug("\(description)")
             #endif
             try await lightHouse.receiveNext()
+        }
+    }
+
+    mutating func validate() throws
+    {
+        guard mqttUnchangedPublishInterval.isFinite,
+              mqttUnchangedPublishInterval >= 0
+        else
+        {
+            throw ValidationError("--mqtt-unchanged-publish-interval must be a finite, non-negative number.")
         }
     }
 }

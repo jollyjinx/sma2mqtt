@@ -43,6 +43,10 @@ OPTIONS:
                           MQTT Server password
   -e, --emit-interval <emit-interval>
                           Minimum Emit Interval to send updates to mqtt Server. (default: 1.0)
+  --mqtt-unchanged-publish-interval <mqtt-unchanged-publish-interval>
+                          Maximum interval between unchanged non-retained MQTT
+                          updates; 0 restores publication after every emit
+                          interval. (default: 15.0)
   -b, --basetopic <basetopic>
                           MQTT Server topic. (default: example/sma/)
   --bind-address <bind-address>
@@ -62,6 +66,19 @@ OPTIONS:
 ```
 
 The option __--interesting-paths-and-values__ is currently defaulted to the things I like to see, but you probably have different needs. To find out what your inverter supports you can use the catch all argument __\*:600__ which will show all paths your inverter supports.
+
+## Unchanged MQTT Updates
+
+By default, changed MQTT values are published at the next opportunity allowed by
+`--emit-interval`. Unchanged values on non-retained topics are republished at
+most once every 15 seconds. Set `--mqtt-unchanged-publish-interval 0` to restore
+the previous behavior of publishing unchanged values after every emit interval.
+The option accepts finite, non-negative values only.
+
+Unchanged retained values are suppressed because the MQTT broker already keeps
+their last value. The interval does not change SMA polling or cause additional
+queries; an unchanged value is republished on the first update received after
+the interval has elapsed.
 
 __sma2mqtt__ does support signaling. When you send:
 

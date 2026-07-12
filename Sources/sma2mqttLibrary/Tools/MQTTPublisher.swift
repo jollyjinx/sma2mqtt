@@ -17,13 +17,15 @@ public actor MQTTPublisher: SMAPublisher
     let mqttClient: MQTTClient
     let jsonOutput: Bool
     let emitInterval: Double
+    let unchangedPublishInterval: TimeInterval
     let baseTopic: String
     let mqttQueue = DispatchQueue(label: "mqttQueue")
-    var lasttimeused = [String: Date]()
+    var publicationGate = MQTTPublicationGate()
 
-    public init(hostname: String, port: Int, username: String? = nil, password _: String? = nil, emitInterval: Double = 1.0, baseTopic: String = "", jsonOutput: Bool = false) async throws
+    public init(hostname: String, port: Int, username: String? = nil, password _: String? = nil, emitInterval: Double = 1.0, unchangedPublishInterval: TimeInterval = 15.0, baseTopic: String = "", jsonOutput: Bool = false) async throws
     {
         self.emitInterval = emitInterval
+        self.unchangedPublishInterval = unchangedPublishInterval
         self.jsonOutput = jsonOutput
         self.baseTopic = baseTopic.hasSuffix("/") ? String(baseTopic.dropLast(1)) : baseTopic
 
@@ -36,11 +38,19 @@ public actor MQTTPublisher: SMAPublisher
     {
         let topic = baseTopic + "/" + topic
 
-        let timenow = Date()
-        let lasttime = lasttimeused[topic, default: .distantPast]
-
-        guard timenow.timeIntervalSince(lasttime) > emitInterval else { return }
-        lasttimeused[topic] = timenow
+        let now = Date()
+        if !mqttClient.isActive()
+        {
+            publicationGate.reset()
+        }
+        guard publicationGate.shouldPublish(topic: topic,
+                                            payload: payload,
+                                            retained: retain,
+                                            at: now,
+                                            minimumEmitInterval: emitInterval,
+                                            unchangedPublishInterval: unchangedPublishInterval)
+        else { return }
+        publicationGate.recordPublication(topic: topic, payload: payload, at: now)
 
         mqttQueue.async
         {

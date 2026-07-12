@@ -7,6 +7,7 @@
 # - tag the image for GHCR
 # - authenticate with a GitHub token stored in macOS Keychain
 # - push the image to `ghcr.io`
+# - use Docker only when `--all-arch` needs a joined multi-architecture image
 #
 # Typical use:
 # - run `./ghcrupload.sh <tag>` to publish a specific image tag
@@ -24,7 +25,8 @@ GHCR_USER="${GHCR_USER:-jollyjinx}"
 IMAGE_REPO="${IMAGE_REPO:-ghcr.io/jollyjinx/sma2mqtt}"
 KEYCHAIN_ITEM="${KEYCHAIN_ITEM:-github-token-sma2mqtt}"
 IMAGE_TAG="jinx"
-PLATFORMS=""
+TAG_PROVIDED=false
+ALL_ARCH=false
 
 usage() {
   cat <<'EOF'
@@ -58,7 +60,7 @@ detect_local_platform() {
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --all-arch)
-      PLATFORMS="linux/amd64,linux/arm64"
+      ALL_ARCH=true
       shift
       ;;
     --help|-h)
@@ -71,41 +73,62 @@ while [ "$#" -gt 0 ]; do
       exit 1
       ;;
     *)
-      if [ "$IMAGE_TAG" != "jinx" ]; then
+      if [ "$TAG_PROVIDED" = true ]; then
         echo "only one image tag may be provided" >&2
         usage >&2
         exit 1
       fi
       IMAGE_TAG="$1"
+      TAG_PROVIDED=true
       shift
       ;;
   esac
 done
 
-if [ -z "$PLATFORMS" ]; then
-  PLATFORMS="$(detect_local_platform)"
-fi
-
 IMAGE_REF="${IMAGE_REPO}:${IMAGE_TAG}"
 
-if ! command -v docker >/dev/null 2>&1; then
-  echo "docker is required for local GHCR pushes" >&2
+if ! command -v security >/dev/null 2>&1; then
+  echo "the macOS security command is required to read the GHCR token" >&2
   exit 1
 fi
 
-GHCR_TOKEN="$(security find-generic-password -w -s "$KEYCHAIN_ITEM")"
-if [ -z "$GHCR_TOKEN" ]; then
+if ! GHCR_TOKEN="$(security find-generic-password -w -s "$KEYCHAIN_ITEM")" || [ -z "$GHCR_TOKEN" ]; then
   echo "no token found in keychain item '$KEYCHAIN_ITEM'" >&2
   exit 1
 fi
 
-printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+if [ "$ALL_ARCH" = true ]; then
+  PLATFORMS="linux/amd64,linux/arm64"
 
-docker buildx build \
-  --file sma2mqtt.product.dockerfile \
-  --platform "$PLATFORMS" \
-  --tag "$IMAGE_REF" \
-  --push \
-  .
+  if ! command -v docker >/dev/null 2>&1; then
+    echo "docker buildx is required for --all-arch because container cannot publish a joined multi-architecture image" >&2
+    exit 1
+  fi
 
-echo "pushed $IMAGE_REF for $PLATFORMS"
+  printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+
+  docker buildx build \
+    --file sma2mqtt.product.dockerfile \
+    --platform "$PLATFORMS" \
+    --tag "$IMAGE_REF" \
+    --push \
+    .
+else
+  PLATFORM="$(detect_local_platform)"
+
+  if ! command -v container >/dev/null 2>&1; then
+    echo "container is required for local-architecture GHCR pushes" >&2
+    exit 1
+  fi
+
+  printf '%s' "$GHCR_TOKEN" | container registry login ghcr.io -u "$GHCR_USER" --password-stdin
+
+  container build \
+    --file sma2mqtt.product.dockerfile \
+    --platform "$PLATFORM" \
+    --tag "$IMAGE_REF" \
+    .
+  container image push --platform "$PLATFORM" "$IMAGE_REF"
+fi
+
+echo "pushed $IMAGE_REF for ${PLATFORMS:-$PLATFORM}"
