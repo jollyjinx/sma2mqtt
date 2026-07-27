@@ -2,7 +2,7 @@
 title: sma2mqtt operations and validation
 summary: Network, MQTT, signals, secrets, container publishing, and test boundaries.
 applies_to: Runtime configuration, tests, Dockerfile, and deployment scripts
-last_verified: 2026-07-22
+last_verified: 2026-07-27
 ---
 
 # Operations and validation
@@ -95,6 +95,8 @@ The Dockerfile copies only `Package.swift` before resolution and does not copy `
 ## Publishing boundary
 
 `.github/workflows/docker-publish.yml` publishes multi-architecture GHCR images from GitHub branch/tag events. `ghcrupload.sh` is a manual publisher that reads a token from the macOS Keychain and mutates GHCR. `build.sh` is a legacy deployment-specific Docker launcher.
+
+Only the `main` branch workflow publishes `latest`; semantic-version tag workflows publish the version tag without also racing to update `latest`. GitHub Actions cache export is best-effort because an unavailable cache backend must not turn a successfully built and published image into a failed release. A cache-export warning can therefore be non-fatal, but an image build or registry-push error must still fail the workflow.
 
 Do not run publishing scripts as validation. Before publishing, verify the intended registry, tag, architectures, credentials, and whether the source commit exists on the server that triggers the workflow.
 

@@ -52,6 +52,8 @@ jobs:
         uses: docker/metadata-action@v6
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          flavor: |
+            latest=false
           tags: |
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=raw,value=main,enable=${{ github.ref == 'refs/heads/main' }}
@@ -70,7 +72,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=sma2mqtt
-          cache-to: type=gha,mode=max,scope=sma2mqtt
+          cache-to: type=gha,mode=max,scope=sma2mqtt,ignore-error=true
 
       - name: Prepare release metadata
         if: startsWith(github.ref, 'refs/tags/')
