@@ -2,7 +2,7 @@
 title: sma2mqtt operations and validation
 summary: Network, MQTT, signals, secrets, container publishing, and test boundaries.
 applies_to: Runtime configuration, tests, Dockerfile, and deployment scripts
-last_verified: 2026-07-27
+last_verified: 2026-07-28
 ---
 
 # Operations and validation
@@ -28,14 +28,9 @@ Multicast normally stays inside one LAN/VLAN. Validate interface selection and c
 - `SIGUSR1` cycles `debug -> trace -> info -> debug`; any other starting level moves to `debug`.
 - Signal sources must remain retained for the process lifetime.
 
-## Known option gaps
+## Known option gap
 
-Two exposed options are not wired through in the current development revision:
-
-1. `MQTTPublisher.init` ignores its password parameter and always passes an empty password to MQTTNIO.
-2. `SMALighthouse.init` ignores its bind-port parameter and configures the receiver with the multicast port.
-
-Treat password-authenticated MQTT and an independently selected local bind port as unsupported until implementation and tests prove otherwise. Keep this warning synchronized with code changes.
+`SMALighthouse.init` ignores its bind-port parameter and configures the receiver with the multicast port. Treat an independently selected local bind port as unsupported until implementation and tests prove otherwise. Keep this warning synchronized with code changes.
 
 ## MQTT stability
 
@@ -46,6 +41,8 @@ MQTT topic shape and JSON type are downstream contracts:
 - keep topics that have emitted arrays as arrays on subsequent single-value updates, including across normalized device-name keys;
 - suppress unchanged retained publications;
 - reset publication history on broker disconnect so state is republished after reconnect;
+- pass both configured MQTT credentials into the connection;
+- record publication history only after mqtt-nio accepts the asynchronous publish;
 - do not confuse publication throttling with SMA polling frequency.
 
 ## Validation layers
@@ -88,7 +85,7 @@ docker run --rm --network host --env INVERTER_PASSWORD sma2mqtt sma2mqtt --mqtt-
 
 The image uses `CMD ["sma2mqtt"]`, not an entrypoint. Supplying arguments after the image replaces that default command, so repeat `sma2mqtt` before any options.
 
-On 2026-07-22, a local-architecture Docker build and `sma2mqtt --help` container smoke test passed. Linux compilation emitted a deprecation warning for MQTTNIO's event-loop provider but completed and copied the resource bundle. A controlled run with reachable devices and broker is still required for network behavior.
+On 2026-07-22, a local-architecture Docker build and `sma2mqtt --help` container smoke test passed. A controlled run with reachable devices and broker is still required for network behavior.
 
 The Dockerfile copies only `Package.swift` before resolution and does not copy `Package.resolved`. It therefore resolves the newest compatible dependency graph, which can differ substantially from a developer's local checkout. Treat dependency updates observed only inside Docker as deliberate inputs to validation, not as proof that the locked/local graph is equivalent.
 

@@ -55,7 +55,7 @@ If device metadata or HTTP bootstrap fails, bundled resources and UDP discovery 
 
 ## Concurrency contract
 
-Long-lived mutable components are actors (`SMALighthouse`, `SMADevice`, `MQTTPublisher`, socket helpers). The executable retains `DispatchSourceSignal` instances on the Main Actor. Keep blocking/network work out of actor-critical sections where possible, preserve cancellation of discovery/refresh tasks, and resolve strict-concurrency diagnostics rather than weakening compiler settings.
+Long-lived mutable components are actors (`SMALighthouse`, `SMADevice`, `MQTTPublisher`, socket helpers). `MQTTPublisher` owns a cancellable connection-maintenance task around mqtt-nio v3's scoped `MQTTConnection`; disconnects reset publication history and retry after a short backoff. The executable retains `DispatchSourceSignal` instances on the Main Actor. Keep blocking/network work out of actor-critical sections where possible, preserve cancellation of discovery/refresh tasks, and resolve strict-concurrency diagnostics rather than weakening compiler settings.
 
 ## Resource contract
 

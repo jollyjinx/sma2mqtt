@@ -30,6 +30,14 @@ struct SignalHandlingTests
     }
 
     @Test
+    func logLevelParsesFromCommandLine() throws
+    {
+        let command = try sma2mqtt.parse(["--log-level", "trace"])
+
+        #expect(command.logLevel == .trace)
+    }
+
+    @Test
     func logLevelCyclesAsExpected()
     {
         #expect(nextLogLevel(after: .trace) == .info)

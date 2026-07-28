@@ -8,7 +8,14 @@ import Foundation
 import JLog
 import sma2mqttLibrary
 
-extension JLog.Level: @retroactive ExpressibleByArgument {}
+extension JLog.Level: @retroactive ExpressibleByArgument
+{
+    public init?(argument: String)
+    {
+        self.init(rawValue: argument)
+    }
+}
+
 #if DEBUG
     let defaultLoglevel: JLog.Level = .debug
 #else

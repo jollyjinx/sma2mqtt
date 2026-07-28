@@ -77,6 +77,7 @@ Run `sma2mqtt --help` for the authoritative option list. Important settings incl
 | `--mqtt-servername` | `mqtt` | MQTT broker hostname |
 | `--mqtt-port` | `1883` | MQTT broker port |
 | `--mqtt-username` | `mqtt` | MQTT username |
+| `--mqtt-password` | empty | MQTT password |
 | `--basetopic` | `sma/` in release | Prefix for published topics |
 | `--emit-interval` | `1.0` seconds | Minimum interval between publications for one topic |
 | `--mqtt-unchanged-publish-interval` | `15.0` seconds | Heartbeat interval for unchanged non-retained values; `0` republishes after each emit interval |
@@ -113,6 +114,7 @@ Device-specific HTTP metadata can promote a better object ID for a path while re
 - Unchanged retained values remain suppressed because the broker already stores them.
 - A reconnect resets publication history so current retained values can be sent again.
 - Topics observed with multi-value array payloads retain their array shape on later single-value updates.
+- MQTT username and password options are passed to the broker connection.
 
 `--json-output` mirrors accepted publications to stdout; it does not disable MQTT delivery.
 
@@ -129,7 +131,6 @@ kill -USR2 "$(pgrep -x sma2mqtt)"
 
 ## Current limitations
 
-- `--mqtt-password` is parsed, but the current `MQTTPublisher` discards it and configures an empty broker password. Password-authenticated MQTT is therefore not supported by this revision.
 - `--bind-port` is parsed, but `SMALighthouse` currently ignores it and listens on `--mcast-port`.
 - Multicast, live inverter login, and MQTT delivery require environment-specific integration testing; the default tests do not contact hardware or a broker.
 - The Docker build resolves the newest dependency versions allowed by `Package.swift` because it does not copy a lockfile. Container and local dependency graphs can therefore differ.
@@ -152,6 +153,8 @@ swift test -- --pcap-file /path/to/fixture.pcap
 ```
 
 Only enable integration tests on a network containing the expected SMA devices. See [`AI/ARCHITECTURE.md`](AI/ARCHITECTURE.md) and [`AI/OPERATIONS.md`](AI/OPERATIONS.md) before changing runtime behavior. The reverse-engineering notes in [`SMA Protocol.md`](SMA%20Protocol.md) are observational and may be incomplete.
+
+The MQTT transport uses mqtt-nio v3. `Package.swift` currently starts its compatible range at the `3.0.0-alpha.2` prerelease, allowing SwiftPM to advance to later compatible v3 prereleases and the final v3 release.
 
 ## Publishing images
 
