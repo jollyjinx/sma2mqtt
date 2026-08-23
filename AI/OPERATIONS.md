@@ -2,7 +2,7 @@
 title: sma2mqtt operations and validation
 summary: Network, MQTT, signals, secrets, container publishing, and test boundaries.
 applies_to: Runtime configuration, tests, Dockerfile, and deployment scripts
-last_verified: 2026-07-28
+last_verified: 2026-08-23
 ---
 
 # Operations and validation
@@ -80,6 +80,7 @@ The product Dockerfile uses matching Swift 6.3 builder/runtime images, resolves 
 
 ```sh
 docker build . --file sma2mqtt.product.dockerfile --tag sma2mqtt
+CONTAINER_COMMAND=docker ./scripts/smoke_swift_container.sh sma2mqtt
 docker run --rm --network host --env INVERTER_PASSWORD sma2mqtt sma2mqtt --mqtt-servername 127.0.0.1
 ```
 
@@ -92,6 +93,10 @@ The Dockerfile copies only `Package.swift` before resolution and does not copy `
 ## Publishing boundary
 
 `.github/workflows/docker-publish.yml` publishes multi-architecture GHCR images from GitHub branch/tag events. `ghcrupload.sh` is a manual publisher that reads a token from the macOS Keychain and mutates GHCR. `build.sh` is a legacy deployment-specific Docker launcher.
+
+`scripts/build_and_push_image.sh` is the preferred manual publisher. It requires either `--gitmaster` or `--github`, derives its default tag through `scripts/container_tag_for_branch.sh`, builds both architectures unless `--arm64` or `--amd64` is selected, and uses Apple Container on macOS or Docker Buildx elsewhere. Registry authentication is deliberately external to the script.
+
+`scripts/run_swift_tests_in_container.sh` runs the deterministic Swift suite in `swift:6.3.2-noble`. `scripts/smoke_swift_container.sh` verifies that a built image contains the executable and resource bundle and that its CLI help contract is usable. Set `CONTAINER_COMMAND=docker` when Docker should be used instead of the smoke script's Apple Container default.
 
 Only the `main` branch workflow publishes `latest`; semantic-version tag workflows publish the version tag without also racing to update `latest`. GitHub Actions cache export is best-effort because an unavailable cache backend must not turn a successfully built and published image into a failed release. A cache-export warning can therefore be non-fatal, but an image build or registry-push error must still fail the workflow.
 

@@ -51,6 +51,7 @@ To build locally:
 
 ```sh
 docker build . --file sma2mqtt.product.dockerfile --tag sma2mqtt
+CONTAINER_COMMAND=docker ./scripts/smoke_swift_container.sh sma2mqtt
 docker run --rm --network host --env INVERTER_PASSWORD sma2mqtt
 ```
 
@@ -143,6 +144,7 @@ swift package dump-package
 swift build
 swift test
 swift build -c release --product sma2mqtt
+./scripts/run_swift_tests_in_container.sh
 ```
 
 The default suite covers packet decoding/generation, object metadata, query fallback behavior, MQTT publication gating, payload shape stability, password precedence, and signal-level cycling. Live-device tests are opt-in:
@@ -158,7 +160,15 @@ The MQTT transport uses the `main` branch of the [`jollyjinx/mqtt-nio`](https://
 
 ## Publishing images
 
-`ghcrupload.sh` publishes one tag for the local architecture using Apple’s `container` CLI, or a joined amd64/arm64 image with `--all-arch` and Docker Buildx. It reads the GHCR token from a macOS Keychain item; see the script header and `--help` before use. Publishing changes external state and is not part of ordinary validation.
+`scripts/build_and_push_image.sh` follows the same build interface as scannerserver. Select exactly one registry; the default tag is the normalized current branch and the default build includes both supported architectures:
+
+```sh
+./scripts/build_and_push_image.sh --gitmaster
+./scripts/build_and_push_image.sh --github
+./scripts/build_and_push_image.sh --gitmaster --arm64 --tag development
+```
+
+On macOS it uses Apple Container; on other hosts it uses Docker Buildx. Authenticate to the selected registry before running it. `ghcrupload.sh` remains available for the older macOS Keychain-based GHCR workflow. Publishing changes external state and is not part of ordinary validation.
 
 ## License
 

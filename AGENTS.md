@@ -16,6 +16,7 @@ Use this skill when the task is inside the `sma2mqtt` Swift package.
 - `Sources/sma2mqttLibrary/Tools/`: queueing, MQTT transport, timers, and UDP helpers.
 - `Sources/sma2mqttLibrary/Resources/`: bundled SMA metadata and translations.
 - `Tests/sma2mqttTests/`: Swift Testing coverage, including queue behavior, packet decoding, and optional integration tests.
+- `scripts/`: branch-tag normalization, Linux Swift tests, container smoke validation, and Gitmaster/GitHub image publication.
 
 ## Working rules
 
@@ -24,3 +25,4 @@ Use this skill when the task is inside the `sma2mqtt` Swift package.
 - Keep MQTT topic shape stable. Multi-value topics that have been observed as arrays should stay arrays on later single-value updates.
 - Preserve strict concurrency. Fix actor-isolation and sendability issues directly instead of disabling checks.
 - Verify package changes with `swift test`. Integration tests are opt-in and should stay gated behind the existing flags.
+- For container work, run `scripts/smoke_swift_container.sh` against the built image. Image publication requires an explicit registry selection and is not a validation step.
