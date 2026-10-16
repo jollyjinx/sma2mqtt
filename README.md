@@ -156,7 +156,7 @@ swift test -- --pcap-file /path/to/fixture.pcap
 
 Only enable integration tests on a network containing the expected SMA devices. See [`AI/ARCHITECTURE.md`](AI/ARCHITECTURE.md) and [`AI/OPERATIONS.md`](AI/OPERATIONS.md) before changing runtime behavior. The reverse-engineering notes in [`SMA Protocol.md`](SMA%20Protocol.md) are observational and may be incomplete.
 
-The MQTT transport uses the `main` branch of the [`jollyjinx/mqtt-nio`](https://github.com/jollyjinx/mqtt-nio) fork, which carries a required mqtt-nio bug fix. Local resolutions are pinned in `Package.resolved`; container builds resolve the current tip of that branch.
+The MQTT transport uses upstream [`mqtt-nio`](https://github.com/swift-server-community/mqtt-nio), starting at [`3.0.0-rc.1`](https://github.com/swift-server-community/mqtt-nio/releases/tag/3.0.0-rc.1). This release includes the revision previously supplied by the `jollyjinx/mqtt-nio` bug-fix fork. The compatible range allows later v3 prereleases and stable v3 releases; local resolutions are pinned in the ignored `Package.resolved`, while container builds resolve the newest compatible versions.
 
 ## Publishing images
 
